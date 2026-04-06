@@ -32,3 +32,23 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Notify Discord (success)
+        if: success()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: success
+          title: CI 통과
+          description: "브랜치: `${{ github.ref_name }}` | ${{ github.event_name }}"
+          color: 0x57F287
+
+      - name: Notify Discord (failure)
+        if: failure()
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: CI 실패
+          description: "브랜치: `${{ github.ref_name }}` | ${{ github.event_name }}"
+          color: 0xED4245
