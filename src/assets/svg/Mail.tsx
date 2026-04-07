@@ -1,4 +1,4 @@
-export default function Main() {
+export default function Mail() {
   return (
     <svg
       width="16"
