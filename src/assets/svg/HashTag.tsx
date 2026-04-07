@@ -1,4 +1,4 @@
-export default function HasgTag() {
+export default function HashTag() {
   return (
     <svg
       width="16"
