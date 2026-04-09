@@ -6,7 +6,9 @@ export default function Header() {
   const isCouncil = ROLE.COUNCIL;
   return (
     <header className="max-w-[1920px] h-[70px] border-b border-main-300 flex items-center justify-between px-50">
-      <Image src="/img/Rels.png" alt="logo" width={50} height={50} />
+      <Link href="/">
+        <Image src="/img/Rels.png" alt="logo" width={50} height={50} />
+      </Link>
       <div>
         {isCouncil && (
           <Link href="/notification" className="font-medium mr-10">

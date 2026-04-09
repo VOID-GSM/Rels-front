@@ -1,65 +1,71 @@
-import Image from "next/image";
+import ApplicantList from "@/components/common/ApplicantList";
+import Badge from "@/components/common/Badge";
+import Button from "@/components/common/Button";
+import CouncilBadge from "@/components/common/CouncilBadge";
+import CreateLectureButton from "@/components/common/CreateLectureButton";
+import Input from "@/components/common/Input";
+import LectureCard from "@/components/common/LectureCard";
 
 export default function Home() {
+  const applicants = [
+    { id: "1", name: "학생101", grade: 3, classNum: 3, number: 5 },
+    { id: "2", name: "학생102", grade: 2, classNum: 10, number: 17 },
+  ];
+
+  const waitings = [
+    { id: "1", name: "학생201", grade: 1, classNum: 3, number: 15 },
+    { id: "2", name: "학생202", grade: 2, classNum: 10, number: 30 },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="max-w-[1920px] h-screen">
+      <div>
+        <Input placeholder="강연 제목을 입력하세요" label="강연" />
+        <Button variant="primary" className="h-[52px] text-base">
+          신청하기
+        </Button>
+        <Button variant="cancel" className="h-[52px] text-base">
+          신청 취소
+        </Button>
+        <Button variant="waiting" className="h-[52px] text-base">
+          대기 신청
+        </Button>
+        <Button variant="primary" className="h-[38px] text-sm">
+          신청하기
+        </Button>
+        <Button variant="primary" type="submit" className="h-[52px]">
+          강연 생성
+        </Button>
+        <Badge variant="confirmed" />
+        <Badge variant="unconfirmed" />
+        <Badge variant="pending" />
+        <CreateLectureButton />
+        <CouncilBadge />
+        <LectureCard
+          id="1"
+          title="파이썬으로 배우는 머신러닝"
+          speaker="최데이터"
+          status="unconfirmed"
+          currentCount={8}
+          maxCount={20}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <LectureCard
+          id="2"
+          title="React 기초부터 실전까지"
+          speaker="김개발"
+          status="confirmed"
+          currentCount={30}
+          maxCount={30}
+          waitingCount={5}
+        />
+        <ApplicantList
+          type="applicant"
+          currentCount={30}
+          maxCount={30}
+          applicants={applicants}
+        />
+        <ApplicantList type="waiting" waitingCount={5} applicants={waitings} />
+      </div>
     </div>
   );
 }
