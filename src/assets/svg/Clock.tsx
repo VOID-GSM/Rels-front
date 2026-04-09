@@ -1,4 +1,4 @@
-export default function Clock({ isActive = false }) {
+export default function Clock({ isActive = false }: { isActive?: boolean }) {
   return (
     <svg
       width="16"
