@@ -1,4 +1,4 @@
-type BadgeVariant = "confirmed" | "unconfirmed" | "pending";
+type BadgeVariant = "confirmed" | "unconfirmed" | "pending" | "closed";
 
 interface BadgeProps {
   variant: BadgeVariant;
@@ -16,6 +16,10 @@ const BADGE_CONFIG: Record<BadgeVariant, { label: string; style: string }> = {
   pending: {
     label: "개설 불확정",
     style: "bg-gray-200 text-gray-600",
+  },
+  closed: {
+    label: "강연 종료",
+    style: "bg-gray-700 text-white",
   },
 };
 
