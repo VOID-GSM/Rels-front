@@ -9,13 +9,22 @@ interface Applicant {
   number: number;
 }
 
-interface ApplicantListProps {
-  type: "applicant" | "waiting";
-  currentCount?: number;
-  maxCount?: number;
-  waitingCount?: number;
+type ApplicantListProps = {
   applicants: Applicant[];
-}
+} & (
+  | {
+      type: "applicant";
+      currentCount: number;
+      maxCount: number;
+      waitingCount?: never;
+    }
+  | {
+      type: "waiting";
+      waitingCount: number;
+      currentCount?: never;
+      maxCount?: never;
+    }
+);
 
 export default function ApplicantList({
   type,
