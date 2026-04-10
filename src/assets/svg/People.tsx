@@ -1,4 +1,4 @@
-export default function People({ isActive = false }) {
+export default function People({ isActive = false }: { isActive?: boolean }) {
   return (
     <svg
       width="16"
