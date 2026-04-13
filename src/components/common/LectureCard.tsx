@@ -7,9 +7,9 @@ interface LectureCardProps {
   id: string;
   title: string;
   speaker: string;
-  status: "confirmed" | "unconfirmed" | "pending";
+  status: "confirmed" | "unconfirmed" | "pending" | "closed";
   currentCount: number;
-  maxCount: number;
+  maxCount?: number;
   waitingCount?: number;
 }
 
@@ -38,7 +38,7 @@ export default function LectureCard({
         <div className="flex items-center gap-1 text-sm text-gray-500">
           <People />
           <span>
-            {currentCount}/{maxCount}명
+            {maxCount ? `${currentCount}/${maxCount}명` : `${currentCount}명`}
           </span>
           {waitingCount && waitingCount > 0 ? (
             <span className="ml-1">(대기 {waitingCount}명)</span>
