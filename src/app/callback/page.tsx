@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
 import { get } from "@/shared/api";
@@ -12,8 +12,14 @@ function CallbackContent() {
   const searchParams = useSearchParams();
   const { setAuth } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
+  const called = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // Strict Mode에서 두 번 실행되는 것을 방지
+    if (called.current) return;
+    called.current = true;
+
     const handleCallback = async () => {
       try {
         const code = searchParams.get("code");
@@ -24,13 +30,9 @@ function CallbackContent() {
         }
 
         // 백엔드에 code + state 전달 → accessToken 수신
-        const res = await fetch(authUrls.dgCallback(code, state));
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.message ?? "로그인에 실패했습니다.");
-        }
-
-        const { accessToken } = (await res.json()) as OAuthSignInType;
+        const { accessToken } = await get<OAuthSignInType>(
+          authUrls.dgCallback(code, state),
+        );
 
         // 토큰을 sessionStorage에 먼저 저장 (axios 인터셉터가 읽을 수 있게)
         sessionStorage.setItem("accessToken", accessToken);
@@ -48,13 +50,16 @@ function CallbackContent() {
             ? err.message
             : "알 수 없는 오류가 발생했습니다.";
         setError(message);
-        setTimeout(() => router.replace("/"), 3000);
+        timerRef.current = setTimeout(() => router.replace("/"), 3000);
       }
     };
 
     handleCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [searchParams, setAuth, router]);
 
   if (error) {
     return (

@@ -1,13 +1,14 @@
 "use client";
 
 import useAuthStore from "@/stores/authStore";
+import { authUrls } from "@/shared/api/apiUrls";
 
 export default function HeaderAuth() {
   const { isLoggedIn, clearAuth } = useAuthStore();
 
   const handleLogin = () => {
     const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
-    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/dg/start?redirectUri=${encodeURIComponent(redirectUri)}`;
+    window.location.href = authUrls.dgStart(redirectUri);
   };
 
   const handleLogout = () => {
