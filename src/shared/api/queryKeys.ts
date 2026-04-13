@@ -4,3 +4,8 @@ export const authQueryKeys = {
   getUserInfo: () => [...authQueryKeys.all, "getUserInfo"] as const,
   postSignIn: () => [...authQueryKeys.all, "postSignIn"] as const,
 };
+
+export const lectureQueryKeys = {
+  all: ["lectures"] as const,
+  getAll: () => [...lectureQueryKeys.all, "list"] as const,
+};
