@@ -76,7 +76,7 @@ function LectureItem({
                 : `${lecture.enrolledCount}명`}
             </span>
           </div>
-          <span className="text-gray-300">|</span>
+          <span className="text-gray-500">|</span>
           <span className="text-xs text-gray-500">
             {STATUS_LABEL[lecture.lectureStatus]}
           </span>
@@ -148,8 +148,16 @@ export default function MyPage() {
 
         <div className="grid grid-cols-2 gap-3">
           <InfoField icon={<Person />} label="이름" value={user.name} />
-          <InfoField icon={<HashTag />} label="학번" value={user.studentNumber} />
-          <InfoField icon={<Building />} label="학과" value={user.major ?? "-"} />
+          <InfoField
+            icon={<HashTag />}
+            label="학번"
+            value={user.studentNumber}
+          />
+          <InfoField
+            icon={<Building />}
+            label="학과"
+            value={user.major ?? "-"}
+          />
           <InfoField icon={<Mail />} label="이메일" value={user.email} />
         </div>
 
