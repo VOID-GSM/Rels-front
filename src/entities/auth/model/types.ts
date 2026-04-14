@@ -41,11 +41,12 @@ export interface StudentType {
   isLeaveSchool: boolean;
 }
 
-// 사용자 정보 타입 (학생이 아닌 경우 student는 null)
+// 사용자 정보 타입 (백엔드 /api/auth/me 응답 기준)
 export interface UserInfoType {
-  id: number;
+  userId: number;
   email: string;
+  name: string;
   role: AccountRoleType;
-  isStudent: boolean;
-  student: StudentType | null;
+  studentNumber: string;
+  major?: string;
 }
