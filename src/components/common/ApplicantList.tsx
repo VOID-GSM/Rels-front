@@ -46,25 +46,31 @@ export default function ApplicantList({
         </span>
       </div>
 
-      <div className="flex flex-col gap-2 overflow-y-auto max-h-[320px] scrollbar-hide">
-        {applicants.map((applicant, index) => (
-          <div
-            key={applicant.id}
-            className="flex items-center gap-4 bg-main-100 px-4 py-2 rounded-[4px]"
-          >
-            <span className="text-sm text-gray-500 w-4">{index + 1}</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-gray-900">
-                {applicant.name}
-              </span>
-              <span className="text-xs text-gray-500">
-                {applicant.grade}학년 {applicant.classNum}반 {applicant.number}
-                번
-              </span>
+      {applicants.length === 0 ? (
+        <p className="text-xs text-gray-400 text-center py-4">
+          {type === "waiting" ? "정원 미달시 비활성화" : "신청자가 없습니다."}
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2 overflow-y-auto max-h-[320px] scrollbar-hide">
+          {applicants.map((applicant, index) => (
+            <div
+              key={applicant.id}
+              className="flex items-center gap-4 bg-main-100 px-4 py-2 rounded-[4px]"
+            >
+              <span className="text-sm text-gray-500 w-4">{index + 1}</span>
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-gray-900">
+                  {applicant.name}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {applicant.grade}학년 {applicant.classNum}반 {applicant.number}
+                  번
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
