@@ -8,6 +8,7 @@ export interface LectureType {
   creatorName: string;
   lectureStatus: LectureStatusType;
   enrolledCount: number;
+  maxCount: number | null;
   waitingCount: number;
   lectureLocation: string | null;
   lectureDate: string | null;
