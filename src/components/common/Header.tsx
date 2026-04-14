@@ -8,18 +8,20 @@ import { useGetUserInfo } from "@/entities/auth";
 import HeaderAuth from "./HeaderAuth";
 
 export default function Header() {
-  const { isLoggedIn, user, setAuth, initFromSession } = useAuthStore();
+  const { isLoggedIn, user, setUser, initFromSession } = useAuthStore();
   const { data: fetchedUser } = useGetUserInfo();
 
-  // 새로고침 후 sessionStorage 토큰 복원 + 유저 정보 주입
+  // 새로고침 후 sessionStorage 토큰 복원
   useEffect(() => {
-    const token = initFromSession();
-    if (token && fetchedUser) {
-      setAuth(token, fetchedUser);
-    }
-  }, [fetchedUser, initFromSession, setAuth]);
+    initFromSession();
+  }, [initFromSession]);
 
-  const isCouncil = user?.student?.role === "STUDENT_COUNCIL";
+  // isLoggedIn 복원 후 useGetUserInfo가 자동 호출되면 user 상태에 반영
+  useEffect(() => {
+    if (fetchedUser) setUser(fetchedUser);
+  }, [fetchedUser, setUser]);
+
+  const isCouncil = user?.role === "ADMIN";
 
   return (
     <header className="max-w-[1920px] h-[70px] border-b border-main-300 flex items-center justify-between px-50">
