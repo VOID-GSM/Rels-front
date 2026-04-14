@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
 import { useGetLectures } from "@/entities/lecture";
+import type { LectureStatusType } from "@/entities/lecture";
 import CouncilBadge from "@/components/common/CouncilBadge";
 import Arrow from "@/assets/svg/Arrow";
 import Person from "@/assets/svg/Person";
@@ -11,6 +12,22 @@ import HashTag from "@/assets/svg/HashTag";
 import Mail from "@/assets/svg/Mail";
 import Building from "@/assets/svg/Building";
 import Logout from "@/assets/svg/Logout";
+import People from "@/assets/svg/People";
+
+const STATUS_LABEL: Record<LectureStatusType, string> = {
+  OPEN: "개설 확정",
+  PENDING: "개설 미정",
+  CLOSED: "강연 종료",
+};
+
+type LectureItem = {
+  lectureId: number;
+  title: string;
+  enrolledCount: number;
+  maxCount?: number;
+  lectureStatus: LectureStatusType;
+  creatorId: number;
+};
 
 function InfoField({
   icon,
@@ -22,13 +39,56 @@ function InfoField({
   value: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 bg-main-50 rounded-xl p-4">
-      <span className="text-xs text-gray-400">{label}</span>
+    <div className="flex flex-col gap-1.5 bg-background rounded-xl p-3">
+      <span className="text-xs text-gray-600">{label}</span>
       <div className="flex items-center gap-2">
         {icon}
-        <span className="text-sm font-medium text-gray-500">{value}</span>
+        <span className="text-sm font-medium">{value}</span>
       </div>
     </div>
+  );
+}
+
+function LectureItem({
+  lecture,
+  onAction,
+  actionLabel,
+}: {
+  lecture: LectureItem;
+  onAction: (id: number) => void;
+  actionLabel: string;
+}) {
+  return (
+    <li className="flex items-center justify-between bg-background rounded-xl px-4 py-3 gap-3">
+      <Link
+        href={`/lectures/${lecture.lectureId}`}
+        className="flex flex-col gap-1.5 flex-1 min-w-0"
+      >
+        <span className="text-sm font-medium text-gray-800 line-clamp-1">
+          {lecture.title}
+        </span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <People />
+            <span>
+              {lecture.maxCount
+                ? `${lecture.enrolledCount}/${lecture.maxCount}명`
+                : `${lecture.enrolledCount}명`}
+            </span>
+          </div>
+          <span className="text-gray-300">|</span>
+          <span className="text-xs text-gray-500">
+            {STATUS_LABEL[lecture.lectureStatus]}
+          </span>
+        </div>
+      </Link>
+      <button
+        onClick={() => onAction(lecture.lectureId)}
+        className="shrink-0 text-xs text-error hover:underline"
+      >
+        {actionLabel}
+      </button>
+    </li>
   );
 }
 
@@ -50,28 +110,42 @@ export default function MyPage() {
     );
   }
 
-  const myCreatedLectures = lectures.filter((l) => l.creatorId === user.userId);
-  // 신청한 강연 API가 추가되면 연결
-  const myEnrolledLectures: typeof lectures = [];
+  const myCreatedLectures: LectureItem[] = lectures.filter(
+    (l) => l.creatorId === user.userId,
+  );
+
+  // 신청한 강연 API 연결 예정
+  const myEnrolledLectures: LectureItem[] = [];
+
+  const handleDelete = (id: number) => {
+    // 강연 삭제 API 연결 예정
+    console.log("강연 삭제:", id);
+  };
+
+  const handleCancelEnroll = (id: number) => {
+    // 강연 신청 취소 API 연결 예정
+    console.log("강연 신청 취소:", id);
+  };
 
   return (
     <main className="max-w-[800px] mx-auto px-6 py-10 flex flex-col gap-6">
       {/* 뒤로 */}
-      <Link href="/" className="flex items-center gap-1 text-sm text-gray-500 w-fit">
+      <Link
+        href="/"
+        className="flex items-center gap-1 text-sm text-gray-500 w-fit"
+      >
         <Arrow />
         뒤로
       </Link>
 
       {/* 내 정보 카드 */}
       <div className="border border-main-200 rounded-2xl p-6 flex flex-col gap-5">
-        {/* 헤더 */}
         <div className="flex items-center gap-3">
-          <Person />
-          <span className="font-semibold text-gray-800">내 정보</span>
+          <Person width={20} height={20} />
+          <span className="font-semibold text-xl">내 정보</span>
           {user.role === "ADMIN" && <CouncilBadge />}
         </div>
 
-        {/* 정보 그리드 — 2열 */}
         <div className="grid grid-cols-2 gap-3">
           <InfoField icon={<Person />} label="이름" value={user.name} />
           <InfoField icon={<HashTag />} label="학번" value={user.studentNumber} />
@@ -79,7 +153,6 @@ export default function MyPage() {
           <InfoField icon={<Mail />} label="이메일" value={user.email} />
         </div>
 
-        {/* 로그아웃 버튼 */}
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 border border-error text-error rounded-xl py-3 text-sm font-medium hover:bg-error/5 transition-colors"
@@ -93,7 +166,7 @@ export default function MyPage() {
       <div className="grid grid-cols-2 gap-4">
         {/* 내가 생성한 강연 */}
         <div className="border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
-          <span className="font-semibold text-gray-800 text-sm">
+          <span className="font-semibold text-base">
             내가 생성한 강연 ({myCreatedLectures.length})
           </span>
           {myCreatedLectures.length === 0 ? (
@@ -103,21 +176,12 @@ export default function MyPage() {
           ) : (
             <ul className="flex flex-col gap-2">
               {myCreatedLectures.map((lecture) => (
-                <li key={lecture.lectureId}>
-                  <Link
-                    href={`/lectures/${lecture.lectureId}`}
-                    className="flex items-center justify-between bg-main-50 rounded-xl px-4 py-3 hover:bg-main-100 transition-colors"
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-medium text-gray-800 line-clamp-1">
-                        {lecture.title}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {lecture.enrolledCount}명 신청
-                      </span>
-                    </div>
-                  </Link>
-                </li>
+                <LectureItem
+                  key={lecture.lectureId}
+                  lecture={lecture}
+                  onAction={handleDelete}
+                  actionLabel="삭제"
+                />
               ))}
             </ul>
           )}
@@ -125,7 +189,7 @@ export default function MyPage() {
 
         {/* 내가 신청한 강연 */}
         <div className="border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
-          <span className="font-semibold text-gray-800 text-sm">
+          <span className="font-semibold text-base">
             내가 신청한 강연 ({myEnrolledLectures.length})
           </span>
           {myEnrolledLectures.length === 0 ? (
@@ -135,16 +199,12 @@ export default function MyPage() {
           ) : (
             <ul className="flex flex-col gap-2">
               {myEnrolledLectures.map((lecture) => (
-                <li key={lecture.lectureId}>
-                  <Link
-                    href={`/lectures/${lecture.lectureId}`}
-                    className="flex items-center justify-between bg-main-50 rounded-xl px-4 py-3 hover:bg-main-100 transition-colors"
-                  >
-                    <span className="text-sm font-medium text-gray-800 line-clamp-1">
-                      {lecture.title}
-                    </span>
-                  </Link>
-                </li>
+                <LectureItem
+                  key={lecture.lectureId}
+                  lecture={lecture}
+                  onAction={handleCancelEnroll}
+                  actionLabel="취소"
+                />
               ))}
             </ul>
           )}
