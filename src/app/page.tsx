@@ -57,7 +57,7 @@ export default function Home() {
   const { data: lectures = [], isLoading } = useGetLectures();
 
   const myLectures = lectures.filter(
-    (l) => isLoggedIn && user && l.creatorId === user.id,
+    (l) => isLoggedIn && user && l.creatorId === user.userId,
   );
   const allLectures = lectures;
 
