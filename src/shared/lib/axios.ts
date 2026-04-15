@@ -1,4 +1,5 @@
 import axios from "axios";
+import useAuthStore from "@/stores/authStore";
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
@@ -22,7 +23,7 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      sessionStorage.removeItem("accessToken");
+      useAuthStore.getState().clearAuth();
       window.location.href = "/";
     }
     return Promise.reject(error);
