@@ -1,8 +1,14 @@
-export default function Person() {
+export default function Person({
+  width = 16,
+  height = 16,
+}: {
+  width?: number;
+  height?: number;
+}) {
   return (
     <svg
-      width="16"
-      height="16"
+      width={width}
+      height={height}
       viewBox="0 0 16 16"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

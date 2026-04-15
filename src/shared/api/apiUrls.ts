@@ -5,6 +5,11 @@ export const authUrl = {
   getUserInfo: () => "/api/auth/me",
 } as const;
 
+export const lectureUrl = {
+  getAll: () => "/api/lectures",
+  delete: (id: number) => `/api/lectures/${id}`,
+} as const;
+
 // 직접 fetch가 필요한 경우를 위한 전체 URL
 export const authUrls = {
   dgStart: (redirectUri: string) =>
