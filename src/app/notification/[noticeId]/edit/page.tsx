@@ -1,33 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Arrow from "@/assets/svg/Arrow";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import { useGetNotice, useUpdateNotice } from "@/entities/notice";
+import type { NoticeType } from "@/entities/notice";
 
-export default function NoticeEditPage() {
-  const params = useParams();
+function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }) {
   const router = useRouter();
-  const noticeId = Number(params.noticeId);
-
-  const { data: notice, isLoading } = useGetNotice(noticeId);
   const { mutate: updateNotice, isPending } = useUpdateNotice(noticeId, {
     onSuccess: () => router.push("/notification"),
   });
 
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [title, setTitle] = useState(notice.title);
+  const [content, setContent] = useState(notice.content);
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
-
-  useEffect(() => {
-    if (notice) {
-      setTitle(notice.title);
-      setContent(notice.content);
-    }
-  }, [notice]);
 
   const validate = () => {
     const next: typeof errors = {};
@@ -41,14 +31,6 @@ export default function NoticeEditPage() {
     if (!validate()) return;
     updateNotice({ title: title.trim(), content: content.trim() });
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
-        <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <main className="max-w-[600px] mx-auto px-6 py-10 flex flex-col gap-6">
@@ -103,4 +85,20 @@ export default function NoticeEditPage() {
       </div>
     </main>
   );
+}
+
+export default function NoticeEditPage() {
+  const params = useParams();
+  const noticeId = Number(params.noticeId);
+  const { data: notice, isLoading } = useGetNotice(noticeId);
+
+  if (isLoading || !notice) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
+        <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return <EditForm notice={notice} noticeId={noticeId} />;
 }
