@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Arrow from "@/assets/svg/Arrow";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
+import useAuthStore from "@/stores/authStore";
 import { useGetNotice, useUpdateNotice } from "@/entities/notice";
 import type { NoticeType } from "@/entities/notice";
 
@@ -89,8 +90,20 @@ function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }
 
 export default function NoticeEditPage() {
   const params = useParams();
+  const router = useRouter();
   const noticeId = Number(params.noticeId);
   const { data: notice, isLoading } = useGetNotice(noticeId);
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (notice && user) {
+      const isAuthor = user.userId === notice.authorId;
+      const isAdmin = user.role === "ADMIN";
+      if (!isAuthor && !isAdmin) {
+        router.replace("/notification");
+      }
+    }
+  }, [notice, user, router]);
 
   if (isLoading || !notice) {
     return (
