@@ -173,9 +173,8 @@ export default function MyPage() {
     });
   };
 
-  const handleCancelEnroll = (id: number) => {
+  const handleCancelEnroll = () => {
     // 강연 신청 취소 API 연결 예정
-    console.log("강연 신청 취소:", id);
   };
 
   return (
