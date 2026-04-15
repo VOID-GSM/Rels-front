@@ -10,6 +10,14 @@ export const lectureUrl = {
   delete: (id: number) => `/api/lectures/${id}`,
 } as const;
 
+export const noticeUrl = {
+  getAll: () => "/api/notices",
+  getOne: (id: number) => `/api/notices/${id}`,
+  create: () => "/api/notices",
+  update: (id: number) => `/api/notices/${id}`,
+  delete: (id: number) => `/api/notices/${id}`,
+} as const;
+
 // 직접 fetch가 필요한 경우를 위한 전체 URL
 export const authUrls = {
   dgStart: (redirectUri: string) =>
