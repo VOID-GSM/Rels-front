@@ -13,5 +13,7 @@ export const useGetLecture = (id: number) => {
     queryKey: lectureQueryKeys.getOne(id),
     queryFn: () => getLecture(id),
     enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 };
