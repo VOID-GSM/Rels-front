@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
-import { useGetLectures } from "@/entities/lecture";
+import { useGetLectures, useDeleteLecture } from "@/entities/lecture";
 import type { LectureStatusType } from "@/entities/lecture";
 import CouncilBadge from "@/components/common/CouncilBadge";
 import Arrow from "@/assets/svg/Arrow";
@@ -24,7 +24,7 @@ type LectureItem = {
   lectureId: number;
   title: string;
   enrolledCount: number;
-  maxCount?: number;
+  capacity?: number | null;
   lectureStatus: LectureStatusType;
   creatorId: number;
 };
@@ -71,8 +71,8 @@ function LectureItem({
           <div className="flex items-center gap-1 text-xs text-gray-500">
             <People />
             <span>
-              {lecture.maxCount
-                ? `${lecture.enrolledCount}/${lecture.maxCount}명`
+              {lecture.capacity
+                ? `${lecture.enrolledCount}/${lecture.capacity}명`
                 : `${lecture.enrolledCount}명`}
             </span>
           </div>
@@ -96,6 +96,7 @@ export default function MyPage() {
   const { user, clearAuth } = useAuthStore();
   const router = useRouter();
   const { data: lectures = [] } = useGetLectures();
+  const { mutate: deleteLecture } = useDeleteLecture();
 
   const handleLogout = () => {
     clearAuth();
@@ -118,8 +119,7 @@ export default function MyPage() {
   const myEnrolledLectures: LectureItem[] = [];
 
   const handleDelete = (id: number) => {
-    // 강연 삭제 API 연결 예정
-    console.log("강연 삭제:", id);
+    deleteLecture(id);
   };
 
   const handleCancelEnroll = (id: number) => {
