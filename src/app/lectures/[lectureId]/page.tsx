@@ -17,17 +17,11 @@ import useAuthStore from "@/stores/authStore";
 import {
   useGetLecture,
   useUpdateLecture,
-  type LectureStatusType,
+  useEnrollLecture,
+  useCancelEnrollment,
+  useGetEnrollments,
 } from "@/entities/lecture";
 
-const STATUS_TO_BADGE: Record<
-  LectureStatusType,
-  "confirmed" | "pending" | "closed"
-> = {
-  OPEN: "confirmed",
-  PENDING: "pending",
-  CLOSED: "closed",
-};
 
 export default function LectureDetailPage() {
   const params = useParams();
@@ -35,12 +29,35 @@ export default function LectureDetailPage() {
   const { user } = useAuthStore();
 
   const { data: lecture, isLoading } = useGetLecture(lectureId);
+  const { data: enrollments } = useGetEnrollments(lectureId);
   const { mutate: updateLecture, isPending: isUpdating } =
     useUpdateLecture(lectureId);
+  const [enrollResult, setEnrollResult] = useState<
+    "ENROLLED" | "WAITING" | "ERROR" | null
+  >(null);
 
+  const { mutate: enrollLecture, isPending: isEnrolling } = useEnrollLecture(
+    lectureId,
+    {
+      onSuccess: (data) => setEnrollResult(data.enrollmentStatus),
+      onError: () => setEnrollResult("ERROR"),
+    },
+  );
+  const { mutate: cancelEnrollment, isPending: isCancelling } =
+    useCancelEnrollment(lectureId, {
+      onSuccess: () => setEnrollResult(null),
+    });
+
+  const enrollStatus: "ENROLLED" | "WAITING" | null = (() => {
+    if (enrollResult === "ENROLLED" || enrollResult === "WAITING") return enrollResult;
+    if (enrollResult === "ERROR") return null;
+    if (!enrollments || !user) return null;
+    if (enrollments.enrolledApplicants.some((a) => a.userId === user.userId)) return "ENROLLED";
+    if (enrollments.waitingApplicants.some((a) => a.userId === user.userId)) return "WAITING";
+    return null;
+  })();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState({
-    maxCount: "",
     lectureLocation: "",
     lectureDate: "",
     lectureTime: "",
@@ -61,12 +78,24 @@ export default function LectureDetailPage() {
   const showPencil = isCreator || isAdmin;
   const showSettings = isAdmin;
 
-  const isFull =
-    lecture.maxCount !== null && lecture.enrolledCount >= lecture.maxCount;
+  const totalCapacity =
+    lecture.gradeCapacities["1"] +
+    lecture.gradeCapacities["2"] +
+    lecture.gradeCapacities["3"];
+
+  const isFull = lecture.enrolledCount >= totalCapacity;
+
+  const STATUS_TO_BADGE = {
+    OPEN: "open",
+    CONFIRMED: "confirmed",
+    FAILED: "failed",
+    CLOSED: "closed",
+  } as const;
+
+  const badgeVariant = STATUS_TO_BADGE[lecture.lectureStatus];
 
   const handleOpenSettings = () => {
     setSettingsForm({
-      maxCount: lecture.maxCount !== null ? String(lecture.maxCount) : "",
       lectureLocation: lecture.lectureLocation ?? "",
       lectureDate: lecture.lectureDate ?? "",
       lectureTime: lecture.lectureTime ?? "",
@@ -77,9 +106,6 @@ export default function LectureDetailPage() {
   const handleSaveSettings = () => {
     setIsSettingsOpen(false);
     updateLecture({
-      maxCount: settingsForm.maxCount
-        ? Number(settingsForm.maxCount)
-        : undefined,
       lectureLocation: settingsForm.lectureLocation || undefined,
       lectureDate: settingsForm.lectureDate || undefined,
       lectureTime: settingsForm.lectureTime || undefined,
@@ -87,8 +113,7 @@ export default function LectureDetailPage() {
   };
 
   const handleEnroll = () => {
-    // 강연 신청 API 연결 예정
-    console.log(isFull ? "대기 신청:" : "신청:", lectureId);
+    enrollLecture();
   };
 
   return (
@@ -106,7 +131,7 @@ export default function LectureDetailPage() {
         <div className="border border-main-200 rounded-2xl p-6 flex flex-col gap-4">
           {/* 상단: 뱃지 + 아이콘 */}
           <div className="flex items-center justify-between">
-            <Badge variant={STATUS_TO_BADGE[lecture.lectureStatus]} />
+            <Badge variant={badgeVariant} />
             <div className="flex items-center gap-2">
               {showPencil && (
                 <Link
@@ -139,13 +164,18 @@ export default function LectureDetailPage() {
           </p>
 
           {/* 인원 정보 */}
-          <div className="flex items-center gap-1 text-sm text-gray-500">
-            <People />
-            <span>
-              {lecture.maxCount
-                ? `${lecture.enrolledCount}/${lecture.maxCount}명`
-                : `${lecture.enrolledCount}명`}
-            </span>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1 text-sm text-gray-500">
+              <People />
+              <span>전체 {lecture.enrolledCount}/{totalCapacity}명</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-gray-400 pl-5">
+              {(["1", "2", "3"] as const).map((grade) => (
+                <span key={grade}>
+                  {grade}학년 최대 {lecture.gradeCapacities[grade]}명
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* 강연 정보 (장소/날짜/시간) */}
@@ -185,14 +215,38 @@ export default function LectureDetailPage() {
             <Button disabled className="py-3 mt-2">
               강연 종료
             </Button>
+          ) : enrollStatus === "ENROLLED" ? (
+            <Button
+              variant="cancel"
+              onClick={() => cancelEnrollment()}
+              disabled={isCancelling}
+              className="py-3 mt-2"
+            >
+              {isCancelling ? "취소 중..." : "신청 취소"}
+            </Button>
+          ) : enrollStatus === "WAITING" ? (
+            <Button
+              variant="cancel"
+              onClick={() => cancelEnrollment()}
+              disabled={isCancelling}
+              className="py-3 mt-2"
+            >
+              {isCancelling ? "취소 중..." : "대기 취소"}
+            </Button>
           ) : (
             <Button
               variant={isFull ? "waiting" : "primary"}
               onClick={handleEnroll}
+              disabled={isEnrolling}
               className="py-3 mt-2"
             >
-              {isFull ? "대기 신청" : "신청하기"}
+              {isEnrolling ? "신청 중..." : isFull ? "대기 신청" : "신청하기"}
             </Button>
+          )}
+          {enrollResult === "ERROR" && (
+            <p className="text-sm text-center text-red-500 font-medium">
+              신청에 실패했습니다. 다시 시도해주세요.
+            </p>
           )}
         </div>
 
@@ -201,15 +255,13 @@ export default function LectureDetailPage() {
           <ApplicantList
             type="applicant"
             currentCount={lecture.enrolledCount}
-            maxCount={lecture.maxCount ?? 0}
-            applicants={[]}
-            // 신청자 목록 API 연결 예정
+            maxCount={lecture.capacity ?? 0}
+            applicants={enrollments?.enrolledApplicants ?? []}
           />
           <ApplicantList
             type="waiting"
             waitingCount={lecture.waitingCount}
-            applicants={[]}
-            // 대기자 목록 API 연결 예정
+            applicants={enrollments?.waitingApplicants ?? []}
           />
         </div>
       </main>
@@ -240,26 +292,6 @@ export default function LectureDetailPage() {
             </div>
 
             <div className="flex flex-col gap-4">
-              {/* 최대 인원 */}
-              <div className="flex flex-col gap-1">
-                <Input
-                  label="최대 인원"
-                  type="number"
-                  min={1}
-                  value={settingsForm.maxCount}
-                  onChange={(e) =>
-                    setSettingsForm((prev) => ({
-                      ...prev,
-                      maxCount: e.target.value,
-                    }))
-                  }
-                />
-                <p className="text-xs text-gray-400">
-                  현재: {lecture.enrolledCount}명 신청 / {lecture.waitingCount}
-                  명 대기
-                </p>
-              </div>
-
               <Input
                 label="강연 장소"
                 placeholder="예: 공학관 301호"
