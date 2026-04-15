@@ -7,7 +7,7 @@ interface LectureCardProps {
   id: string;
   title: string;
   speaker: string;
-  status: "confirmed" | "unconfirmed" | "pending" | "closed";
+  status: "open" | "confirmed" | "failed" | "closed";
   currentCount: number;
   maxCount?: number;
   waitingCount?: number;
