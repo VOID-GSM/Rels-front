@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Arrow from "@/assets/svg/Arrow";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
+import useAuthStore from "@/stores/authStore";
 import { useCreateNotice } from "@/entities/notice";
 
 export default function NoticeWritePage() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
@@ -18,6 +20,12 @@ export default function NoticeWritePage() {
   const { mutate: createNotice, isPending } = useCreateNotice({
     onSuccess: () => router.push("/notification"),
   });
+
+  useEffect(() => {
+    if (!user || user.role !== "ADMIN") {
+      router.replace("/notification");
+    }
+  }, [user, router]);
 
   const validate = () => {
     const next: typeof errors = {};
@@ -94,7 +102,7 @@ export default function NoticeWritePage() {
       {isConfirmOpen && (
         <div
           className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-          onClick={() => setIsConfirmOpen(false)}
+          onClick={() => !isPending && setIsConfirmOpen(false)}
         >
           <div
             className="bg-white rounded-2xl p-6 w-full max-w-[400px] mx-4 flex flex-col gap-5"
