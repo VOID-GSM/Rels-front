@@ -118,6 +118,7 @@ export default function MyPage() {
   const myEnrolledLectures: LectureItem[] = [];
 
   const handleDelete = (id: number) => {
+    if (!confirm("정말로 이 강연을 삭제하시겠습니까?")) return;
     deleteLecture(id);
   };
 
@@ -145,7 +146,7 @@ export default function MyPage() {
           {user.role === "ADMIN" && <CouncilBadge />}
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-col sm:flex-row gap-3">
           <InfoField icon={<Person />} label="이름" value={user.name} />
           <InfoField icon={<HashTag />} label="학번" value={user.studentNumber} />
           <InfoField icon={<Mail />} label="이메일" value={user.email} />
@@ -161,7 +162,7 @@ export default function MyPage() {
       </div>
 
       {/* 강연 섹션 — 2열 */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* 내가 생성한 강연 */}
         <div className="border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
           <span className="font-semibold text-base">
