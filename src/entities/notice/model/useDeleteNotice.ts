@@ -7,7 +7,7 @@ const deleteNotice = (id: number): Promise<void> => {
   return del<void>(noticeUrl.delete(id));
 };
 
-export const useDeleteNotice = (options?: { onSuccess?: () => void }) => {
+export const useDeleteNotice = (options?: { onSuccess?: () => void; onError?: () => void }) => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -15,6 +15,9 @@ export const useDeleteNotice = (options?: { onSuccess?: () => void }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: noticeQueryKeys.getAll() });
       options?.onSuccess?.();
+    },
+    onError: () => {
+      options?.onError?.();
     },
   });
 };
