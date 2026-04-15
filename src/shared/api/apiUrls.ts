@@ -7,6 +7,7 @@ export const authUrl = {
 
 export const lectureUrl = {
   getAll: () => "/api/lectures",
+  delete: (id: number) => `/api/lectures/${id}`,
 } as const;
 
 // 직접 fetch가 필요한 경우를 위한 전체 URL
