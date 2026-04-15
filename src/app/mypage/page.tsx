@@ -10,7 +10,6 @@ import Arrow from "@/assets/svg/Arrow";
 import Person from "@/assets/svg/Person";
 import HashTag from "@/assets/svg/HashTag";
 import Mail from "@/assets/svg/Mail";
-import Building from "@/assets/svg/Building";
 import Logout from "@/assets/svg/Logout";
 import People from "@/assets/svg/People";
 
@@ -39,7 +38,7 @@ function InfoField({
   value: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 bg-background rounded-xl p-3">
+    <div className="flex-1 flex flex-col gap-1.5 bg-background rounded-xl p-3">
       <span className="text-xs text-gray-600">{label}</span>
       <div className="flex items-center gap-2">
         {icon}
@@ -146,18 +145,9 @@ export default function MyPage() {
           {user.role === "ADMIN" && <CouncilBadge />}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex gap-3">
           <InfoField icon={<Person />} label="이름" value={user.name} />
-          <InfoField
-            icon={<HashTag />}
-            label="학번"
-            value={user.studentNumber}
-          />
-          <InfoField
-            icon={<Building />}
-            label="학과"
-            value={user.major ?? "-"}
-          />
+          <InfoField icon={<HashTag />} label="학번" value={user.studentNumber} />
           <InfoField icon={<Mail />} label="이메일" value={user.email} />
         </div>
 
