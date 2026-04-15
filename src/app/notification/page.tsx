@@ -59,18 +59,18 @@ function DeleteConfirmModal({
 export default function NotificationPage() {
   const { user } = useAuthStore();
   const { data, isLoading } = useGetNotices();
-  const { mutate: deleteNotice, isPending: isDeleting } = useDeleteNotice();
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const { mutate: deleteNotice, isPending: isDeleting } = useDeleteNotice({
+    onSuccess: () => setDeleteTargetId(null),
+    onError: () => setDeleteTargetId(null),
+  });
 
   const notices = data?.content ?? [];
   const isAdmin = user?.role === "ADMIN";
 
   const handleConfirmDelete = () => {
     if (deleteTargetId === null) return;
-    deleteNotice(deleteTargetId, {
-      onSuccess: () => setDeleteTargetId(null),
-      onError: () => setDeleteTargetId(null),
-    });
+    deleteNotice(deleteTargetId);
   };
 
   return (
@@ -102,7 +102,7 @@ export default function NotificationPage() {
         ) : (
           <div className="flex flex-col gap-4">
             {notices.map((notice) => {
-              const isAuthor = user?.userId === notice.authorId;
+              const canEdit = user?.userId === notice.authorId || isAdmin;
               return (
                 <div
                   key={notice.id}
@@ -113,7 +113,7 @@ export default function NotificationPage() {
                       <h2 className="text-base font-bold text-gray-900">{notice.title}</h2>
                       <span className="text-xs text-gray-400">{formatDate(notice.createdAt)}</span>
                     </div>
-                    {isAuthor && (
+                    {canEdit && (
                       <div className="flex items-center gap-2 shrink-0">
                         <Link
                           href={`/notification/${notice.id}/edit`}
