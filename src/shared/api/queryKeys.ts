@@ -9,4 +9,5 @@ export const lectureQueryKeys = {
   all: ["lectures"] as const,
   getAll: () => [...lectureQueryKeys.all, "list"] as const,
   getOne: (id: number) => [...lectureQueryKeys.all, id] as const,
+  getEnrollments: (id: number) => [...lectureQueryKeys.all, id, "enrollments"] as const,
 };
