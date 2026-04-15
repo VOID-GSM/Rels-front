@@ -14,5 +14,6 @@ export const useGetLectures = () => {
     queryKey: lectureQueryKeys.getAll(),
     queryFn: getLectures,
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 };
