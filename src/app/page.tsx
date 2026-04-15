@@ -54,7 +54,7 @@ function LectureGrid({ lectures }: { lectures: LectureType[] }) {
 
 export default function Home() {
   const { user, isLoggedIn } = useAuthStore();
-  const { data: lectures = [], isLoading } = useGetLectures();
+  const { data: lectures = [], isLoading, isError } = useGetLectures();
 
   const myLectures = lectures.filter(
     (l) => isLoggedIn && user && l.creatorId === user.userId,
@@ -73,6 +73,10 @@ export default function Home() {
         <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
         </div>
+      ) : isError ? (
+        <p className="text-sm text-gray-400 py-20 text-center">
+          강연 목록을 불러올 수 없습니다.
+        </p>
       ) : (
         <>
           {/* 내가 생성한 강연 */}
