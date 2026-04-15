@@ -11,6 +11,9 @@ export const lectureUrl = {
   getOne: (id: number) => `/api/lectures/${id}`,
   update: (id: number) => `/api/lectures/${id}`,
   delete: (id: number) => `/api/lectures/${id}`,
+  enroll: (id: number) => `/api/lectures/${id}/enrollments`,
+  cancelEnrollment: (id: number) => `/api/lectures/${id}/enrollments`,
+  getEnrollments: (id: number) => `/api/lectures/${id}/enrollments`,
 } as const;
 
 // 직접 fetch가 필요한 경우를 위한 전체 URL
