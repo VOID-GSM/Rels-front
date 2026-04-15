@@ -14,12 +14,28 @@ export default function CreateLecturePage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [errors, setErrors] = useState<{ title?: string; description?: string }>({});
+  const [grade1, setGrade1] = useState("");
+  const [grade2, setGrade2] = useState("");
+  const [grade3, setGrade3] = useState("");
+  const [lectureLocation, setLectureLocation] = useState("");
+  const [lectureDate, setLectureDate] = useState("");
+  const [lectureTime, setLectureTime] = useState("");
+
+  const [errors, setErrors] = useState<{
+    title?: string;
+    description?: string;
+    grade1?: string;
+    grade2?: string;
+    grade3?: string;
+  }>({});
 
   const validate = () => {
     const next: typeof errors = {};
     if (!title.trim()) next.title = "강연 제목을 입력해주세요.";
     if (!description.trim()) next.description = "강연 내용을 입력해주세요.";
+    if (!grade1 || Number(grade1) < 1) next.grade1 = "1명 이상이어야 합니다.";
+    if (!grade2 || Number(grade2) < 1) next.grade2 = "1명 이상이어야 합니다.";
+    if (!grade3 || Number(grade3) < 1) next.grade3 = "1명 이상이어야 합니다.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -28,12 +44,19 @@ export default function CreateLecturePage() {
     if (!validate()) return;
 
     createLecture(
-      { title: title.trim(), description: description.trim() },
       {
-        onSuccess: () => {
-          router.push("/");
+        title: title.trim(),
+        description: description.trim(),
+        gradeCapacities: {
+          "1": Number(grade1),
+          "2": Number(grade2),
+          "3": Number(grade3),
         },
+        lectureLocation: lectureLocation.trim() || undefined,
+        lectureDate: lectureDate || undefined,
+        lectureTime: lectureTime || undefined,
       },
+      { onSuccess: () => router.push("/") },
     );
   };
 
@@ -57,7 +80,8 @@ export default function CreateLecturePage() {
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
-              if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
+              if (errors.title)
+                setErrors((prev) => ({ ...prev, title: undefined }));
             }}
             error={errors.title}
           />
@@ -84,9 +108,75 @@ export default function CreateLecturePage() {
             )}
           </div>
 
-          <p className="text-xs text-gray-400">
-            최대 인원, 장소, 일정은 생성 후 수정에서 설정할 수 있습니다.
-          </p>
+          {/* 학년별 최대 인원 */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">학년별 최대 인원</label>
+            <div className="grid grid-cols-3 gap-3">
+              <Input
+                label="1학년"
+                type="number"
+                min={1}
+                placeholder="인원"
+                value={grade1}
+                onChange={(e) => {
+                  setGrade1(e.target.value);
+                  if (errors.grade1)
+                    setErrors((prev) => ({ ...prev, grade1: undefined }));
+                }}
+                error={errors.grade1}
+              />
+              <Input
+                label="2학년"
+                type="number"
+                min={1}
+                placeholder="인원"
+                value={grade2}
+                onChange={(e) => {
+                  setGrade2(e.target.value);
+                  if (errors.grade2)
+                    setErrors((prev) => ({ ...prev, grade2: undefined }));
+                }}
+                error={errors.grade2}
+              />
+              <Input
+                label="3학년"
+                type="number"
+                min={1}
+                placeholder="인원"
+                value={grade3}
+                onChange={(e) => {
+                  setGrade3(e.target.value);
+                  if (errors.grade3)
+                    setErrors((prev) => ({ ...prev, grade3: undefined }));
+                }}
+                error={errors.grade3}
+              />
+            </div>
+          </div>
+
+          {/* 강연 장소 */}
+          <Input
+            label="강연 장소 (선택)"
+            placeholder="예: 공학관 301호"
+            value={lectureLocation}
+            onChange={(e) => setLectureLocation(e.target.value)}
+          />
+
+          {/* 날짜 / 시간 */}
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="날짜 (선택)"
+              type="date"
+              value={lectureDate}
+              onChange={(e) => setLectureDate(e.target.value)}
+            />
+            <Input
+              label="시간 (선택)"
+              type="time"
+              value={lectureTime}
+              onChange={(e) => setLectureTime(e.target.value)}
+            />
+          </div>
         </div>
 
         <Button
