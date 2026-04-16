@@ -24,8 +24,6 @@ export default function LectureDetailPage() {
   const lectureId = Number(params.lectureId);
   const { user } = useAuthStore();
 
-  if (isNaN(lectureId)) return notFound();
-
   const { data: lecture, isLoading } = useGetLecture(lectureId);
   const { data: enrollments } = useGetEnrollments(lectureId);
 
@@ -54,6 +52,8 @@ export default function LectureDetailPage() {
     if (enrollments.waitingApplicants.some((a) => a.userId === user.userId)) return "WAITING";
     return null;
   }, [enrollResult, enrollments, user]);
+
+  if (isNaN(lectureId)) return notFound();
 
   if (isLoading) {
     return (

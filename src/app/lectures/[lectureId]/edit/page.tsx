@@ -124,9 +124,9 @@ function EditForm({ lecture }: { lecture: LectureType }) {
 export default function EditLecturePage() {
   const params = useParams();
   const lectureId = Number(params.lectureId);
-  if (isNaN(lectureId)) return notFound();
-
   const { data: lecture, isLoading } = useGetLecture(lectureId);
+
+  if (isNaN(lectureId)) return notFound();
 
   if (isLoading || !lecture) {
     return (
