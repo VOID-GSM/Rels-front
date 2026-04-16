@@ -11,7 +11,7 @@ import { useCreateNotice } from "@/entities/notice";
 
 export default function NoticeWritePage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isLoggedIn } = useAuthStore();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
@@ -22,12 +22,17 @@ export default function NoticeWritePage() {
   });
 
   useEffect(() => {
-    if (!user || user.role !== "ADMIN") {
+    if (isLoggedIn && user && user.role !== "ADMIN") {
       router.replace("/notification");
     }
-  }, [user, router]);
+  }, [isLoggedIn, user, router]);
 
-  if (!user || user.role !== "ADMIN") return null;
+  if (!user) return (
+    <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
+      <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
+    </div>
+  );
+  if (user.role !== "ADMIN") return null;
 
   const validate = () => {
     const next: typeof errors = {};
