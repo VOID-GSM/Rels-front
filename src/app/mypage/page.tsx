@@ -16,8 +16,9 @@ import Logout from "@/assets/svg/Logout";
 import People from "@/assets/svg/People";
 
 const STATUS_LABEL: Record<LectureStatusType, string> = {
-  OPEN: "개설 확정",
-  PENDING: "개설 미정",
+  OPEN: "개설 미정",
+  CONFIRMED: "개설 확정",
+  FAILED: "개설 실패",
   CLOSED: "강연 종료",
 };
 
