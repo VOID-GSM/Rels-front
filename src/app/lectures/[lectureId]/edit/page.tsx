@@ -52,9 +52,9 @@ export default function EditLecturePage() {
     const next: typeof errors = {};
     if (!title.trim()) next.title = "강연 제목을 입력해주세요.";
     if (!description.trim()) next.description = "강연 내용을 입력해주세요.";
-    if (!grade1 || Number(grade1) < 1) next.grade1 = "1명 이상이어야 합니다.";
-    if (!grade2 || Number(grade2) < 1) next.grade2 = "1명 이상이어야 합니다.";
-    if (!grade3 || Number(grade3) < 1) next.grade3 = "1명 이상이어야 합니다.";
+    if (!grade1 || isNaN(Number(grade1)) || Number(grade1) < 1) next.grade1 = "1명 이상이어야 합니다.";
+    if (!grade2 || isNaN(Number(grade2)) || Number(grade2) < 1) next.grade2 = "1명 이상이어야 합니다.";
+    if (!grade3 || isNaN(Number(grade3)) || Number(grade3) < 1) next.grade3 = "1명 이상이어야 합니다.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
