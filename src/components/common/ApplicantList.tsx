@@ -58,8 +58,7 @@ export default function ApplicantList({
                 {applicant.name}
               </span>
               <span className="text-xs text-gray-500">
-                {applicant.grade}학년 {applicant.classNum}반 {applicant.number}
-                번
+                {applicant.grade}학년 {applicant.classNum}반 {applicant.number}번
               </span>
             </div>
           </div>
