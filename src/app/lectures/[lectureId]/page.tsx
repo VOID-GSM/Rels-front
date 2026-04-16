@@ -41,6 +41,7 @@ export default function LectureDetailPage() {
   const { mutate: cancelEnrollment, isPending: isCancelling } =
     useCancelEnrollment(lectureId, {
       onSuccess: () => setEnrollResult(null),
+      onError: () => setEnrollResult("ERROR"),
     });
 
   const enrollStatus: "ENROLLED" | "WAITING" | null = (() => {
