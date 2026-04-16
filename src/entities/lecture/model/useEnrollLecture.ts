@@ -40,6 +40,9 @@ export const useEnrollLecture = (
           };
         },
       );
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getEnrollments(lectureId),
+      });
       options?.onSuccess?.(data);
     },
     onError: (error: Error) => {
