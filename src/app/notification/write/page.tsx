@@ -27,6 +27,8 @@ export default function NoticeWritePage() {
     }
   }, [user, router]);
 
+  if (!user || user.role !== "ADMIN") return null;
+
   const validate = () => {
     const next: typeof errors = {};
     if (!title.trim()) next.title = "공지 제목을 입력해주세요.";
