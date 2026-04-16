@@ -7,7 +7,13 @@ export const authUrl = {
 
 export const lectureUrl = {
   getAll: () => "/api/lectures",
+  create: () => "/api/lectures",
+  getOne: (id: number) => `/api/lectures/${id}`,
+  update: (id: number) => `/api/lectures/${id}`,
   delete: (id: number) => `/api/lectures/${id}`,
+  enroll: (id: number) => `/api/lectures/${id}/enrollments`,
+  cancelEnrollment: (id: number) => `/api/lectures/${id}/enrollments`,
+  getEnrollments: (id: number) => `/api/lectures/${id}/enrollments`,
 } as const;
 
 export const noticeUrl = {

@@ -20,7 +20,7 @@ export default function Button({
   type = "button",
 }: ButtonProps) {
   const baseStyle =
-    "w-full rounded-xl font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
+    "w-full rounded-xl font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center";
 
   const variantStyle: Record<ButtonVariant, string> = {
     primary: "bg-main text-white",

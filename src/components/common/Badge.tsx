@@ -1,19 +1,19 @@
-type BadgeVariant = "confirmed" | "unconfirmed" | "pending" | "closed";
+type BadgeVariant = "open" | "confirmed" | "failed" | "closed";
 
 interface BadgeProps {
   variant: BadgeVariant;
 }
 
 const BADGE_CONFIG: Record<BadgeVariant, { label: string; style: string }> = {
+  open: {
+    label: "개설 미정",
+    style: "bg-main-100 text-gray-600",
+  },
   confirmed: {
     label: "개설 확정",
     style: "bg-main text-black",
   },
-  unconfirmed: {
-    label: "개설 미정",
-    style: "bg-main-100 text-gray-600",
-  },
-  pending: {
+  failed: {
     label: "개설 불확정",
     style: "bg-gray-200 text-gray-600",
   },
@@ -28,7 +28,7 @@ export default function Badge({ variant }: BadgeProps) {
 
   return (
     <span
-      className={`w-[70px] px-3 py-1 rounded-md text-xs font-medium ${style}`}
+      className={`inline-block w-[88px] text-center py-1 rounded-md text-xs font-medium ${style}`}
     >
       {label}
     </span>
