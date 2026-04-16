@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import Badge from "@/components/common/Badge";
@@ -44,14 +44,14 @@ export default function LectureDetailPage() {
       onError: () => setEnrollResult("ERROR"),
     });
 
-  const enrollStatus: "ENROLLED" | "WAITING" | null = (() => {
+  const enrollStatus = useMemo<"ENROLLED" | "WAITING" | null>(() => {
     if (enrollResult === "ENROLLED" || enrollResult === "WAITING") return enrollResult;
     if (enrollResult === "ERROR") return null;
     if (!enrollments || !user) return null;
     if (enrollments.enrolledApplicants.some((a) => a.userId === user.userId)) return "ENROLLED";
     if (enrollments.waitingApplicants.some((a) => a.userId === user.userId)) return "WAITING";
     return null;
-  })();
+  }, [enrollResult, enrollments, user]);
 
   if (isLoading) {
     return (
