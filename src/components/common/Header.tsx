@@ -31,7 +31,7 @@ export default function Header() {
       <div className="flex items-center gap-4">
         {isLoggedIn && isCouncil && (
           <Link href="/notification" className="font-medium">
-            공지 작성
+            공지사항
           </Link>
         )}
         {isLoggedIn && (

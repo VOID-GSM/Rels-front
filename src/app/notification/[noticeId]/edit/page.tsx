@@ -105,7 +105,7 @@ export default function NoticeEditPage() {
     }
   }, [notice, user, router]);
 
-  if (isLoading || !notice) {
+  if (isLoading || !notice || !user) {
     return (
       <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
         <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
