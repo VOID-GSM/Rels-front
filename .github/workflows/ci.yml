@@ -52,3 +52,4 @@ jobs:
           title: CI 실패
           description: "브랜치: `${{ github.ref_name }}` | ${{ github.event_name }}"
           color: 0xED4245
+

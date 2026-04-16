@@ -1,6 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import QueryProvider from "@/providers/QueryProvider";
+import Header from "@/components/common/Header";
+import NoticeBanner from "@/components/common/NoticeBanner";
 
 export const metadata: Metadata = {
   title: "Rels",
@@ -16,7 +18,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <Header />
+          <NoticeBanner />
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );
