@@ -1,3 +1,10 @@
-export type { LectureType, LectureStatusType } from "./model/types";
+export type { LectureType, LectureStatusType, GradeCapacities, EnrollmentApplicant, LectureEnrollmentsType } from "./model/types";
 export { useGetLectures } from "./model/useGetLectures";
+export { useGetLecture } from "./model/useGetLecture";
+export { useCreateLecture } from "./model/useCreateLecture";
+export { useUpdateLecture } from "./model/useUpdateLecture";
+export type { UpdateLectureData, UpdateLectureSettingsData } from "./model/useUpdateLecture";
 export { useDeleteLecture } from "./model/useDeleteLecture";
+export { useEnrollLecture } from "./model/useEnrollLecture";
+export { useCancelEnrollment } from "./model/useCancelEnrollment";
+export { useGetEnrollments } from "./model/useGetEnrollments";

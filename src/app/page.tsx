@@ -8,18 +8,20 @@ import CreateLectureButton from "@/components/common/CreateLectureButton";
 
 const STATUS_TO_BADGE: Record<
   LectureStatusType,
-  "confirmed" | "unconfirmed" | "pending" | "closed"
+  "open" | "confirmed" | "failed" | "closed"
 > = {
-  OPEN: "confirmed",
-  PENDING: "unconfirmed",
+  OPEN: "open",
+  CONFIRMED: "confirmed",
+  FAILED: "failed",
   CLOSED: "closed",
 };
 
 // 강연 종료, 개설 불확정을 뒤로 정렬
 const STATUS_SORT_ORDER: Record<LectureStatusType, number> = {
-  OPEN: 0,
-  PENDING: 1,
-  CLOSED: 2,
+  CONFIRMED: 0,
+  OPEN: 1,
+  FAILED: 2,
+  CLOSED: 3,
 };
 
 const sortLectures = (lectures: LectureType[]) =>
@@ -45,6 +47,7 @@ function LectureGrid({ lectures }: { lectures: LectureType[] }) {
           speaker={lecture.creatorName}
           status={STATUS_TO_BADGE[lecture.lectureStatus]}
           currentCount={lecture.enrolledCount}
+          maxCount={lecture.gradeCapacities["1"] + lecture.gradeCapacities["2"] + lecture.gradeCapacities["3"]}
           waitingCount={lecture.waitingCount}
         />
       ))}
