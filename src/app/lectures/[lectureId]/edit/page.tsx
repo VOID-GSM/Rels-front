@@ -3,12 +3,54 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import Arrow from "@/assets/svg/Arrow";
 import Delete from "@/assets/svg/Delete";
+import LectureForm from "@/components/common/LectureForm";
+import type { LectureFormData } from "@/components/common/LectureForm";
 import { useGetLecture, useUpdateLecture, useDeleteLecture } from "@/entities/lecture";
 import type { LectureType } from "@/entities/lecture";
+
+function DeleteConfirmModal({
+  onConfirm,
+  onCancel,
+  isPending,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-white rounded-2xl p-6 w-full max-w-[360px] mx-4 flex flex-col gap-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-lg font-bold text-gray-900">강연 삭제</h2>
+          <p className="text-sm text-gray-500">
+            강연을 삭제하면 복구할 수 없습니다. 정말 삭제하시겠습니까?
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="cancel" onClick={onCancel} className="py-2.5">
+            취소
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={isPending}
+            className="py-2.5 bg-error border-error hover:bg-error/90"
+          >
+            {isPending ? "삭제 중..." : "삭제"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function EditForm({ lecture }: { lecture: LectureType }) {
   const router = useRouter();
@@ -16,200 +58,66 @@ function EditForm({ lecture }: { lecture: LectureType }) {
 
   const { mutate: updateLecture, isPending: isUpdating } = useUpdateLecture(lectureId);
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const [title, setTitle] = useState(lecture.title);
-  const [description, setDescription] = useState(lecture.description);
-  const [grade1, setGrade1] = useState(String(lecture.gradeCapacities["1"]));
-  const [grade2, setGrade2] = useState(String(lecture.gradeCapacities["2"]));
-  const [grade3, setGrade3] = useState(String(lecture.gradeCapacities["3"]));
-  const [lectureLocation, setLectureLocation] = useState(lecture.lectureLocation ?? "");
-  const [lectureDate, setLectureDate] = useState(lecture.lectureDate ?? "");
-  const [lectureTime, setLectureTime] = useState(lecture.lectureTime ?? "");
-
-  const [errors, setErrors] = useState<{
-    title?: string;
-    description?: string;
-    grade1?: string;
-    grade2?: string;
-    grade3?: string;
-  }>({});
-
-  const validate = () => {
-    const next: typeof errors = {};
-    if (!title.trim()) next.title = "강연 제목을 입력해주세요.";
-    if (!description.trim()) next.description = "강연 내용을 입력해주세요.";
-    if (!grade1 || isNaN(Number(grade1)) || Number(grade1) < 1) next.grade1 = "1명 이상이어야 합니다.";
-    if (!grade2 || isNaN(Number(grade2)) || Number(grade2) < 1) next.grade2 = "1명 이상이어야 합니다.";
-    if (!grade3 || isNaN(Number(grade3)) || Number(grade3) < 1) next.grade3 = "1명 이상이어야 합니다.";
-    setErrors(next);
-    return Object.keys(next).length === 0;
+  const handleSubmit = (data: LectureFormData) => {
+    updateLecture(data, { onSuccess: () => router.push(`/lectures/${lectureId}`) });
   };
 
-  const handleSave = () => {
-    if (!validate()) return;
-    updateLecture(
-      {
-        title: title.trim(),
-        description: description.trim(),
-        gradeCapacities: {
-          "1": Number(grade1),
-          "2": Number(grade2),
-          "3": Number(grade3),
-        },
-        lectureLocation: lectureLocation.trim() || undefined,
-        lectureDate: lectureDate || undefined,
-        lectureTime: lectureTime || undefined,
-      },
-      { onSuccess: () => router.push(`/lectures/${lectureId}`) },
-    );
-  };
-
-  const handleDelete = () => {
-    if (!confirm("강연을 삭제하시겠습니까?")) return;
-    deleteLecture(lectureId, {
-      onSuccess: () => router.push("/"),
-    });
+  const handleConfirmDelete = () => {
+    deleteLecture(lectureId, { onSuccess: () => router.push("/") });
   };
 
   return (
-    <main className="max-w-[600px] mx-auto px-6 py-10 flex flex-col gap-6">
-      <Link
-        href={`/lectures/${lectureId}`}
-        className="flex items-center gap-1 text-sm text-gray-500 w-fit"
-      >
-        <Arrow />
-        취소
-      </Link>
+    <>
+      <main className="max-w-[600px] mx-auto px-6 py-10 flex flex-col gap-6">
+        <Link
+          href={`/lectures/${lectureId}`}
+          className="flex items-center gap-1 text-sm text-gray-500 w-fit"
+        >
+          <Arrow />
+          취소
+        </Link>
 
-      <div className="border border-main-200 rounded-2xl p-8 flex flex-col gap-6">
-        <h1 className="text-xl font-bold text-gray-900">강연 수정</h1>
-
-        <div className="flex flex-col gap-4">
-          <Input
-            label="강연 제목"
-            placeholder="강연 제목"
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              if (errors.title)
-                setErrors((prev) => ({ ...prev, title: undefined }));
+        <div className="border border-main-200 rounded-2xl p-8 flex flex-col gap-6">
+          <h1 className="text-xl font-bold text-gray-900">강연 수정</h1>
+          <LectureForm
+            initialValues={{
+              title: lecture.title,
+              description: lecture.description,
+              grade1: String(lecture.gradeCapacities["1"]),
+              grade2: String(lecture.gradeCapacities["2"]),
+              grade3: String(lecture.gradeCapacities["3"]),
+              lectureLocation: lecture.lectureLocation ?? "",
+              lectureDate: lecture.lectureDate ?? "",
+              lectureTime: lecture.lectureTime ?? "",
             }}
-            error={errors.title}
+            onSubmit={handleSubmit}
+            isPending={isUpdating}
+            submitLabel="저장"
+            extraAction={
+              <Button
+                variant="cancel"
+                onClick={() => setShowDeleteModal(true)}
+                disabled={isUpdating || isDeleting}
+                className="py-3 flex items-center justify-center gap-2"
+              >
+                <Delete />
+                삭제
+              </Button>
+            }
           />
-
-          <div className="flex flex-col gap-1 w-full">
-            <label className="text-sm font-medium text-gray-700">강연 내용</label>
-            <textarea
-              placeholder="강연 내용을 입력하세요"
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                if (errors.description)
-                  setErrors((prev) => ({ ...prev, description: undefined }));
-              }}
-              rows={5}
-              className={`w-full px-3 py-2 border rounded-md placeholder:text-gray-400 focus:outline-none transition-colors resize-none ${
-                errors.description
-                  ? "border-error focus:border-error"
-                  : "border-main-300 focus:border-main"
-              }`}
-            />
-            {errors.description && (
-              <p className="text-xs text-error">{errors.description}</p>
-            )}
-          </div>
-
-          {/* 학년별 최대 인원 */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">학년별 최대 인원</label>
-            <div className="grid grid-cols-3 gap-3">
-              <Input
-                label="1학년"
-                type="number"
-                min={1}
-                placeholder="인원"
-                value={grade1}
-                onChange={(e) => {
-                  setGrade1(e.target.value);
-                  if (errors.grade1)
-                    setErrors((prev) => ({ ...prev, grade1: undefined }));
-                }}
-                error={errors.grade1}
-              />
-              <Input
-                label="2학년"
-                type="number"
-                min={1}
-                placeholder="인원"
-                value={grade2}
-                onChange={(e) => {
-                  setGrade2(e.target.value);
-                  if (errors.grade2)
-                    setErrors((prev) => ({ ...prev, grade2: undefined }));
-                }}
-                error={errors.grade2}
-              />
-              <Input
-                label="3학년"
-                type="number"
-                min={1}
-                placeholder="인원"
-                value={grade3}
-                onChange={(e) => {
-                  setGrade3(e.target.value);
-                  if (errors.grade3)
-                    setErrors((prev) => ({ ...prev, grade3: undefined }));
-                }}
-                error={errors.grade3}
-              />
-            </div>
-          </div>
-
-          {/* 강연 장소 */}
-          <Input
-            label="강연 장소 (선택)"
-            placeholder="예: 공학관 301호"
-            value={lectureLocation}
-            onChange={(e) => setLectureLocation(e.target.value)}
-          />
-
-          {/* 날짜 / 시간 */}
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="날짜 (선택)"
-              type="date"
-              value={lectureDate}
-              onChange={(e) => setLectureDate(e.target.value)}
-            />
-            <Input
-              label="시간 (선택)"
-              type="time"
-              value={lectureTime}
-              onChange={(e) => setLectureTime(e.target.value)}
-            />
-          </div>
         </div>
+      </main>
 
-        <div className="flex gap-3">
-          <Button
-            onClick={handleSave}
-            disabled={isUpdating || isDeleting}
-            className="py-3"
-          >
-            저장
-          </Button>
-          <Button
-            variant="cancel"
-            onClick={handleDelete}
-            disabled={isUpdating || isDeleting}
-            className="py-3 flex items-center justify-center gap-2"
-          >
-            <Delete />
-            삭제
-          </Button>
-        </div>
-      </div>
-    </main>
+      {showDeleteModal && (
+        <DeleteConfirmModal
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setShowDeleteModal(false)}
+          isPending={isDeleting}
+        />
+      )}
+    </>
   );
 }
 
