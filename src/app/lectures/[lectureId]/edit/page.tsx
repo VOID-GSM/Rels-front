@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Input from "@/components/common/Input";
@@ -8,24 +8,23 @@ import Button from "@/components/common/Button";
 import Arrow from "@/assets/svg/Arrow";
 import Delete from "@/assets/svg/Delete";
 import { useGetLecture, useUpdateLecture, useDeleteLecture } from "@/entities/lecture";
+import type { LectureType } from "@/entities/lecture";
 
-export default function EditLecturePage() {
-  const params = useParams();
+function EditForm({ lecture }: { lecture: LectureType }) {
   const router = useRouter();
-  const lectureId = Number(params.lectureId);
+  const lectureId = lecture.lectureId;
 
-  const { data: lecture, isLoading } = useGetLecture(lectureId);
   const { mutate: updateLecture, isPending: isUpdating } = useUpdateLecture(lectureId);
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [grade1, setGrade1] = useState("");
-  const [grade2, setGrade2] = useState("");
-  const [grade3, setGrade3] = useState("");
-  const [lectureLocation, setLectureLocation] = useState("");
-  const [lectureDate, setLectureDate] = useState("");
-  const [lectureTime, setLectureTime] = useState("");
+  const [title, setTitle] = useState(lecture.title);
+  const [description, setDescription] = useState(lecture.description);
+  const [grade1, setGrade1] = useState(String(lecture.gradeCapacities["1"]));
+  const [grade2, setGrade2] = useState(String(lecture.gradeCapacities["2"]));
+  const [grade3, setGrade3] = useState(String(lecture.gradeCapacities["3"]));
+  const [lectureLocation, setLectureLocation] = useState(lecture.lectureLocation ?? "");
+  const [lectureDate, setLectureDate] = useState(lecture.lectureDate ?? "");
+  const [lectureTime, setLectureTime] = useState(lecture.lectureTime ?? "");
 
   const [errors, setErrors] = useState<{
     title?: string;
@@ -34,19 +33,6 @@ export default function EditLecturePage() {
     grade2?: string;
     grade3?: string;
   }>({});
-
-  useEffect(() => {
-    if (lecture) {
-      setTitle(lecture.title);
-      setDescription(lecture.description);
-      setGrade1(String(lecture.gradeCapacities["1"]));
-      setGrade2(String(lecture.gradeCapacities["2"]));
-      setGrade3(String(lecture.gradeCapacities["3"]));
-      setLectureLocation(lecture.lectureLocation ?? "");
-      setLectureDate(lecture.lectureDate ?? "");
-      setLectureTime(lecture.lectureTime ?? "");
-    }
-  }, [lecture]);
 
   const validate = () => {
     const next: typeof errors = {};
@@ -84,14 +70,6 @@ export default function EditLecturePage() {
       onSuccess: () => router.push("/"),
     });
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
-        <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <main className="max-w-[600px] mx-auto px-6 py-10 flex flex-col gap-6">
@@ -233,4 +211,20 @@ export default function EditLecturePage() {
       </div>
     </main>
   );
+}
+
+export default function EditLecturePage() {
+  const params = useParams();
+  const lectureId = Number(params.lectureId);
+  const { data: lecture, isLoading } = useGetLecture(lectureId);
+
+  if (isLoading || !lecture) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
+        <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return <EditForm lecture={lecture} />;
 }
