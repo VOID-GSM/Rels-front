@@ -11,7 +11,7 @@ const STATUS_TO_BADGE: Record<
   "confirmed" | "unconfirmed" | "pending" | "closed"
 > = {
   OPEN: "confirmed",
-  PENDING: "pending",
+  PENDING: "unconfirmed",
   CLOSED: "closed",
 };
 
