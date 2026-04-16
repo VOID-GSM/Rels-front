@@ -6,7 +6,7 @@ import type { LectureType } from "./types";
 
 const getLectures = async (): Promise<LectureType[]> => {
   const res = await get<{ content: LectureType[] }>(lectureUrl.getAll());
-  return res.content;
+  return res?.content ?? [];
 };
 
 export const useGetLectures = () => {
@@ -14,5 +14,6 @@ export const useGetLectures = () => {
     queryKey: lectureQueryKeys.getAll(),
     queryFn: getLectures,
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 };
