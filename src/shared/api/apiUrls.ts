@@ -14,7 +14,6 @@ export const lectureUrl = {
   enroll: (id: number) => `/api/lectures/${id}/enrollments`,
   cancelEnrollment: (id: number) => `/api/lectures/${id}/enrollments`,
   getEnrollments: (id: number) => `/api/lectures/${id}/enrollments`,
-  delete: (id: number) => `/api/lectures/${id}`,
 } as const;
 
 export const noticeUrl = {
