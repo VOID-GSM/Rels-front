@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, notFound } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/common/Button";
 import Arrow from "@/assets/svg/Arrow";
@@ -124,6 +124,8 @@ function EditForm({ lecture }: { lecture: LectureType }) {
 export default function EditLecturePage() {
   const params = useParams();
   const lectureId = Number(params.lectureId);
+  if (isNaN(lectureId)) return notFound();
+
   const { data: lecture, isLoading } = useGetLecture(lectureId);
 
   if (isLoading || !lecture) {

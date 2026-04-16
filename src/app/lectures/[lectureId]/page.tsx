@@ -24,6 +24,8 @@ export default function LectureDetailPage() {
   const lectureId = Number(params.lectureId);
   const { user } = useAuthStore();
 
+  if (isNaN(lectureId)) return notFound();
+
   const { data: lecture, isLoading } = useGetLecture(lectureId);
   const { data: enrollments } = useGetEnrollments(lectureId);
 
