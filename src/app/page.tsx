@@ -10,11 +10,10 @@ import { authUrls } from "@/shared/api/apiUrls";
 
 const STATUS_TO_BADGE: Record<
   LectureStatusType,
-  "open" | "confirmed" | "failed" | "closed" | "unconfirmed"
+  "open" | "confirmed" | "closed" | "unconfirmed"
 > = {
   OPEN: "open",
   CONFIRMED: "confirmed",
-  FAILED: "failed",
   CLOSED: "closed",
   UNCONFIRMED: "unconfirmed",
 };
@@ -23,7 +22,6 @@ const STATUS_TO_BADGE: Record<
 const STATUS_SORT_ORDER: Record<LectureStatusType, number> = {
   CONFIRMED: 0,
   OPEN: 1,
-  FAILED: 2,
   UNCONFIRMED: 2,
   CLOSED: 3,
 };

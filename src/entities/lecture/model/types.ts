@@ -1,7 +1,6 @@
 export type LectureStatusType =
   | "OPEN"
   | "CONFIRMED"
-  | "FAILED"
   | "CLOSED"
   | "UNCONFIRMED";
 

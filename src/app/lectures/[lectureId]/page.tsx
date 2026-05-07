@@ -94,7 +94,6 @@ export default function LectureDetailPage() {
   const STATUS_TO_BADGE = {
     OPEN: "open",
     CONFIRMED: "confirmed",
-    FAILED: "failed",
     CLOSED: "closed",
     UNCONFIRMED: "unconfirmed",
   } as const;
