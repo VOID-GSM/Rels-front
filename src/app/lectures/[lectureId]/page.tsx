@@ -11,6 +11,7 @@ import Pencil from "@/assets/svg/Pencil";
 import People from "@/assets/svg/People";
 import Calendar from "@/assets/svg/Calendar";
 import Clock from "@/assets/svg/Clock";
+import Location from "@/assets/svg/Location";
 import useAuthStore from "@/stores/authStore";
 import {
   useGetLecture,
@@ -45,11 +46,14 @@ export default function LectureDetailPage() {
     });
 
   const enrollStatus = useMemo<"ENROLLED" | "WAITING" | null>(() => {
-    if (enrollResult === "ENROLLED" || enrollResult === "WAITING") return enrollResult;
+    if (enrollResult === "ENROLLED" || enrollResult === "WAITING")
+      return enrollResult;
     if (enrollResult === "ERROR") return null;
     if (!enrollments || !user) return null;
-    if (enrollments.enrolledApplicants.some((a) => a.userId === user.userId)) return "ENROLLED";
-    if (enrollments.waitingApplicants.some((a) => a.userId === user.userId)) return "WAITING";
+    if (enrollments.enrolled.some((a) => a.userId === user.userId))
+      return "ENROLLED";
+    if (enrollments.waiting.some((a) => a.userId === user.userId))
+      return "WAITING";
     return null;
   }, [enrollResult, enrollments, user]);
 
@@ -70,9 +74,9 @@ export default function LectureDetailPage() {
   const showPencil = isCreator || isAdmin;
 
   const totalCapacity =
-    lecture.gradeCapacities["1"] +
-    lecture.gradeCapacities["2"] +
-    lecture.gradeCapacities["3"];
+    (lecture.capacityByGrade?.["1"] ?? 0) +
+    (lecture.capacityByGrade?.["2"] ?? 0) +
+    (lecture.capacityByGrade?.["3"] ?? 0);
 
   const isFull = lecture.enrolledCount >= totalCapacity;
 
@@ -81,6 +85,7 @@ export default function LectureDetailPage() {
     CONFIRMED: "confirmed",
     FAILED: "failed",
     CLOSED: "closed",
+    UNCONFIRMED: "unconfirmed",
   } as const;
 
   const badgeVariant = STATUS_TO_BADGE[lecture.lectureStatus];
@@ -125,12 +130,14 @@ export default function LectureDetailPage() {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1 text-sm text-gray-500">
             <People />
-            <span>전체 {lecture.enrolledCount}/{totalCapacity}명</span>
+            <span>
+              전체 {lecture.enrolledCount}/{totalCapacity}명
+            </span>
           </div>
           <div className="flex items-center gap-3 text-xs text-gray-400 pl-5">
             {(["1", "2", "3"] as const).map((grade) => (
               <span key={grade}>
-                {grade}학년 최대 {lecture.gradeCapacities[grade]}명
+                {grade}학년 최대 {lecture.capacityByGrade?.[grade] ?? 0}명
               </span>
             ))}
           </div>
@@ -143,9 +150,7 @@ export default function LectureDetailPage() {
           <div className="flex items-center gap-4 bg-main-100 rounded-xl px-4 py-2.5 text-xs text-gray-600 flex-wrap">
             {lecture.lectureLocation && (
               <div className="flex items-center gap-1.5">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 1.5C6.27 1.5 4.875 2.895 4.875 4.625C4.875 7.125 8 12 8 12C8 12 11.125 7.125 11.125 4.625C11.125 2.895 9.73 1.5 8 1.5ZM8 6C7.17 6 6.5 5.33 6.5 4.5C6.5 3.67 7.17 3 8 3C8.83 3 9.5 3.67 9.5 4.5C9.5 5.33 8.83 6 8 6Z" fill="var(--color-gray-600)"/>
-                </svg>
+                <Location />
                 <span>{lecture.lectureLocation}</span>
               </div>
             )}
@@ -214,12 +219,12 @@ export default function LectureDetailPage() {
           type="applicant"
           currentCount={lecture.enrolledCount}
           maxCount={totalCapacity}
-          applicants={enrollments?.enrolledApplicants ?? []}
+          applicants={enrollments?.enrolled ?? []}
         />
         <ApplicantList
           type="waiting"
           waitingCount={lecture.waitingCount}
-          applicants={enrollments?.waitingApplicants ?? []}
+          applicants={enrollments?.waiting ?? []}
         />
       </div>
     </main>

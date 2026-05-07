@@ -1,4 +1,9 @@
-export type LectureStatusType = "OPEN" | "CONFIRMED" | "FAILED" | "CLOSED";
+export type LectureStatusType =
+  | "OPEN"
+  | "CONFIRMED"
+  | "FAILED"
+  | "CLOSED"
+  | "UNCONFIRMED";
 
 export interface EnrollmentApplicant {
   userId: number;
@@ -9,8 +14,8 @@ export interface EnrollmentApplicant {
 
 export interface LectureEnrollmentsType {
   lectureId: number;
-  enrolledApplicants: EnrollmentApplicant[];
-  waitingApplicants: EnrollmentApplicant[];
+  enrolled: EnrollmentApplicant[];
+  waiting: EnrollmentApplicant[];
 }
 
 export interface GradeCapacities {
@@ -26,11 +31,13 @@ export interface LectureType {
   creatorId: number;
   creatorName: string;
   lectureStatus: LectureStatusType;
-  gradeCapacities: GradeCapacities;
+  capacityByGrade?: GradeCapacities;
+  totalCapacity?: number | null;
   enrolledCount: number;
   waitingCount: number;
   lectureLocation: string | null;
   lectureDate: string | null;
   lectureTime: string | null;
+  applicationDeadline?: string | null;
   createdAt: string;
 }

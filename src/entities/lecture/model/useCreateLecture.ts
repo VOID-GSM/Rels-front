@@ -7,10 +7,12 @@ import type { LectureType, GradeCapacities } from "./types";
 interface CreateLectureReqType {
   title: string;
   description: string;
-  gradeCapacities: GradeCapacities;
-  lectureLocation?: string;
-  lectureDate?: string;
-  lectureTime?: string;
+  capacityByGrade?: GradeCapacities | null;
+  totalCapacity?: number | null;
+  lectureLocation?: string | null;
+  lectureDate?: string | null;
+  lectureTime?: string | null;
+  applicationDeadline?: string | null;
 }
 
 const createLecture = (data: CreateLectureReqType): Promise<LectureType> => {

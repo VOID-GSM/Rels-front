@@ -85,12 +85,15 @@ function EditForm({ lecture }: { lecture: LectureType }) {
             initialValues={{
               title: lecture.title,
               description: lecture.description,
-              grade1: String(lecture.gradeCapacities["1"]),
-              grade2: String(lecture.gradeCapacities["2"]),
-              grade3: String(lecture.gradeCapacities["3"]),
+              capacityMode: lecture.capacityByGrade ? "grade" : "total",
+              totalCapacity: String(lecture.totalCapacity ?? ""),
+              grade1: String(lecture.capacityByGrade?.["1"] ?? ""),
+              grade2: String(lecture.capacityByGrade?.["2"] ?? ""),
+              grade3: String(lecture.capacityByGrade?.["3"] ?? ""),
               lectureLocation: lecture.lectureLocation ?? "",
               lectureDate: lecture.lectureDate ?? "",
               lectureTime: lecture.lectureTime ?? "",
+              applicationDeadline: lecture.applicationDeadline ?? "",
             }}
             onSubmit={handleSubmit}
             isPending={isUpdating}

@@ -20,6 +20,7 @@ const STATUS_LABEL: Record<LectureStatusType, string> = {
   CONFIRMED: "개설 확정",
   FAILED: "개설 실패",
   CLOSED: "강연 종료",
+  UNCONFIRMED: "개설 불확정",
 };
 
 type LectureItem = {

@@ -1,4 +1,3 @@
-// src/components/lecture/LectureCard.tsx
 import Badge from "@/components/common/Badge";
 import People from "@/assets/svg/People";
 import Link from "next/link";
@@ -7,7 +6,7 @@ interface LectureCardProps {
   id: string;
   title: string;
   speaker: string;
-  status: "open" | "confirmed" | "failed" | "closed";
+  status: "open" | "confirmed" | "failed" | "closed" | "unconfirmed";
   currentCount: number;
   maxCount?: number;
   waitingCount?: number;
@@ -34,15 +33,17 @@ export default function LectureCard({
           <p className="text-sm text-gray-500">{speaker}</p>
         </div>
 
-        {/* 하단 인원 */}
-        <div className="flex items-center gap-1 text-sm text-gray-500">
-          <People />
-          <span>
-            {maxCount ? `${currentCount}/${maxCount}명` : `${currentCount}명`}
-          </span>
-          {waitingCount && waitingCount > 0 ? (
-            <span className="ml-1">(대기 {waitingCount}명)</span>
-          ) : null}
+        {/* 하단 */}
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1 text-sm text-gray-500">
+            <People />
+            <span>
+              {maxCount ? `${currentCount}/${maxCount}명` : `${currentCount}명`}
+            </span>
+            {waitingCount && waitingCount > 0 ? (
+              <span className="ml-1">(대기 {waitingCount}명)</span>
+            ) : null}
+          </div>
         </div>
       </div>
     </Link>
