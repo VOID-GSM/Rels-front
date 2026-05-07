@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import Badge from "@/components/common/Badge";
@@ -12,7 +12,9 @@ import People from "@/assets/svg/People";
 import Calendar from "@/assets/svg/Calendar";
 import Clock from "@/assets/svg/Clock";
 import Location from "@/assets/svg/Location";
+import DeadlineCountdown from "@/components/common/DeadlineCountdown";
 import useAuthStore from "@/stores/authStore";
+import { authUrls } from "@/shared/api/apiUrls";
 import {
   useGetLecture,
   useEnrollLecture,
@@ -23,7 +25,15 @@ import {
 export default function LectureDetailPage() {
   const params = useParams();
   const lectureId = Number(params.lectureId);
-  const { user } = useAuthStore();
+  const { user, initFromSession } = useAuthStore();
+
+  useEffect(() => {
+    const token = initFromSession();
+    if (!token) {
+      const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
+      window.location.href = authUrls.dgStart(redirectUri);
+    }
+  }, []);
 
   const { data: lecture, isLoading } = useGetLecture(lectureId);
   const { data: enrollments } = useGetEnrollments(lectureId);
@@ -74,9 +84,10 @@ export default function LectureDetailPage() {
   const showPencil = isCreator || isAdmin;
 
   const totalCapacity =
-    (lecture.capacityByGrade?.["1"] ?? 0) +
-    (lecture.capacityByGrade?.["2"] ?? 0) +
-    (lecture.capacityByGrade?.["3"] ?? 0);
+    lecture.totalCapacity ??
+    ((lecture.capacityByGrade?.["1"] ?? 0) +
+      (lecture.capacityByGrade?.["2"] ?? 0) +
+      (lecture.capacityByGrade?.["3"] ?? 0));
 
   const isFull = lecture.enrolledCount >= totalCapacity;
 
@@ -134,13 +145,15 @@ export default function LectureDetailPage() {
               전체 {lecture.enrolledCount}/{totalCapacity}명
             </span>
           </div>
-          <div className="flex items-center gap-3 text-xs text-gray-400 pl-5">
-            {(["1", "2", "3"] as const).map((grade) => (
-              <span key={grade}>
-                {grade}학년 최대 {lecture.capacityByGrade?.[grade] ?? 0}명
-              </span>
-            ))}
-          </div>
+          {lecture.capacityByGrade && (
+            <div className="flex items-center gap-3 text-xs text-gray-400 pl-5">
+              {(["1", "2", "3"] as const).map((grade) => (
+                <span key={grade}>
+                  {grade}학년 최대 {lecture.capacityByGrade![grade] ?? 0}명
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 강연 정보 (장소/날짜/시간) */}
@@ -166,6 +179,14 @@ export default function LectureDetailPage() {
                 <span>{lecture.lectureTime}</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* 신청 마감 카운트다운 */}
+        {lecture.applicationDeadline && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>신청 마감까지</span>
+            <DeadlineCountdown deadline={lecture.applicationDeadline} />
           </div>
         )}
 

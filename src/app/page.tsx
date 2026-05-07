@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
 import { useGetLectures } from "@/entities/lecture";
 import type { LectureType, LectureStatusType } from "@/entities/lecture";
 import LectureCard from "@/components/common/LectureCard";
 import CreateLectureButton from "@/components/common/CreateLectureButton";
+import { authUrls } from "@/shared/api/apiUrls";
 
 const STATUS_TO_BADGE: Record<
   LectureStatusType,
@@ -32,7 +34,7 @@ const sortLectures = (lectures: LectureType[]) =>
       STATUS_SORT_ORDER[a.lectureStatus] - STATUS_SORT_ORDER[b.lectureStatus],
   );
 
-function LectureGrid({ lectures }: { lectures: LectureType[] }) {
+function LectureGrid({ lectures, onCardClick }: { lectures: LectureType[]; onCardClick?: (id: string) => void }) {
   if (lectures.length === 0) {
     return (
       <p className="text-sm text-gray-400">등록된 강연이 없습니다.</p>
@@ -51,6 +53,7 @@ function LectureGrid({ lectures }: { lectures: LectureType[] }) {
           currentCount={lecture.enrolledCount}
           maxCount={lecture.totalCapacity ?? ((lecture.capacityByGrade?.["1"] ?? 0) + (lecture.capacityByGrade?.["2"] ?? 0) + (lecture.capacityByGrade?.["3"] ?? 0))}
           waitingCount={lecture.waitingCount}
+          onClick={onCardClick ? () => onCardClick(String(lecture.lectureId)) : undefined}
         />
       ))}
     </div>
@@ -58,6 +61,7 @@ function LectureGrid({ lectures }: { lectures: LectureType[] }) {
 }
 
 export default function Home() {
+  const router = useRouter();
   const { user, isLoggedIn } = useAuthStore();
   const { data: lectures = [], isLoading, isError } = useGetLectures();
 
@@ -65,6 +69,15 @@ export default function Home() {
     (l) => isLoggedIn && user && l.creatorId === user.userId,
   );
   const allLectures = lectures;
+
+  const handleCardClick = (id: string) => {
+    if (!isLoggedIn) {
+      const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
+      window.location.href = authUrls.dgStart(redirectUri);
+      return;
+    }
+    router.push(`/lectures/${id}`);
+  };
 
   return (
     <main className="max-w-[1200px] mx-auto px-6 py-10 flex flex-col gap-10">
@@ -90,14 +103,14 @@ export default function Home() {
               <h2 className="text-lg font-semibold text-gray-800">
                 내가 생성한 강연
               </h2>
-              <LectureGrid lectures={myLectures} />
+              <LectureGrid lectures={myLectures} onCardClick={handleCardClick} />
             </section>
           )}
 
           {/* 전체 강연 */}
           <section className="flex flex-col gap-4">
             <h2 className="text-lg font-semibold text-gray-800">전체 강연</h2>
-            <LectureGrid lectures={allLectures} />
+            <LectureGrid lectures={allLectures} onCardClick={handleCardClick} />
           </section>
         </>
       )}

@@ -83,6 +83,7 @@ export default function LectureForm({
     grade1?: string;
     grade2?: string;
     grade3?: string;
+    applicationDeadline?: string;
   }>({});
 
   const validate = () => {
@@ -97,6 +98,7 @@ export default function LectureForm({
       if (grade2 === "" || isNaN(Number(grade2)) || Number(grade2) < 0) next.grade2 = "0명 이상이어야 합니다.";
       if (grade3 === "" || isNaN(Number(grade3)) || Number(grade3) < 0) next.grade3 = "0명 이상이어야 합니다.";
     }
+    if (!applicationDeadline) next.applicationDeadline = "신청 마감일을 입력해주세요.";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -119,7 +121,7 @@ export default function LectureForm({
       lectureLocation: lectureLocation.trim() || null,
       lectureDate: lectureDate || null,
       lectureTime: lectureTime || null,
-      applicationDeadline: applicationDeadline || null,
+      applicationDeadline: applicationDeadline,
     });
   };
 
@@ -273,10 +275,14 @@ export default function LectureForm({
 
       {/* 신청 마감일 */}
       <Input
-        label="신청 마감일 (선택)"
+        label="신청 마감일"
         type="datetime-local"
         value={applicationDeadline}
-        onChange={(e) => setApplicationDeadline(e.target.value)}
+        onChange={(e) => {
+          setApplicationDeadline(e.target.value);
+          if (errors.applicationDeadline) setErrors((p) => ({ ...p, applicationDeadline: undefined }));
+        }}
+        error={errors.applicationDeadline}
       />
 
       <div className="flex gap-3 mt-2">
