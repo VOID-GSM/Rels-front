@@ -4,8 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
-import { useGetLectures, useDeleteLecture } from "@/entities/lecture";
-import type { LectureStatusType } from "@/entities/lecture";
+import {
+  getDisplayLectureStatus,
+  useDeleteLecture,
+  useGetLectures,
+} from "@/entities/lecture";
+import type { LectureStatusType, LectureType } from "@/entities/lecture";
 import CouncilBadge from "@/components/common/CouncilBadge";
 import Button from "@/components/common/Button";
 import Arrow from "@/assets/svg/Arrow";
@@ -22,13 +26,8 @@ const STATUS_LABEL: Record<LectureStatusType, string> = {
   UNCONFIRMED: "개설 불확정",
 };
 
-type LectureItem = {
-  lectureId: number;
-  title: string;
-  enrolledCount: number;
+type LectureItem = LectureType & {
   capacity?: number | null;
-  lectureStatus: LectureStatusType;
-  creatorId: number;
 };
 
 function InfoField({
@@ -80,7 +79,7 @@ function LectureItem({
           </div>
           <span className="text-gray-500">|</span>
           <span className="text-xs text-gray-500">
-            {STATUS_LABEL[lecture.lectureStatus]}
+            {STATUS_LABEL[getDisplayLectureStatus(lecture)]}
           </span>
         </div>
       </Link>
@@ -155,9 +154,16 @@ export default function MyPage() {
     );
   }
 
-  const myCreatedLectures: LectureItem[] = lectures.filter(
-    (l) => l.creatorId === user.userId,
-  );
+  const myCreatedLectures: LectureItem[] = lectures
+    .filter((l) => l.creatorId === user.userId)
+    .map((lecture) => ({
+      ...lecture,
+      capacity:
+        lecture.totalCapacity ??
+        ((lecture.capacityByGrade?.["1"] ?? 0) +
+          (lecture.capacityByGrade?.["2"] ?? 0) +
+          (lecture.capacityByGrade?.["3"] ?? 0)),
+    }));
 
   // 신청한 강연 API 연결 예정
   const myEnrolledLectures: LectureItem[] = [];
