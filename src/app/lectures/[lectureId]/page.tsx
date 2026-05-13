@@ -186,7 +186,7 @@ export default function LectureDetailPage() {
         )}
 
         {/* 신청 마감 카운트다운 */}
-        {lecture.applicationDeadline && (
+        {lecture.applicationDeadline && displayStatus !== "CLOSED" && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>신청 마감까지</span>
             <DeadlineCountdown deadline={lecture.applicationDeadline} />
@@ -199,7 +199,11 @@ export default function LectureDetailPage() {
             내가 생성한 강연입니다
           </Button>
         ) : displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED" ? (
-          <Button disabled className="py-3 mt-2">
+          <Button
+            variant={displayStatus === "CLOSED" ? "cancel" : "waiting"}
+            disabled
+            className="py-3 mt-2"
+          >
             {displayStatus === "UNCONFIRMED" ? "개설 불확정" : "강연 종료"}
           </Button>
         ) : enrollStatus === "ENROLLED" ? (

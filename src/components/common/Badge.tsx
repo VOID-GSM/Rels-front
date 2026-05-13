@@ -19,7 +19,7 @@ const BADGE_CONFIG: Record<BadgeVariant, { label: string; style: string }> = {
   },
   closed: {
     label: "강연 종료",
-    style: "bg-gray-700 text-white",
+    style: "bg-error text-white",
   },
 };
 
