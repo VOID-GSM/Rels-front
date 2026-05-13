@@ -1,4 +1,5 @@
 import Badge from "@/components/common/Badge";
+import type { BadgeVariant } from "@/components/common/Badge";
 import People from "@/assets/svg/People";
 import Link from "next/link";
 
@@ -6,7 +7,7 @@ interface LectureCardProps {
   id: string;
   title: string;
   speaker: string;
-  status: "open" | "confirmed" | "failed" | "closed" | "unconfirmed";
+  status: BadgeVariant;
   currentCount: number;
   maxCount?: number;
   waitingCount?: number;

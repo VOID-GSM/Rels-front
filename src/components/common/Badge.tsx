@@ -1,4 +1,4 @@
-type BadgeVariant = "open" | "confirmed" | "closed" | "unconfirmed";
+export type BadgeVariant = "open" | "confirmed" | "closed" | "unconfirmed";
 
 interface BadgeProps {
   variant: BadgeVariant;

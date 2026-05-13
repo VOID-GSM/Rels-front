@@ -34,7 +34,7 @@ export default function LectureDetailPage() {
       const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
       window.location.href = authUrls.dgStart(redirectUri);
     }
-  }, []);
+  }, [initFromSession]);
 
   const { data: lecture, isLoading } = useGetLecture(lectureId);
   const { data: enrollments } = useGetEnrollments(lectureId);
