@@ -8,3 +8,4 @@ export { useDeleteLecture } from "./model/useDeleteLecture";
 export { useEnrollLecture } from "./model/useEnrollLecture";
 export { useCancelEnrollment } from "./model/useCancelEnrollment";
 export { useGetEnrollments } from "./model/useGetEnrollments";
+export { getDisplayLectureStatus } from "./model/status";
