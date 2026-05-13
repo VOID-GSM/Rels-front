@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
-import { useGetLectures } from "@/entities/lecture";
+import { getDisplayLectureStatus, useGetLectures } from "@/entities/lecture";
 import type { LectureType, LectureStatusType } from "@/entities/lecture";
 import LectureCard from "@/components/common/LectureCard";
 import CreateLectureButton from "@/components/common/CreateLectureButton";
@@ -29,7 +29,8 @@ const STATUS_SORT_ORDER: Record<LectureStatusType, number> = {
 const sortLectures = (lectures: LectureType[]) =>
   [...lectures].sort(
     (a, b) =>
-      STATUS_SORT_ORDER[a.lectureStatus] - STATUS_SORT_ORDER[b.lectureStatus],
+      STATUS_SORT_ORDER[getDisplayLectureStatus(a)] -
+      STATUS_SORT_ORDER[getDisplayLectureStatus(b)],
   );
 
 function LectureGrid({ lectures, onCardClick }: { lectures: LectureType[]; onCardClick?: (id: string) => void }) {
@@ -47,7 +48,7 @@ function LectureGrid({ lectures, onCardClick }: { lectures: LectureType[]; onCar
           id={String(lecture.lectureId)}
           title={lecture.title}
           speaker={lecture.creatorName}
-          status={STATUS_TO_BADGE[lecture.lectureStatus]}
+          status={STATUS_TO_BADGE[getDisplayLectureStatus(lecture)]}
           currentCount={lecture.enrolledCount}
           maxCount={lecture.totalCapacity ?? ((lecture.capacityByGrade?.["1"] ?? 0) + (lecture.capacityByGrade?.["2"] ?? 0) + (lecture.capacityByGrade?.["3"] ?? 0))}
           waitingCount={lecture.waitingCount}
