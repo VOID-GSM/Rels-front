@@ -1,36 +1,39 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
-import { useGetLectures } from "@/entities/lecture";
+import { getDisplayLectureStatus, useGetLectures } from "@/entities/lecture";
 import type { LectureType, LectureStatusType } from "@/entities/lecture";
 import LectureCard from "@/components/common/LectureCard";
 import CreateLectureButton from "@/components/common/CreateLectureButton";
+import { authUrls } from "@/shared/api/apiUrls";
 
 const STATUS_TO_BADGE: Record<
   LectureStatusType,
-  "open" | "confirmed" | "failed" | "closed"
+  "open" | "confirmed" | "closed" | "unconfirmed"
 > = {
   OPEN: "open",
   CONFIRMED: "confirmed",
-  FAILED: "failed",
   CLOSED: "closed",
+  UNCONFIRMED: "unconfirmed",
 };
 
 // 강연 종료, 개설 불확정을 뒤로 정렬
 const STATUS_SORT_ORDER: Record<LectureStatusType, number> = {
   CONFIRMED: 0,
   OPEN: 1,
-  FAILED: 2,
+  UNCONFIRMED: 2,
   CLOSED: 3,
 };
 
 const sortLectures = (lectures: LectureType[]) =>
   [...lectures].sort(
     (a, b) =>
-      STATUS_SORT_ORDER[a.lectureStatus] - STATUS_SORT_ORDER[b.lectureStatus],
+      STATUS_SORT_ORDER[getDisplayLectureStatus(a)] -
+      STATUS_SORT_ORDER[getDisplayLectureStatus(b)],
   );
 
-function LectureGrid({ lectures }: { lectures: LectureType[] }) {
+function LectureGrid({ lectures, onCardClick }: { lectures: LectureType[]; onCardClick?: (id: string) => void }) {
   if (lectures.length === 0) {
     return (
       <p className="text-sm text-gray-400">등록된 강연이 없습니다.</p>
@@ -45,10 +48,11 @@ function LectureGrid({ lectures }: { lectures: LectureType[] }) {
           id={String(lecture.lectureId)}
           title={lecture.title}
           speaker={lecture.creatorName}
-          status={STATUS_TO_BADGE[lecture.lectureStatus]}
+          status={STATUS_TO_BADGE[getDisplayLectureStatus(lecture)]}
           currentCount={lecture.enrolledCount}
-          maxCount={lecture.gradeCapacities["1"] + lecture.gradeCapacities["2"] + lecture.gradeCapacities["3"]}
+          maxCount={lecture.totalCapacity ?? ((lecture.capacityByGrade?.["1"] ?? 0) + (lecture.capacityByGrade?.["2"] ?? 0) + (lecture.capacityByGrade?.["3"] ?? 0))}
           waitingCount={lecture.waitingCount}
+          onClick={onCardClick ? () => onCardClick(String(lecture.lectureId)) : undefined}
         />
       ))}
     </div>
@@ -56,6 +60,7 @@ function LectureGrid({ lectures }: { lectures: LectureType[] }) {
 }
 
 export default function Home() {
+  const router = useRouter();
   const { user, isLoggedIn } = useAuthStore();
   const { data: lectures = [], isLoading, isError } = useGetLectures();
 
@@ -63,6 +68,15 @@ export default function Home() {
     (l) => isLoggedIn && user && l.creatorId === user.userId,
   );
   const allLectures = lectures;
+
+  const handleCardClick = (id: string) => {
+    if (!isLoggedIn) {
+      const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
+      window.location.href = authUrls.dgStart(redirectUri);
+      return;
+    }
+    router.push(`/lectures/${id}`);
+  };
 
   return (
     <main className="max-w-[1200px] mx-auto px-6 py-10 flex flex-col gap-10">
@@ -88,14 +102,14 @@ export default function Home() {
               <h2 className="text-lg font-semibold text-gray-800">
                 내가 생성한 강연
               </h2>
-              <LectureGrid lectures={myLectures} />
+              <LectureGrid lectures={myLectures} onCardClick={handleCardClick} />
             </section>
           )}
 
           {/* 전체 강연 */}
           <section className="flex flex-col gap-4">
             <h2 className="text-lg font-semibold text-gray-800">전체 강연</h2>
-            <LectureGrid lectures={allLectures} />
+            <LectureGrid lectures={allLectures} onCardClick={handleCardClick} />
           </section>
         </>
       )}

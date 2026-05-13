@@ -1,4 +1,4 @@
-type BadgeVariant = "open" | "confirmed" | "failed" | "closed";
+export type BadgeVariant = "open" | "confirmed" | "closed" | "unconfirmed";
 
 interface BadgeProps {
   variant: BadgeVariant;
@@ -13,13 +13,13 @@ const BADGE_CONFIG: Record<BadgeVariant, { label: string; style: string }> = {
     label: "개설 확정",
     style: "bg-main text-black",
   },
-  failed: {
+  unconfirmed: {
     label: "개설 불확정",
     style: "bg-gray-200 text-gray-600",
   },
   closed: {
     label: "강연 종료",
-    style: "bg-gray-700 text-white",
+    style: "bg-error text-white",
   },
 };
 

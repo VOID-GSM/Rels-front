@@ -5,12 +5,14 @@ import { lectureUrl } from "@/shared/api/apiUrls";
 import type { LectureType, GradeCapacities } from "./types";
 
 export interface UpdateLectureData {
-  title: string;
-  description: string;
-  gradeCapacities: GradeCapacities;
-  lectureLocation?: string;
-  lectureDate?: string;
-  lectureTime?: string;
+  title?: string;
+  description?: string;
+  totalCapacity?: number | null;
+  capacityByGrade?: GradeCapacities | null;
+  lectureLocation?: string | null;
+  lectureDate?: string | null;
+  lectureTime?: string | null;
+  applicationDeadline?: string | null;
 }
 
 export interface UpdateLectureSettingsData {

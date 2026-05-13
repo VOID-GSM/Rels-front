@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import Badge from "@/components/common/Badge";
@@ -11,8 +11,12 @@ import Pencil from "@/assets/svg/Pencil";
 import People from "@/assets/svg/People";
 import Calendar from "@/assets/svg/Calendar";
 import Clock from "@/assets/svg/Clock";
+import Location from "@/assets/svg/Location";
+import DeadlineCountdown from "@/components/common/DeadlineCountdown";
 import useAuthStore from "@/stores/authStore";
+import { authUrls } from "@/shared/api/apiUrls";
 import {
+  getDisplayLectureStatus,
   useGetLecture,
   useEnrollLecture,
   useCancelEnrollment,
@@ -22,7 +26,15 @@ import {
 export default function LectureDetailPage() {
   const params = useParams();
   const lectureId = Number(params.lectureId);
-  const { user } = useAuthStore();
+  const { user, initFromSession } = useAuthStore();
+
+  useEffect(() => {
+    const token = initFromSession();
+    if (!token) {
+      const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
+      window.location.href = authUrls.dgStart(redirectUri);
+    }
+  }, [initFromSession]);
 
   const { data: lecture, isLoading } = useGetLecture(lectureId);
   const { data: enrollments } = useGetEnrollments(lectureId);
@@ -45,11 +57,14 @@ export default function LectureDetailPage() {
     });
 
   const enrollStatus = useMemo<"ENROLLED" | "WAITING" | null>(() => {
-    if (enrollResult === "ENROLLED" || enrollResult === "WAITING") return enrollResult;
+    if (enrollResult === "ENROLLED" || enrollResult === "WAITING")
+      return enrollResult;
     if (enrollResult === "ERROR") return null;
     if (!enrollments || !user) return null;
-    if (enrollments.enrolledApplicants.some((a) => a.userId === user.userId)) return "ENROLLED";
-    if (enrollments.waitingApplicants.some((a) => a.userId === user.userId)) return "WAITING";
+    if (enrollments.enrolled.some((a) => a.userId === user.userId))
+      return "ENROLLED";
+    if (enrollments.waiting.some((a) => a.userId === user.userId))
+      return "WAITING";
     return null;
   }, [enrollResult, enrollments, user]);
 
@@ -70,20 +85,24 @@ export default function LectureDetailPage() {
   const showPencil = isCreator || isAdmin;
 
   const totalCapacity =
-    lecture.gradeCapacities["1"] +
-    lecture.gradeCapacities["2"] +
-    lecture.gradeCapacities["3"];
+    lecture.totalCapacity ??
+    ((lecture.capacityByGrade?.["1"] ?? 0) +
+      (lecture.capacityByGrade?.["2"] ?? 0) +
+      (lecture.capacityByGrade?.["3"] ?? 0));
+  const usesGradeCapacity =
+    lecture.totalCapacity == null && lecture.capacityByGrade != null;
 
   const isFull = lecture.enrolledCount >= totalCapacity;
+  const displayStatus = getDisplayLectureStatus(lecture);
 
   const STATUS_TO_BADGE = {
     OPEN: "open",
     CONFIRMED: "confirmed",
-    FAILED: "failed",
     CLOSED: "closed",
+    UNCONFIRMED: "unconfirmed",
   } as const;
 
-  const badgeVariant = STATUS_TO_BADGE[lecture.lectureStatus];
+  const badgeVariant = STATUS_TO_BADGE[displayStatus];
 
   return (
     <main className="max-w-[800px] mx-auto px-6 py-10 flex flex-col gap-6">
@@ -125,15 +144,19 @@ export default function LectureDetailPage() {
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1 text-sm text-gray-500">
             <People />
-            <span>전체 {lecture.enrolledCount}/{totalCapacity}명</span>
+            <span>
+              전체 {lecture.enrolledCount}/{totalCapacity}명
+            </span>
           </div>
-          <div className="flex items-center gap-3 text-xs text-gray-400 pl-5">
-            {(["1", "2", "3"] as const).map((grade) => (
-              <span key={grade}>
-                {grade}학년 최대 {lecture.gradeCapacities[grade]}명
-              </span>
-            ))}
-          </div>
+          {usesGradeCapacity && (
+            <div className="flex items-center gap-3 text-xs text-gray-400 pl-5">
+              {(["1", "2", "3"] as const).map((grade) => (
+                <span key={grade}>
+                  {grade}학년 최대 {lecture.capacityByGrade![grade] ?? 0}명
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 강연 정보 (장소/날짜/시간) */}
@@ -143,9 +166,7 @@ export default function LectureDetailPage() {
           <div className="flex items-center gap-4 bg-main-100 rounded-xl px-4 py-2.5 text-xs text-gray-600 flex-wrap">
             {lecture.lectureLocation && (
               <div className="flex items-center gap-1.5">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 1.5C6.27 1.5 4.875 2.895 4.875 4.625C4.875 7.125 8 12 8 12C8 12 11.125 7.125 11.125 4.625C11.125 2.895 9.73 1.5 8 1.5ZM8 6C7.17 6 6.5 5.33 6.5 4.5C6.5 3.67 7.17 3 8 3C8.83 3 9.5 3.67 9.5 4.5C9.5 5.33 8.83 6 8 6Z" fill="var(--color-gray-600)"/>
-                </svg>
+                <Location />
                 <span>{lecture.lectureLocation}</span>
               </div>
             )}
@@ -164,14 +185,26 @@ export default function LectureDetailPage() {
           </div>
         )}
 
+        {/* 신청 마감 카운트다운 */}
+        {lecture.applicationDeadline && displayStatus !== "CLOSED" && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>신청 마감까지</span>
+            <DeadlineCountdown deadline={lecture.applicationDeadline} />
+          </div>
+        )}
+
         {/* 액션 버튼 */}
         {isCreator ? (
           <Button variant="waiting" disabled className="py-3 mt-2">
             내가 생성한 강연입니다
           </Button>
-        ) : lecture.lectureStatus === "CLOSED" ? (
-          <Button disabled className="py-3 mt-2">
-            강연 종료
+        ) : displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED" ? (
+          <Button
+            variant={displayStatus === "CLOSED" ? "cancel" : "waiting"}
+            disabled
+            className="py-3 mt-2"
+          >
+            {displayStatus === "UNCONFIRMED" ? "개설 불확정" : "강연 종료"}
           </Button>
         ) : enrollStatus === "ENROLLED" ? (
           <Button
@@ -214,12 +247,12 @@ export default function LectureDetailPage() {
           type="applicant"
           currentCount={lecture.enrolledCount}
           maxCount={totalCapacity}
-          applicants={enrollments?.enrolledApplicants ?? []}
+          applicants={enrollments?.enrolled ?? []}
         />
         <ApplicantList
           type="waiting"
           waitingCount={lecture.waitingCount}
-          applicants={enrollments?.waitingApplicants ?? []}
+          applicants={enrollments?.waiting ?? []}
         />
       </div>
     </main>

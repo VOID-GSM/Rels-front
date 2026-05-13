@@ -55,6 +55,8 @@ function DeleteConfirmModal({
 function EditForm({ lecture }: { lecture: LectureType }) {
   const router = useRouter();
   const lectureId = lecture.lectureId;
+  const capacityMode =
+    lecture.totalCapacity != null ? "total" : "grade";
 
   const { mutate: updateLecture, isPending: isUpdating } = useUpdateLecture(lectureId);
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
@@ -85,12 +87,15 @@ function EditForm({ lecture }: { lecture: LectureType }) {
             initialValues={{
               title: lecture.title,
               description: lecture.description,
-              grade1: String(lecture.gradeCapacities["1"]),
-              grade2: String(lecture.gradeCapacities["2"]),
-              grade3: String(lecture.gradeCapacities["3"]),
+              capacityMode,
+              totalCapacity: String(lecture.totalCapacity ?? ""),
+              grade1: String(lecture.capacityByGrade?.["1"] ?? ""),
+              grade2: String(lecture.capacityByGrade?.["2"] ?? ""),
+              grade3: String(lecture.capacityByGrade?.["3"] ?? ""),
               lectureLocation: lecture.lectureLocation ?? "",
               lectureDate: lecture.lectureDate ?? "",
               lectureTime: lecture.lectureTime ?? "",
+              applicationDeadline: lecture.applicationDeadline ?? "",
             }}
             onSubmit={handleSubmit}
             isPending={isUpdating}
