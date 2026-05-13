@@ -16,6 +16,7 @@ import DeadlineCountdown from "@/components/common/DeadlineCountdown";
 import useAuthStore from "@/stores/authStore";
 import { authUrls } from "@/shared/api/apiUrls";
 import {
+  getDisplayLectureStatus,
   useGetLecture,
   useEnrollLecture,
   useCancelEnrollment,
@@ -88,8 +89,11 @@ export default function LectureDetailPage() {
     ((lecture.capacityByGrade?.["1"] ?? 0) +
       (lecture.capacityByGrade?.["2"] ?? 0) +
       (lecture.capacityByGrade?.["3"] ?? 0));
+  const usesGradeCapacity =
+    lecture.totalCapacity == null && lecture.capacityByGrade != null;
 
   const isFull = lecture.enrolledCount >= totalCapacity;
+  const displayStatus = getDisplayLectureStatus(lecture);
 
   const STATUS_TO_BADGE = {
     OPEN: "open",
@@ -98,7 +102,7 @@ export default function LectureDetailPage() {
     UNCONFIRMED: "unconfirmed",
   } as const;
 
-  const badgeVariant = STATUS_TO_BADGE[lecture.lectureStatus];
+  const badgeVariant = STATUS_TO_BADGE[displayStatus];
 
   return (
     <main className="max-w-[800px] mx-auto px-6 py-10 flex flex-col gap-6">
@@ -144,7 +148,7 @@ export default function LectureDetailPage() {
               전체 {lecture.enrolledCount}/{totalCapacity}명
             </span>
           </div>
-          {lecture.capacityByGrade && (
+          {usesGradeCapacity && (
             <div className="flex items-center gap-3 text-xs text-gray-400 pl-5">
               {(["1", "2", "3"] as const).map((grade) => (
                 <span key={grade}>
@@ -194,9 +198,9 @@ export default function LectureDetailPage() {
           <Button variant="waiting" disabled className="py-3 mt-2">
             내가 생성한 강연입니다
           </Button>
-        ) : lecture.lectureStatus === "CLOSED" ? (
+        ) : displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED" ? (
           <Button disabled className="py-3 mt-2">
-            강연 종료
+            {displayStatus === "UNCONFIRMED" ? "개설 불확정" : "강연 종료"}
           </Button>
         ) : enrollStatus === "ENROLLED" ? (
           <Button
