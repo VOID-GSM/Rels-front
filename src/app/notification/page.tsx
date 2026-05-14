@@ -110,7 +110,9 @@ export default function NotificationPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex flex-col gap-1">
-                      <h2 className="text-base font-bold text-gray-900">{notice.title}</h2>
+                      <h2 className="break-words text-base font-bold text-gray-900">
+                        {notice.title}
+                      </h2>
                       <span className="text-xs text-gray-400">{formatDate(notice.createdAt)}</span>
                     </div>
                     {canEdit && (
@@ -130,7 +132,7 @@ export default function NotificationPage() {
                       </div>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  <p className="break-words whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
                     {notice.content}
                   </p>
                 </div>

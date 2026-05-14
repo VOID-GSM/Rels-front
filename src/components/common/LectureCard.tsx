@@ -29,8 +29,10 @@ export default function LectureCard({
       {/* 상단 */}
       <div className="flex flex-col gap-2">
         <Badge variant={status} />
-        <p className="font-bold text-lg text-gray-900 line-clamp-1">{title}</p>
-        <p className="text-sm text-gray-500">{speaker}</p>
+        <p className="line-clamp-2 break-words text-lg font-bold text-gray-900">
+          {title}
+        </p>
+        <p className="break-words text-sm text-gray-500">{speaker}</p>
       </div>
 
       {/* 하단 */}

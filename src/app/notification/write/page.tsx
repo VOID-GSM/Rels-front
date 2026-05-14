@@ -9,6 +9,9 @@ import Button from "@/components/common/Button";
 import useAuthStore from "@/stores/authStore";
 import { useCreateNotice } from "@/entities/notice";
 
+const TITLE_MAX_LENGTH = 300;
+const CONTENT_MAX_LENGTH = 500;
+
 export default function NoticeWritePage() {
   const router = useRouter();
   const { user, isLoggedIn } = useAuthStore();
@@ -27,17 +30,30 @@ export default function NoticeWritePage() {
     }
   }, [isLoggedIn, user, router]);
 
-  if (!user) return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
-      <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
-    </div>
-  );
+  if (!user) {
+    return (
+      <div className="flex min-h-[calc(100vh-70px)] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-main/30 border-t-main" />
+      </div>
+    );
+  }
+
   if (user.role !== "ADMIN") return null;
 
   const validate = () => {
     const next: typeof errors = {};
-    if (!title.trim()) next.title = "공지 제목을 입력해주세요.";
-    if (!content.trim()) next.content = "공지 내용을 입력해주세요.";
+    if (!title.trim()) {
+      next.title = "공지 제목을 입력해 주세요.";
+    } else if (title.trim().length > TITLE_MAX_LENGTH) {
+      next.title = `공지 제목은 ${TITLE_MAX_LENGTH}자 이내로 입력해 주세요.`;
+    }
+
+    if (!content.trim()) {
+      next.content = "공지 내용을 입력해 주세요.";
+    } else if (content.trim().length > CONTENT_MAX_LENGTH) {
+      next.content = `공지 내용은 ${CONTENT_MAX_LENGTH}자 이내로 입력해 주세요.`;
+    }
+
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -53,46 +69,62 @@ export default function NoticeWritePage() {
 
   return (
     <>
-      <main className="max-w-[600px] mx-auto px-6 py-10 flex flex-col gap-6">
+      <main className="mx-auto flex max-w-[600px] flex-col gap-6 px-6 py-10">
         <Link
           href="/notification"
-          className="flex items-center gap-1 text-sm text-gray-500 w-fit"
+          className="flex w-fit items-center gap-1 text-sm text-gray-500"
         >
           <Arrow />
           뒤로
         </Link>
 
-        <div className="border border-main-200 rounded-2xl p-8 flex flex-col gap-6">
+        <div className="flex flex-col gap-6 rounded-2xl border border-main-200 p-8">
           <h1 className="text-xl font-bold text-gray-900">공지 작성</h1>
 
           <div className="flex flex-col gap-4">
-            <Input
-              label="공지 제목"
-              placeholder="공지 제목을 입력하세요"
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                if (errors.title) setErrors((p) => ({ ...p, title: undefined }));
-              }}
-              error={errors.title}
-            />
-
-            <div className="flex flex-col gap-1 w-full">
-              <label className="text-sm font-medium text-gray-700">공지 내용</label>
-              <textarea
-                placeholder="공지 내용을 입력하세요"
-                value={content}
+            <div className="flex flex-col gap-1">
+              <Input
+                label="공지 제목"
+                placeholder="공지 제목을 입력해 주세요."
+                value={title}
+                maxLength={TITLE_MAX_LENGTH}
                 onChange={(e) => {
-                  setContent(e.target.value);
-                  if (errors.content) setErrors((p) => ({ ...p, content: undefined }));
+                  setTitle(e.target.value.slice(0, TITLE_MAX_LENGTH));
+                  if (errors.title) {
+                    setErrors((prev) => ({ ...prev, title: undefined }));
+                  }
+                }}
+                error={errors.title}
+              />
+              <p className="text-right text-xs text-gray-400">
+                {title.length}/{TITLE_MAX_LENGTH}
+              </p>
+            </div>
+
+            <div className="flex w-full flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">
+                공지 내용
+              </label>
+              <textarea
+                placeholder="공지 내용을 입력해 주세요."
+                value={content}
+                maxLength={CONTENT_MAX_LENGTH}
+                onChange={(e) => {
+                  setContent(e.target.value.slice(0, CONTENT_MAX_LENGTH));
+                  if (errors.content) {
+                    setErrors((prev) => ({ ...prev, content: undefined }));
+                  }
                 }}
                 rows={8}
-                className={`w-full px-3 py-2 border rounded-md placeholder:text-gray-400 focus:outline-none transition-colors resize-none ${
+                className={`w-full resize-none rounded-md border px-3 py-2 placeholder:text-gray-400 break-words whitespace-pre-wrap focus:outline-none transition-colors ${
                   errors.content
                     ? "border-error focus:border-error"
                     : "border-main-300 focus:border-main"
                 }`}
               />
+              <p className="text-right text-xs text-gray-400">
+                {content.length}/{CONTENT_MAX_LENGTH}
+              </p>
               {errors.content && (
                 <p className="text-xs text-error">{errors.content}</p>
               )}
@@ -105,14 +137,13 @@ export default function NoticeWritePage() {
         </div>
       </main>
 
-      {/* 확인 모달 */}
       {isConfirmOpen && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
           onClick={() => !isPending && setIsConfirmOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-6 w-full max-w-[400px] mx-4 flex flex-col gap-5"
+            className="mx-4 flex w-full max-w-[400px] flex-col gap-5 rounded-2xl bg-white p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col gap-1.5">
@@ -134,7 +165,7 @@ export default function NoticeWritePage() {
                 disabled={isPending}
                 className="py-2.5"
               >
-                {isPending ? "등록 중..." : "공지하기"}
+                {isPending ? "등록 중.." : "공지하기"}
               </Button>
             </div>
           </div>
