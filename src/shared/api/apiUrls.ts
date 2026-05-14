@@ -1,9 +1,4 @@
-const BACKEND_URL = (process.env.NEXT_PUBLIC_BACKEND_URL ?? "").replace(
-  /\/+$/,
-  "",
-);
-
-// 백엔드 API 엔드포인트 (클라이언트 axios 전용 — baseURL이 BACKEND_URL이므로 경로만 작성)
+// 백엔드 API 엔드포인트는 Next rewrite를 통해 같은 출처의 /api 경로로 프록시됩니다.
 export const authUrl = {
   getUserInfo: () => "/api/auth/me",
 } as const;
@@ -27,10 +22,9 @@ export const noticeUrl = {
   delete: (id: number) => `/api/notices/${id}`,
 } as const;
 
-// 직접 fetch가 필요한 경우를 위한 전체 URL
 export const authUrls = {
   dgStart: (redirectUri: string) =>
-    `${BACKEND_URL}/api/auth/dg/start?redirectUri=${encodeURIComponent(redirectUri)}`,
+    `/api/auth/dg/start?redirectUri=${encodeURIComponent(redirectUri)}`,
   dgCallback: (code: string, state: string) =>
-    `${BACKEND_URL}/api/auth/dg/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`,
+    `/api/auth/dg/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`,
 } as const;
