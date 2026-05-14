@@ -17,7 +17,7 @@ export default function NoticeBanner() {
           <Notification />
           <span className="font-medium text-main">공지</span>
           <span className="mx-1 text-gray-300">|</span>
-          <span className="truncate">{latestNotice.title}</span>
+          <span className="min-w-0 flex-1 truncate">{latestNotice.title}</span>
         </div>
       </div>
     </Link>

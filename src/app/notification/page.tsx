@@ -109,7 +109,7 @@ export default function NotificationPage() {
                   className="border border-main-200 rounded-2xl p-6 flex flex-col gap-3"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex flex-col gap-1">
+                    <div className="min-w-0 flex-1 flex-col gap-1">
                       <h2 className="break-words text-base font-bold text-gray-900">
                         {notice.title}
                       </h2>

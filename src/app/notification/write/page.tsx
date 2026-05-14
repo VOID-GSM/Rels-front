@@ -9,7 +9,7 @@ import Button from "@/components/common/Button";
 import useAuthStore from "@/stores/authStore";
 import { useCreateNotice } from "@/entities/notice";
 
-const TITLE_MAX_LENGTH = 300;
+const TITLE_MAX_LENGTH = 360;
 const CONTENT_MAX_LENGTH = 500;
 
 export default function NoticeWritePage() {
