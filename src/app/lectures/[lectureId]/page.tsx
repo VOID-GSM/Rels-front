@@ -131,12 +131,14 @@ export default function LectureDetailPage() {
 
         {/* 제목 */}
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{lecture.title}</h1>
+          <h1 className="break-words text-xl font-bold text-gray-900">
+            {lecture.title}
+          </h1>
           <p className="text-sm text-gray-500 mt-1">{lecture.creatorName}</p>
         </div>
 
         {/* 설명 */}
-        <p className="text-sm text-gray-700 leading-relaxed">
+        <p className="break-words whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
           {lecture.description}
         </p>
 

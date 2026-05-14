@@ -4,6 +4,9 @@ import { useState } from "react";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 
+const TITLE_MAX_LENGTH = 300;
+const DESCRIPTION_MAX_LENGTH = 500;
+
 export interface LectureFormValues {
   title: string;
   description: string;
@@ -70,7 +73,7 @@ function ValidationModal({
       >
         <div className="flex flex-col gap-1.5">
           <h2 className="text-lg font-bold text-gray-900">입력 확인</h2>
-          <p className="text-sm text-gray-500 whitespace-pre-line">{message}</p>
+          <p className="whitespace-pre-line text-sm text-gray-500">{message}</p>
         </div>
         <Button onClick={onClose} className="py-2.5">
           확인
@@ -122,12 +125,27 @@ export default function LectureForm({
     applicationDeadline?: string;
   }>({});
 
+  const clearError = (key: keyof typeof errors) => {
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: undefined }));
+    }
+  };
+
   const validate = () => {
     const next: typeof errors = {};
     const missingFields: string[] = [];
 
-    if (!title.trim()) next.title = "강연 제목을 입력해 주세요.";
-    if (!description.trim()) next.description = "강연 내용을 입력해 주세요.";
+    if (!title.trim()) {
+      next.title = "강연 제목을 입력해 주세요.";
+    } else if (title.trim().length > TITLE_MAX_LENGTH) {
+      next.title = `강연 제목은 ${TITLE_MAX_LENGTH}자 이내로 입력해 주세요.`;
+    }
+
+    if (!description.trim()) {
+      next.description = "강연 내용을 입력해 주세요.";
+    } else if (description.trim().length > DESCRIPTION_MAX_LENGTH) {
+      next.description = `강연 내용은 ${DESCRIPTION_MAX_LENGTH}자 이내로 입력해 주세요.`;
+    }
 
     if (capacityMode === "total") {
       if (
@@ -135,17 +153,17 @@ export default function LectureForm({
         Number.isNaN(Number(totalCapacity)) ||
         Number(totalCapacity) < 0
       ) {
-        next.totalCapacity = "0명 이상이어야 합니다.";
+        next.totalCapacity = "0명 이상의 값을 입력해 주세요.";
       }
     } else {
       if (grade1 === "" || Number.isNaN(Number(grade1)) || Number(grade1) < 0) {
-        next.grade1 = "0명 이상이어야 합니다.";
+        next.grade1 = "0명 이상의 값을 입력해 주세요.";
       }
       if (grade2 === "" || Number.isNaN(Number(grade2)) || Number(grade2) < 0) {
-        next.grade2 = "0명 이상이어야 합니다.";
+        next.grade2 = "0명 이상의 값을 입력해 주세요.";
       }
       if (grade3 === "" || Number.isNaN(Number(grade3)) || Number(grade3) < 0) {
-        next.grade3 = "0명 이상이어야 합니다.";
+        next.grade3 = "0명 이상의 값을 입력해 주세요.";
       }
     }
 
@@ -169,7 +187,7 @@ export default function LectureForm({
 
     if (missingFields.length > 0) {
       setValidationModalMessage(
-        `${missingFields.join(", ")}을 입력해 주세요.`,
+        `${missingFields.join(", ")} 항목을 입력해 주세요.`,
       );
     }
 
@@ -206,35 +224,43 @@ export default function LectureForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <Input
-        label="강연 제목"
-        placeholder="강연 제목"
-        value={title}
-        onChange={(e) => {
-          setTitle(e.target.value);
-          if (errors.title) setErrors((p) => ({ ...p, title: undefined }));
-        }}
-        error={errors.title}
-      />
+      <div className="flex flex-col gap-1">
+        <Input
+          label="강연 제목"
+          placeholder="강연 제목"
+          value={title}
+          maxLength={TITLE_MAX_LENGTH}
+          onChange={(e) => {
+            setTitle(e.target.value.slice(0, TITLE_MAX_LENGTH));
+            clearError("title");
+          }}
+          error={errors.title}
+        />
+        <p className="text-right text-xs text-gray-400">
+          {title.length}/{TITLE_MAX_LENGTH}
+        </p>
+      </div>
 
       <div className="flex w-full flex-col gap-1">
         <label className="text-sm font-medium text-gray-700">강연 내용</label>
         <textarea
           placeholder="강연 내용을 입력해 주세요."
           value={description}
+          maxLength={DESCRIPTION_MAX_LENGTH}
           onChange={(e) => {
-            setDescription(e.target.value);
-            if (errors.description) {
-              setErrors((p) => ({ ...p, description: undefined }));
-            }
+            setDescription(e.target.value.slice(0, DESCRIPTION_MAX_LENGTH));
+            clearError("description");
           }}
           rows={5}
-          className={`w-full resize-none rounded-md border px-3 py-2 placeholder:text-gray-400 focus:outline-none transition-colors ${
+          className={`w-full resize-none rounded-md border px-3 py-2 placeholder:text-gray-400 break-words whitespace-pre-wrap focus:outline-none transition-colors ${
             errors.description
               ? "border-error focus:border-error"
               : "border-main-300 focus:border-main"
           }`}
         />
+        <p className="text-right text-xs text-gray-400">
+          {description.length}/{DESCRIPTION_MAX_LENGTH}
+        </p>
         {errors.description && (
           <p className="text-xs text-error">{errors.description}</p>
         )}
@@ -278,9 +304,7 @@ export default function LectureForm({
             value={totalCapacity}
             onChange={(e) => {
               setTotalCapacity(e.target.value);
-              if (errors.totalCapacity) {
-                setErrors((p) => ({ ...p, totalCapacity: undefined }));
-              }
+              clearError("totalCapacity");
             }}
             error={errors.totalCapacity}
           />
@@ -294,9 +318,7 @@ export default function LectureForm({
               value={grade1}
               onChange={(e) => {
                 setGrade1(e.target.value);
-                if (errors.grade1) {
-                  setErrors((p) => ({ ...p, grade1: undefined }));
-                }
+                clearError("grade1");
               }}
               error={errors.grade1}
             />
@@ -308,9 +330,7 @@ export default function LectureForm({
               value={grade2}
               onChange={(e) => {
                 setGrade2(e.target.value);
-                if (errors.grade2) {
-                  setErrors((p) => ({ ...p, grade2: undefined }));
-                }
+                clearError("grade2");
               }}
               error={errors.grade2}
             />
@@ -322,9 +342,7 @@ export default function LectureForm({
               value={grade3}
               onChange={(e) => {
                 setGrade3(e.target.value);
-                if (errors.grade3) {
-                  setErrors((p) => ({ ...p, grade3: undefined }));
-                }
+                clearError("grade3");
               }}
               error={errors.grade3}
             />
@@ -338,9 +356,7 @@ export default function LectureForm({
         value={lectureLocation}
         onChange={(e) => {
           setLectureLocation(e.target.value);
-          if (errors.lectureLocation) {
-            setErrors((p) => ({ ...p, lectureLocation: undefined }));
-          }
+          clearError("lectureLocation");
         }}
         error={errors.lectureLocation}
       />
@@ -352,9 +368,7 @@ export default function LectureForm({
           value={lectureDate}
           onChange={(e) => {
             setLectureDate(e.target.value);
-            if (errors.lectureDate) {
-              setErrors((p) => ({ ...p, lectureDate: undefined }));
-            }
+            clearError("lectureDate");
           }}
           error={errors.lectureDate}
         />
@@ -364,9 +378,7 @@ export default function LectureForm({
           value={lectureTime}
           onChange={(e) => {
             setLectureTime(e.target.value);
-            if (errors.lectureTime) {
-              setErrors((p) => ({ ...p, lectureTime: undefined }));
-            }
+            clearError("lectureTime");
           }}
           error={errors.lectureTime}
         />
@@ -378,9 +390,7 @@ export default function LectureForm({
         value={applicationDeadline}
         onChange={(e) => {
           setApplicationDeadline(e.target.value);
-          if (errors.applicationDeadline) {
-            setErrors((p) => ({ ...p, applicationDeadline: undefined }));
-          }
+          clearError("applicationDeadline");
         }}
         error={errors.applicationDeadline}
       />
