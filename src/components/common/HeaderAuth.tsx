@@ -2,13 +2,13 @@
 
 import useAuthStore from "@/stores/authStore";
 import { authUrls } from "@/shared/api/apiUrls";
+import { getOAuthRedirectUri } from "@/shared/lib/getOAuthRedirectUri";
 
 export default function HeaderAuth() {
   const { isLoggedIn } = useAuthStore();
 
   const handleLogin = () => {
-    const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
-    window.location.href = authUrls.dgStart(redirectUri);
+    window.location.href = authUrls.dgStart(getOAuthRedirectUri());
   };
 
   if (isLoggedIn) return null;

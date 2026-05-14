@@ -15,6 +15,7 @@ import Location from "@/assets/svg/Location";
 import DeadlineCountdown from "@/components/common/DeadlineCountdown";
 import useAuthStore from "@/stores/authStore";
 import { authUrls } from "@/shared/api/apiUrls";
+import { getOAuthRedirectUri } from "@/shared/lib/getOAuthRedirectUri";
 import {
   getDisplayLectureStatus,
   useGetLecture,
@@ -31,8 +32,7 @@ export default function LectureDetailPage() {
   useEffect(() => {
     const token = initFromSession();
     if (!token) {
-      const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
-      window.location.href = authUrls.dgStart(redirectUri);
+      window.location.href = authUrls.dgStart(getOAuthRedirectUri());
     }
   }, [initFromSession]);
 

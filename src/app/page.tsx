@@ -7,6 +7,7 @@ import type { LectureType, LectureStatusType } from "@/entities/lecture";
 import LectureCard from "@/components/common/LectureCard";
 import CreateLectureButton from "@/components/common/CreateLectureButton";
 import { authUrls } from "@/shared/api/apiUrls";
+import { getOAuthRedirectUri } from "@/shared/lib/getOAuthRedirectUri";
 
 const STATUS_TO_BADGE: Record<
   LectureStatusType,
@@ -71,8 +72,7 @@ export default function Home() {
 
   const handleCardClick = (id: string) => {
     if (!isLoggedIn) {
-      const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/callback`;
-      window.location.href = authUrls.dgStart(redirectUri);
+      window.location.href = authUrls.dgStart(getOAuthRedirectUri());
       return;
     }
     router.push(`/lectures/${id}`);
