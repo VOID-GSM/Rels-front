@@ -10,7 +10,7 @@ import useAuthStore from "@/stores/authStore";
 import { useGetNotice, useUpdateNotice } from "@/entities/notice";
 import type { NoticeType } from "@/entities/notice";
 
-const TITLE_MAX_LENGTH = 300;
+const TITLE_MAX_LENGTH = 360;
 const CONTENT_MAX_LENGTH = 500;
 
 function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }) {
