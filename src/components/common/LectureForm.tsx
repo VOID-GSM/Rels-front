@@ -4,7 +4,7 @@ import { useState } from "react";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 
-const TITLE_MAX_LENGTH = 360;
+const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 500;
 
 export interface LectureFormValues {
