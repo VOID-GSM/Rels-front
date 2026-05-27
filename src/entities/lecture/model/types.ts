@@ -17,6 +17,35 @@ export interface LectureEnrollmentsType {
   waiting: EnrollmentApplicant[];
 }
 
+export interface MyEnrolledLecture {
+  lectureId: number;
+  title: string;
+  lectureStatus: LectureStatusType;
+  enrollmentStatus: "ENROLLED" | "WAITING" | string;
+  creatorName: string;
+  lectureLocation: string | null;
+  lectureDate: string | null;
+  lectureTime: string | null;
+  applicationDeadline: string | null;
+  requestedAt: string;
+}
+
+export interface MyCreatedLecture {
+  lectureId: number;
+  title: string;
+  lectureStatus: LectureStatusType;
+  lectureLocation: string | null;
+  lectureDate: string | null;
+  lectureTime: string | null;
+  applicationDeadline: string | null;
+  createdAt: string;
+}
+
+export interface MyLectureEnrollmentsType {
+  enrolledLectures: MyEnrolledLecture[];
+  createdLectures: MyCreatedLecture[];
+}
+
 export interface GradeCapacities {
   "1": number;
   "2": number;

@@ -14,6 +14,9 @@ export const useDeleteLecture = () => {
     mutationFn: deleteLecture,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: lectureQueryKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getMyEnrollments(),
+      });
     },
   });
 };

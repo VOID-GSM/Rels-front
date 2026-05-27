@@ -4,7 +4,7 @@ import { useState } from "react";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 
-const TITLE_MAX_LENGTH = 360;
+const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 500;
 
 export interface LectureFormValues {
@@ -352,7 +352,7 @@ export default function LectureForm({
 
       <Input
         label="강연 장소"
-        placeholder="예: 공학관 301호"
+        placeholder="예) 컴플렉스존"
         value={lectureLocation}
         onChange={(e) => {
           setLectureLocation(e.target.value);
