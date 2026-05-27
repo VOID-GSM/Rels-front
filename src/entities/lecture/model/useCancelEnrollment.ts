@@ -27,6 +27,32 @@ export const useCancelEnrollment = (
       queryClient.invalidateQueries({
         queryKey: lectureQueryKeys.getEnrollments(lectureId),
       });
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getMyEnrollments(),
+      });
+      options?.onSuccess?.();
+    },
+    onError: (error: Error) => {
+      options?.onError?.(error);
+    },
+  });
+};
+
+export const useCancelEnrollmentById = (options?: UseCancelEnrollmentOptions) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: cancelEnrollment,
+    onSuccess: (_, lectureId) => {
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getOne(lectureId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getEnrollments(lectureId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getMyEnrollments(),
+      });
       options?.onSuccess?.();
     },
     onError: (error: Error) => {
