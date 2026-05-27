@@ -119,7 +119,7 @@ export default function NotificationPage() {
                         {formatDate(notice.createdAt)}
                       </span>
                     </div>
-                    {isAdmin && canEdit && (
+                    {canEdit && (
                       <div className="flex items-center gap-2 shrink-0">
                         <Link
                           href={`/notification/${notice.id}/edit`}
