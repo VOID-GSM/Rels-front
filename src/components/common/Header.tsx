@@ -8,7 +8,7 @@ import { useGetUserInfo } from "@/entities/auth";
 import HeaderAuth from "./HeaderAuth";
 
 export default function Header() {
-  const { isLoggedIn, user, setUser, initFromSession } = useAuthStore();
+  const { isLoggedIn, setUser, initFromSession } = useAuthStore();
   const { data: fetchedUser } = useGetUserInfo();
 
   // 새로고침 후 sessionStorage 토큰 복원
@@ -20,8 +20,6 @@ export default function Header() {
   useEffect(() => {
     if (fetchedUser) setUser(fetchedUser);
   }, [fetchedUser, setUser]);
-
-  const isCouncil = user?.role === "ADMIN";
 
   return (
     <header className="max-w-[1920px] h-[70px] border-b border-main-300 flex items-center justify-between px-66">
