@@ -9,6 +9,7 @@ interface EnrollResponse {
   enrollmentStatus: "ENROLLED" | "WAITING";
   enrolledCount: number;
   waitingCount: number;
+  requestedAt: string;
 }
 
 const enrollLecture = (id: number): Promise<EnrollResponse> => {
@@ -42,6 +43,9 @@ export const useEnrollLecture = (
       );
       queryClient.invalidateQueries({
         queryKey: lectureQueryKeys.getEnrollments(lectureId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getMyEnrollments(),
       });
       options?.onSuccess?.(data);
     },
