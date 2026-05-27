@@ -5,11 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
 import {
-  getDisplayLectureStatus,
+  useCancelEnrollmentById,
   useDeleteLecture,
-  useGetLectures,
+  useGetMyLectureEnrollments,
 } from "@/entities/lecture";
-import type { LectureStatusType, LectureType } from "@/entities/lecture";
+import type {
+  LectureStatusType,
+  MyCreatedLecture,
+  MyEnrolledLecture,
+} from "@/entities/lecture";
 import CouncilBadge from "@/components/common/CouncilBadge";
 import Button from "@/components/common/Button";
 import Arrow from "@/assets/svg/Arrow";
@@ -17,7 +21,6 @@ import Person from "@/assets/svg/Person";
 import HashTag from "@/assets/svg/HashTag";
 import Mail from "@/assets/svg/Mail";
 import Logout from "@/assets/svg/Logout";
-import People from "@/assets/svg/People";
 
 const STATUS_LABEL: Record<LectureStatusType, string> = {
   OPEN: "개설 미정",
@@ -26,8 +29,13 @@ const STATUS_LABEL: Record<LectureStatusType, string> = {
   UNCONFIRMED: "개설 불확정",
 };
 
-type LectureItem = LectureType & {
-  capacity?: number | null;
+const ENROLLMENT_STATUS_LABEL: Record<string, string> = {
+  ENROLLED: "신청 완료",
+  WAITING: "대기 중",
+};
+
+type MyPageLectureItem = (MyCreatedLecture | MyEnrolledLecture) & {
+  meta?: string;
 };
 
 function InfoField({
@@ -54,11 +62,16 @@ function LectureItem({
   lecture,
   onAction,
   actionLabel,
+  disabled,
 }: {
-  lecture: LectureItem;
+  lecture: MyPageLectureItem;
   onAction: (id: number) => void;
   actionLabel: string;
+  disabled?: boolean;
 }) {
+  const statusLabel =
+    STATUS_LABEL[lecture.lectureStatus] ?? lecture.lectureStatus;
+
   return (
     <li className="flex items-center justify-between bg-background rounded-xl px-4 py-3 gap-3">
       <Link
@@ -68,24 +81,22 @@ function LectureItem({
         <span className="text-sm font-medium text-gray-800 line-clamp-1">
           {lecture.title}
         </span>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <People />
-            <span>
-              {lecture.capacity
-                ? `${lecture.enrolledCount}/${lecture.capacity}명`
-                : `${lecture.enrolledCount}명`}
-            </span>
-          </div>
-          <span className="text-gray-500">|</span>
-          <span className="text-xs text-gray-500">
-            {STATUS_LABEL[getDisplayLectureStatus(lecture)]}
-          </span>
+        <div className="flex items-center gap-2 min-w-0">
+          {lecture.meta && (
+            <>
+              <span className="text-xs text-gray-500 line-clamp-1">
+                {lecture.meta}
+              </span>
+              <span className="text-gray-500">|</span>
+            </>
+          )}
+          <span className="text-xs text-gray-500 shrink-0">{statusLabel}</span>
         </div>
       </Link>
       <button
         onClick={() => onAction(lecture.lectureId)}
-        className="shrink-0 text-xs text-error hover:underline"
+        disabled={disabled}
+        className="shrink-0 text-xs text-error hover:underline disabled:text-gray-300 disabled:hover:no-underline"
       >
         {actionLabel}
       </button>
@@ -137,8 +148,11 @@ function DeleteConfirmModal({
 export default function MyPage() {
   const { user, clearAuth } = useAuthStore();
   const router = useRouter();
-  const { data: lectures = [] } = useGetLectures();
+  const { data: myLectureEnrollments, isLoading } =
+    useGetMyLectureEnrollments();
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
+  const { mutate: cancelEnrollment, isPending: isCancelling } =
+    useCancelEnrollmentById();
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   const handleLogout = () => {
@@ -154,19 +168,25 @@ export default function MyPage() {
     );
   }
 
-  const myCreatedLectures: LectureItem[] = lectures
-    .filter((l) => l.creatorId === user.userId)
-    .map((lecture) => ({
-      ...lecture,
-      capacity:
-        lecture.totalCapacity ??
-        ((lecture.capacityByGrade?.["1"] ?? 0) +
-          (lecture.capacityByGrade?.["2"] ?? 0) +
-          (lecture.capacityByGrade?.["3"] ?? 0)),
-    }));
+  const myCreatedLectures: MyPageLectureItem[] = (
+    myLectureEnrollments?.createdLectures ?? []
+  ).map((lecture) => ({
+    ...lecture,
+    meta: [lecture.lectureLocation, lecture.lectureDate].filter(Boolean).join(" · "),
+  }));
 
-  // 신청한 강연 API 연결 예정
-  const myEnrolledLectures: LectureItem[] = [];
+  const myEnrolledLectures: MyPageLectureItem[] = (
+    myLectureEnrollments?.enrolledLectures ?? []
+  ).map((lecture) => ({
+    ...lecture,
+    meta: [
+      lecture.creatorName,
+      ENROLLMENT_STATUS_LABEL[lecture.enrollmentStatus] ??
+        lecture.enrollmentStatus,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }));
 
   const handleDelete = (id: number) => {
     setDeleteTargetId(id);
@@ -180,14 +200,13 @@ export default function MyPage() {
     });
   };
 
-  const handleCancelEnroll = () => {
-    // 강연 신청 취소 API 연결 예정
+  const handleCancelEnroll = (id: number) => {
+    cancelEnrollment(id);
   };
 
   return (
     <>
       <main className="max-w-[800px] mx-auto px-6 py-10 flex flex-col gap-6">
-        {/* 뒤로 */}
         <Link
           href="/"
           className="flex items-center gap-1 text-sm text-gray-500 w-fit"
@@ -196,7 +215,6 @@ export default function MyPage() {
           뒤로
         </Link>
 
-        {/* 내 정보 카드 */}
         <div className="border border-main-200 rounded-2xl p-6 flex flex-col gap-5">
           <div className="flex items-center gap-3">
             <Person width={20} height={20} />
@@ -206,7 +224,11 @@ export default function MyPage() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <InfoField icon={<Person />} label="이름" value={user.name} />
-            <InfoField icon={<HashTag />} label="학번" value={user.studentNumber} />
+            <InfoField
+              icon={<HashTag />}
+              label="학번"
+              value={user.studentNumber}
+            />
             <InfoField icon={<Mail />} label="이메일" value={user.email} />
           </div>
 
@@ -219,14 +241,16 @@ export default function MyPage() {
           </button>
         </div>
 
-        {/* 강연 섹션 — 2열 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* 내가 생성한 강연 */}
           <div className="border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
             <span className="font-semibold text-base">
-              내가 생성한 강연 ({myCreatedLectures.length})
+              내가 개설한 강연 ({myCreatedLectures.length})
             </span>
-            {myCreatedLectures.length === 0 ? (
+            {isLoading ? (
+              <p className="text-xs text-gray-400 py-4 text-center">
+                불러오는 중...
+              </p>
+            ) : myCreatedLectures.length === 0 ? (
               <p className="text-xs text-gray-400 py-4 text-center">
                 생성한 강연이 없습니다.
               </p>
@@ -244,12 +268,15 @@ export default function MyPage() {
             )}
           </div>
 
-          {/* 내가 신청한 강연 */}
           <div className="border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
             <span className="font-semibold text-base">
               내가 신청한 강연 ({myEnrolledLectures.length})
             </span>
-            {myEnrolledLectures.length === 0 ? (
+            {isLoading ? (
+              <p className="text-xs text-gray-400 py-4 text-center">
+                불러오는 중...
+              </p>
+            ) : myEnrolledLectures.length === 0 ? (
               <p className="text-xs text-gray-400 py-4 text-center">
                 신청한 강연이 없습니다.
               </p>
@@ -261,6 +288,7 @@ export default function MyPage() {
                     lecture={lecture}
                     onAction={handleCancelEnroll}
                     actionLabel="취소"
+                    disabled={isCancelling}
                   />
                 ))}
               </ul>
