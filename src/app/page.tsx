@@ -34,11 +34,15 @@ const sortLectures = (lectures: LectureType[]) =>
       STATUS_SORT_ORDER[getDisplayLectureStatus(b)],
   );
 
-function LectureGrid({ lectures, onCardClick }: { lectures: LectureType[]; onCardClick?: (id: string) => void }) {
+function LectureGrid({
+  lectures,
+  onCardClick,
+}: {
+  lectures: LectureType[];
+  onCardClick?: (id: string) => void;
+}) {
   if (lectures.length === 0) {
-    return (
-      <p className="text-sm text-gray-400">등록된 강연이 없습니다.</p>
-    );
+    return <p className="text-sm text-gray-400">등록된 강연이 없습니다.</p>;
   }
 
   return (
@@ -51,9 +55,18 @@ function LectureGrid({ lectures, onCardClick }: { lectures: LectureType[]; onCar
           speaker={lecture.creatorName}
           status={STATUS_TO_BADGE[getDisplayLectureStatus(lecture)]}
           currentCount={lecture.enrolledCount}
-          maxCount={lecture.totalCapacity ?? ((lecture.capacityByGrade?.["1"] ?? 0) + (lecture.capacityByGrade?.["2"] ?? 0) + (lecture.capacityByGrade?.["3"] ?? 0))}
+          maxCount={
+            lecture.totalCapacity ??
+            (lecture.capacityByGrade?.["1"] ?? 0) +
+              (lecture.capacityByGrade?.["2"] ?? 0) +
+              (lecture.capacityByGrade?.["3"] ?? 0)
+          }
           waitingCount={lecture.waitingCount}
-          onClick={onCardClick ? () => onCardClick(String(lecture.lectureId)) : undefined}
+          onClick={
+            onCardClick
+              ? () => onCardClick(String(lecture.lectureId))
+              : undefined
+          }
         />
       ))}
     </div>
@@ -102,7 +115,10 @@ export default function Home() {
               <h2 className="text-lg font-semibold text-gray-800">
                 내가 생성한 강연
               </h2>
-              <LectureGrid lectures={myLectures} onCardClick={handleCardClick} />
+              <LectureGrid
+                lectures={myLectures}
+                onCardClick={handleCardClick}
+              />
             </section>
           )}
 

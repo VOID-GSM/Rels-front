@@ -98,7 +98,9 @@ export default function NotificationPage() {
             <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
           </div>
         ) : notices.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-20">등록된 공지가 없습니다.</p>
+          <p className="text-sm text-gray-400 text-center py-20">
+            등록된 공지가 없습니다.
+          </p>
         ) : (
           <div className="flex flex-col gap-4">
             {notices.map((notice) => {
@@ -113,9 +115,11 @@ export default function NotificationPage() {
                       <h2 className="break-words text-base font-bold text-gray-900">
                         {notice.title}
                       </h2>
-                      <span className="text-xs text-gray-400">{formatDate(notice.createdAt)}</span>
+                      <span className="text-xs text-gray-400">
+                        {formatDate(notice.createdAt)}
+                      </span>
                     </div>
-                    {canEdit && (
+                    {isAdmin && canEdit && (
                       <div className="flex items-center gap-2 shrink-0">
                         <Link
                           href={`/notification/${notice.id}/edit`}
