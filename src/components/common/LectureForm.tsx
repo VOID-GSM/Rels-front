@@ -10,6 +10,11 @@ const DESCRIPTION_MAX_LENGTH = 500;
 const MIN_CAPACITY = 10;
 const MAX_CAPACITY = 30;
 
+const parseLocalDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
 export interface LectureFormValues {
   title: string;
   description: string;
@@ -107,6 +112,7 @@ export default function LectureForm({
     const next: typeof errors = {};
     const missingFields: string[] = [];
     let capacityToastMessage: string | null = null;
+    let dateToastMessage: string | null = null;
 
     if (!title.trim()) {
       next.title = "강연 제목을 입력해 주세요.";
@@ -197,12 +203,35 @@ export default function LectureForm({
       missingFields.push("신청 마감일");
     }
 
+    if (lectureDate && lectureTime) {
+      const lectureDateTime = parseLocalDateTime(`${lectureDate}T${lectureTime}`);
+
+      if (lectureDateTime && lectureDateTime.getTime() < Date.now()) {
+        next.lectureDate = "현재 날짜/시간 이후로 선택해 주세요.";
+        next.lectureTime = "현재 날짜/시간 이후로 선택해 주세요.";
+        dateToastMessage = "강연 날짜와 시간은 현재보다 이전으로 설정할 수 없습니다.";
+      }
+    }
+
+    if (applicationDeadline) {
+      const deadlineDateTime = parseLocalDateTime(applicationDeadline);
+
+      if (deadlineDateTime && deadlineDateTime.getTime() < Date.now()) {
+        next.applicationDeadline = "현재 날짜/시간 이후로 선택해 주세요.";
+        dateToastMessage =
+          dateToastMessage ??
+          "신청 마감일은 현재보다 이전으로 설정할 수 없습니다.";
+      }
+    }
+
     setErrors(next);
 
     if (missingFields.length > 0) {
       toast.error(`${missingFields.join(", ")} 항목을 입력해 주세요.`);
     } else if (capacityToastMessage) {
       toast.error(capacityToastMessage);
+    } else if (dateToastMessage) {
+      toast.error(dateToastMessage);
     }
 
     return Object.keys(next).length === 0;
