@@ -22,7 +22,7 @@ export default function Header() {
   }, [fetchedUser, setUser]);
 
   return (
-    <header className="max-w-[1920px] h-[70px] border-b border-main-300 flex items-center justify-between px-66">
+    <header className="max-w-[1920px] h-[70px] border-b border-main-300 flex items-center justify-between px-68">
       <Link href="/">
         <Image src="/img/Rels.png" alt="logo" width={50} height={50} />
       </Link>

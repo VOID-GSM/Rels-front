@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import QueryProvider from "@/providers/QueryProvider";
 import Header from "@/components/common/Header";
 import NoticeBanner from "@/components/common/NoticeBanner";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Rels",
@@ -22,6 +23,7 @@ export default function RootLayout({
           <Header />
           <NoticeBanner />
           {children}
+          <Toaster position="top-center" richColors />
         </QueryProvider>
       </body>
     </html>
