@@ -1,13 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import useAuthStore from "@/stores/authStore";
 import { getDisplayLectureStatus, useGetLectures } from "@/entities/lecture";
 import type { LectureType, LectureStatusType } from "@/entities/lecture";
 import LectureCard from "@/components/common/LectureCard";
 import CreateLectureButton from "@/components/common/CreateLectureButton";
-import { authUrls } from "@/shared/api/apiUrls";
-import { getOAuthRedirectUri } from "@/shared/lib/getOAuthRedirectUri";
 
 const STATUS_TO_BADGE: Record<
   LectureStatusType,
@@ -75,8 +74,15 @@ function LectureGrid({
 
 export default function Home() {
   const router = useRouter();
-  const { user, isLoggedIn } = useAuthStore();
+  const { user, isLoggedIn, accessToken, initFromSession } = useAuthStore();
   const { data: lectures = [], isLoading, isError } = useGetLectures();
+
+  useEffect(() => {
+    const token = initFromSession();
+    if (!token) {
+      router.replace("/login");
+    }
+  }, [initFromSession, router]);
 
   const myLectures = lectures.filter(
     (l) => isLoggedIn && user && l.creatorId === user.userId,
@@ -84,12 +90,16 @@ export default function Home() {
   const allLectures = lectures;
 
   const handleCardClick = (id: string) => {
-    if (!isLoggedIn) {
-      window.location.href = authUrls.dgStart(getOAuthRedirectUri());
-      return;
-    }
     router.push(`/lectures/${id}`);
   };
+
+  if (!accessToken) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
+        <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <main className="max-w-[1200px] mx-auto px-6 py-10 flex flex-col gap-10">
