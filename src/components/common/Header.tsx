@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect } from "react";
 import useAuthStore from "@/stores/authStore";
 import { useGetUserInfo } from "@/entities/auth";
-import HeaderAuth from "./HeaderAuth";
 
 export default function Header() {
   const { isLoggedIn, setUser, initFromSession } = useAuthStore();
@@ -37,7 +36,6 @@ export default function Header() {
             </Link>
           </>
         )}
-        <HeaderAuth />
       </div>
     </header>
   );

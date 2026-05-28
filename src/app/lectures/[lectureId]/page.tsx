@@ -14,8 +14,7 @@ import Clock from "@/assets/svg/Clock";
 import Location from "@/assets/svg/Location";
 import DeadlineCountdown from "@/components/common/DeadlineCountdown";
 import useAuthStore from "@/stores/authStore";
-import { authUrls } from "@/shared/api/apiUrls";
-import { getOAuthRedirectUri } from "@/shared/lib/getOAuthRedirectUri";
+import { useRouter } from "next/navigation";
 import {
   getDisplayLectureStatus,
   useGetLecture,
@@ -26,15 +25,16 @@ import {
 
 export default function LectureDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const lectureId = Number(params.lectureId);
   const { user, initFromSession } = useAuthStore();
 
   useEffect(() => {
     const token = initFromSession();
     if (!token) {
-      window.location.href = authUrls.dgStart(getOAuthRedirectUri());
+      router.replace("/login");
     }
-  }, [initFromSession]);
+  }, [initFromSession, router]);
 
   const { data: lecture, isLoading } = useGetLecture(lectureId);
   const { data: enrollments } = useGetEnrollments(lectureId);
