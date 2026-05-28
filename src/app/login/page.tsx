@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
 import { authUrls } from "@/shared/api/apiUrls";
@@ -10,17 +10,31 @@ import { getOAuthRedirectUri } from "@/shared/lib/getOAuthRedirectUri";
 export default function LoginPage() {
   const router = useRouter();
   const { isLoggedIn, initFromSession } = useAuthStore();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     const token = initFromSession();
     if (token || isLoggedIn) {
       router.replace("/");
+    } else {
+      queueMicrotask(() => {
+        if (isMounted) setIsChecking(false);
+      });
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [initFromSession, isLoggedIn, router]);
 
   const handleLogin = () => {
     window.location.href = authUrls.dgStart(getOAuthRedirectUri());
   };
+
+  if (isChecking) {
+    return null;
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center px-6 bg-main-100/50">
