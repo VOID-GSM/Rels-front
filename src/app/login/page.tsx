@@ -23,8 +23,8 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white flex items-center justify-center px-6">
-      <section className="w-full max-w-[360px] flex flex-col items-center gap-6 bg-main-100 rounded-2xl p-8">
+    <main className="min-h-screen flex items-center justify-center px-6 bg-main-100/50">
+      <section className="w-full max-w-[430px] flex flex-col items-center gap-6 bg-white rounded-2xl p-8 shadow-2xl">
         <Image src="/img/Rels.png" alt="Rels" width={82} height={82} priority />
         <div className="flex flex-col items-center gap-2 text-center">
           <h1 className="text-2xl font-bold text-black">Rels 로그인</h1>
