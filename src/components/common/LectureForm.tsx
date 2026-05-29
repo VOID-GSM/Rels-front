@@ -125,13 +125,16 @@ export default function LectureForm({
     if (capacityMode === "total") {
       const total = Number(totalCapacity);
 
-      if (
-        totalCapacity === "" ||
-        Number.isNaN(total) ||
-        total < 0
-      ) {
-        next.totalCapacity = "0명 이상의 값을 입력해 주세요.";
+      if (totalCapacity === "") {
+        next.totalCapacity = "최대 인원을 입력해 주세요.";
         missingFields.push("최대 인원");
+      } else if (
+        Number.isNaN(total) ||
+        total < 0 ||
+        !Number.isInteger(total)
+      ) {
+        next.totalCapacity = "0명 이상의 정수를 입력해 주세요.";
+        capacityToastMessage = "최대 인원은 0명 이상의 정수로 입력해 주세요.";
       } else if (total < MIN_CAPACITY || total > MAX_CAPACITY) {
         next.totalCapacity = `${MIN_CAPACITY}명 이상 ${MAX_CAPACITY}명 이하로 입력해 주세요.`;
         capacityToastMessage = `강연 최대 인원은 ${MIN_CAPACITY}명 이상 ${MAX_CAPACITY}명 이하로 설정해 주세요.`;
@@ -141,29 +144,41 @@ export default function LectureForm({
       const grade2Capacity = Number(grade2);
       const grade3Capacity = Number(grade3);
 
-      if (
-        grade1 === "" ||
-        Number.isNaN(grade1Capacity) ||
-        grade1Capacity < 0
-      ) {
-        next.grade1 = "0명 이상의 값을 입력해 주세요.";
+      if (grade1 === "") {
+        next.grade1 = "1학년 인원을 입력해 주세요.";
         missingFields.push("1학년 인원");
-      }
-      if (
-        grade2 === "" ||
-        Number.isNaN(grade2Capacity) ||
-        grade2Capacity < 0
+      } else if (
+        Number.isNaN(grade1Capacity) ||
+        grade1Capacity < 0 ||
+        !Number.isInteger(grade1Capacity)
       ) {
-        next.grade2 = "0명 이상의 값을 입력해 주세요.";
+        next.grade1 = "0명 이상의 정수를 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
+      }
+      if (grade2 === "") {
+        next.grade2 = "2학년 인원을 입력해 주세요.";
         missingFields.push("2학년 인원");
-      }
-      if (
-        grade3 === "" ||
-        Number.isNaN(grade3Capacity) ||
-        grade3Capacity < 0
+      } else if (
+        Number.isNaN(grade2Capacity) ||
+        grade2Capacity < 0 ||
+        !Number.isInteger(grade2Capacity)
       ) {
-        next.grade3 = "0명 이상의 값을 입력해 주세요.";
+        next.grade2 = "0명 이상의 정수를 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
+      }
+      if (grade3 === "") {
+        next.grade3 = "3학년 인원을 입력해 주세요.";
         missingFields.push("3학년 인원");
+      } else if (
+        Number.isNaN(grade3Capacity) ||
+        grade3Capacity < 0 ||
+        !Number.isInteger(grade3Capacity)
+      ) {
+        next.grade3 = "0명 이상의 정수를 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
       }
 
       if (!next.grade1 && !next.grade2 && !next.grade3) {
