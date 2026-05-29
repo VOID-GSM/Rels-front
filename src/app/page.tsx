@@ -113,16 +113,15 @@ export default function Home() {
   const myLectures = lectures.filter(
     (lecture) => isLoggedIn && user && lecture.creatorId === user.userId,
   );
-  const selectedCategoryInfo =
-    LECTURE_CATEGORIES.find((category) => category.key === selectedCategory) ??
-    LECTURE_CATEGORIES[0];
-  const filteredLectures = useMemo(
-    () =>
-      lectures.filter((lecture) =>
-        selectedCategoryInfo.matches(getDisplayLectureStatus(lecture)),
-      ),
-    [lectures, selectedCategoryInfo],
-  );
+  const filteredLectures = useMemo(() => {
+    const selectedCategoryInfo =
+      LECTURE_CATEGORIES.find((category) => category.key === selectedCategory) ??
+      LECTURE_CATEGORIES[0];
+
+    return lectures.filter((lecture) =>
+      selectedCategoryInfo.matches(getDisplayLectureStatus(lecture)),
+    );
+  }, [lectures, selectedCategory]);
 
   const handleCardClick = (id: string) => {
     router.push(`/lectures/${id}`);
