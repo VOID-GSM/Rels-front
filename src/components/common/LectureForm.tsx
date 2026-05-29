@@ -10,6 +10,11 @@ const DESCRIPTION_MAX_LENGTH = 500;
 const MIN_CAPACITY = 10;
 const MAX_CAPACITY = 30;
 
+const parseLocalDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
 export interface LectureFormValues {
   title: string;
   description: string;
@@ -107,6 +112,7 @@ export default function LectureForm({
     const next: typeof errors = {};
     const missingFields: string[] = [];
     let capacityToastMessage: string | null = null;
+    let dateToastMessage: string | null = null;
 
     if (!title.trim()) {
       next.title = "강연 제목을 입력해 주세요.";
@@ -125,13 +131,12 @@ export default function LectureForm({
     if (capacityMode === "total") {
       const total = Number(totalCapacity);
 
-      if (
-        totalCapacity === "" ||
-        Number.isNaN(total) ||
-        total < 0
-      ) {
-        next.totalCapacity = "0명 이상의 값을 입력해 주세요.";
+      if (totalCapacity === "") {
+        next.totalCapacity = "최대 인원을 입력해 주세요.";
         missingFields.push("최대 인원");
+      } else if (Number.isNaN(total) || total < 0) {
+        next.totalCapacity = "0명 이상의 값을 입력해 주세요.";
+        capacityToastMessage = "최대 인원은 0명 이상의 숫자로 입력해 주세요.";
       } else if (total < MIN_CAPACITY || total > MAX_CAPACITY) {
         next.totalCapacity = `${MIN_CAPACITY}명 이상 ${MAX_CAPACITY}명 이하로 입력해 주세요.`;
         capacityToastMessage = `강연 최대 인원은 ${MIN_CAPACITY}명 이상 ${MAX_CAPACITY}명 이하로 설정해 주세요.`;
@@ -141,29 +146,29 @@ export default function LectureForm({
       const grade2Capacity = Number(grade2);
       const grade3Capacity = Number(grade3);
 
-      if (
-        grade1 === "" ||
-        Number.isNaN(grade1Capacity) ||
-        grade1Capacity < 0
-      ) {
-        next.grade1 = "0명 이상의 값을 입력해 주세요.";
+      if (grade1 === "") {
+        next.grade1 = "1학년 인원을 입력해 주세요.";
         missingFields.push("1학년 인원");
+      } else if (Number.isNaN(grade1Capacity) || grade1Capacity < 0) {
+        next.grade1 = "0명 이상의 값을 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 숫자로 입력해 주세요.";
       }
-      if (
-        grade2 === "" ||
-        Number.isNaN(grade2Capacity) ||
-        grade2Capacity < 0
-      ) {
-        next.grade2 = "0명 이상의 값을 입력해 주세요.";
+      if (grade2 === "") {
+        next.grade2 = "2학년 인원을 입력해 주세요.";
         missingFields.push("2학년 인원");
+      } else if (Number.isNaN(grade2Capacity) || grade2Capacity < 0) {
+        next.grade2 = "0명 이상의 값을 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 숫자로 입력해 주세요.";
       }
-      if (
-        grade3 === "" ||
-        Number.isNaN(grade3Capacity) ||
-        grade3Capacity < 0
-      ) {
-        next.grade3 = "0명 이상의 값을 입력해 주세요.";
+      if (grade3 === "") {
+        next.grade3 = "3학년 인원을 입력해 주세요.";
         missingFields.push("3학년 인원");
+      } else if (Number.isNaN(grade3Capacity) || grade3Capacity < 0) {
+        next.grade3 = "0명 이상의 값을 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 숫자로 입력해 주세요.";
       }
 
       if (!next.grade1 && !next.grade2 && !next.grade3) {
@@ -197,12 +202,58 @@ export default function LectureForm({
       missingFields.push("신청 마감일");
     }
 
+    const lectureDateTime =
+      lectureDate && lectureTime
+        ? parseLocalDateTime(`${lectureDate}T${lectureTime}`)
+        : null;
+    const deadlineDateTime = applicationDeadline
+      ? parseLocalDateTime(applicationDeadline)
+      : null;
+    const isDateChanged =
+      lectureDate !== init.lectureDate || lectureTime !== init.lectureTime;
+    const isDeadlineChanged =
+      applicationDeadline !== init.applicationDeadline;
+
+    if (
+      lectureDateTime &&
+      isDateChanged &&
+      lectureDateTime.getTime() < Date.now()
+    ) {
+      next.lectureDate = "현재 날짜/시간 이후로 선택해 주세요.";
+      next.lectureTime = "현재 날짜/시간 이후로 선택해 주세요.";
+      dateToastMessage = "강연 날짜와 시간은 현재보다 이전으로 설정할 수 없습니다.";
+    }
+
+    if (
+      deadlineDateTime &&
+      isDeadlineChanged &&
+      deadlineDateTime.getTime() < Date.now()
+    ) {
+      next.applicationDeadline = "현재 날짜/시간 이후로 선택해 주세요.";
+      dateToastMessage =
+        dateToastMessage ??
+        "신청 마감일은 현재보다 이전으로 설정할 수 없습니다.";
+    }
+
+    if (
+      lectureDateTime &&
+      deadlineDateTime &&
+      deadlineDateTime.getTime() > lectureDateTime.getTime()
+    ) {
+      next.applicationDeadline = "신청 마감일은 강연 일시 이전이어야 합니다.";
+      dateToastMessage =
+        dateToastMessage ??
+        "신청 마감일은 강연 일시보다 이후로 설정할 수 없습니다.";
+    }
+
     setErrors(next);
 
     if (missingFields.length > 0) {
       toast.error(`${missingFields.join(", ")} 항목을 입력해 주세요.`);
     } else if (capacityToastMessage) {
       toast.error(capacityToastMessage);
+    } else if (dateToastMessage) {
+      toast.error(dateToastMessage);
     }
 
     return Object.keys(next).length === 0;

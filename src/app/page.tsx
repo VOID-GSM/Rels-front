@@ -1,12 +1,33 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import useAuthStore from "@/stores/authStore";
 import { getDisplayLectureStatus, useGetLectures } from "@/entities/lecture";
 import type { LectureType, LectureStatusType } from "@/entities/lecture";
 import LectureCard from "@/components/common/LectureCard";
 import CreateLectureButton from "@/components/common/CreateLectureButton";
+
+type LectureCategoryKey = "all" | "open" | "confirmed" | "past";
+
+const LECTURE_CATEGORIES: {
+  key: LectureCategoryKey;
+  label: string;
+  matches: (status: LectureStatusType) => boolean;
+}[] = [
+  { key: "all", label: "전체", matches: () => true },
+  { key: "open", label: "신청 가능", matches: (status) => status === "OPEN" },
+  {
+    key: "confirmed",
+    label: "개설 확정",
+    matches: (status) => status === "CONFIRMED",
+  },
+  {
+    key: "past",
+    label: "지난 강의",
+    matches: (status) => status === "CLOSED" || status === "UNCONFIRMED",
+  },
+];
 
 const STATUS_TO_BADGE: Record<
   LectureStatusType,
@@ -18,7 +39,6 @@ const STATUS_TO_BADGE: Record<
   UNCONFIRMED: "unconfirmed",
 };
 
-// 강연 종료, 개설 불확정을 뒤로 정렬
 const STATUS_SORT_ORDER: Record<LectureStatusType, number> = {
   CONFIRMED: 0,
   OPEN: 1,
@@ -41,7 +61,11 @@ function LectureGrid({
   onCardClick?: (id: string) => void;
 }) {
   if (lectures.length === 0) {
-    return <p className="text-sm text-gray-400">등록된 강연이 없습니다.</p>;
+    return (
+      <p className="text-sm text-gray-400">
+        해당 카테고리에 등록된 강연이 없습니다.
+      </p>
+    );
   }
 
   return (
@@ -76,6 +100,8 @@ export default function Home() {
   const router = useRouter();
   const { user, isLoggedIn, accessToken, initFromSession } = useAuthStore();
   const { data: lectures = [], isLoading, isError } = useGetLectures();
+  const [selectedCategory, setSelectedCategory] =
+    useState<LectureCategoryKey>("all");
 
   useEffect(() => {
     const token = initFromSession();
@@ -85,9 +111,17 @@ export default function Home() {
   }, [initFromSession, router]);
 
   const myLectures = lectures.filter(
-    (l) => isLoggedIn && user && l.creatorId === user.userId,
+    (lecture) => isLoggedIn && user && lecture.creatorId === user.userId,
   );
-  const allLectures = lectures;
+  const filteredLectures = useMemo(() => {
+    const selectedCategoryInfo =
+      LECTURE_CATEGORIES.find((category) => category.key === selectedCategory) ??
+      LECTURE_CATEGORIES[0];
+
+    return lectures.filter((lecture) =>
+      selectedCategoryInfo.matches(getDisplayLectureStatus(lecture)),
+    );
+  }, [lectures, selectedCategory]);
 
   const handleCardClick = (id: string) => {
     router.push(`/lectures/${id}`);
@@ -103,7 +137,6 @@ export default function Home() {
 
   return (
     <main className="max-w-[1200px] mx-auto px-6 py-10 flex flex-col gap-10">
-      {/* 제목 + 강연 생성 버튼 */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">강연 목록</h1>
         {isLoggedIn && <CreateLectureButton />}
@@ -119,7 +152,6 @@ export default function Home() {
         </p>
       ) : (
         <>
-          {/* 내가 생성한 강연 */}
           {isLoggedIn && myLectures.length > 0 && (
             <section className="flex flex-col gap-4">
               <h2 className="text-lg font-semibold text-gray-800">
@@ -132,10 +164,36 @@ export default function Home() {
             </section>
           )}
 
-          {/* 전체 강연 */}
           <section className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold text-gray-800">전체 강연</h2>
-            <LectureGrid lectures={allLectures} onCardClick={handleCardClick} />
+            <div className="flex flex-col gap-3">
+              <h2 className="text-lg font-semibold text-gray-800">
+                전체 강연
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {LECTURE_CATEGORIES.map((category) => {
+                  const isActive = selectedCategory === category.key;
+
+                  return (
+                    <button
+                      key={category.key}
+                      type="button"
+                      onClick={() => setSelectedCategory(category.key)}
+                      className={`h-9 rounded-lg border px-4 text-sm font-medium transition-colors ${
+                        isActive
+                          ? "border-main bg-main text-black"
+                          : "border-main-200 bg-white text-gray-600 hover:bg-main-100"
+                      }`}
+                    >
+                      {category.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <LectureGrid
+              lectures={filteredLectures}
+              onCardClick={handleCardClick}
+            />
           </section>
         </>
       )}
