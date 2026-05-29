@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useEffect } from "react";
 import useAuthStore from "@/stores/authStore";
 import { useGetUserInfo } from "@/entities/auth";
-import HeaderAuth from "./HeaderAuth";
 
 export default function Header() {
   const { isLoggedIn, setUser, initFromSession } = useAuthStore();
@@ -22,7 +21,7 @@ export default function Header() {
   }, [fetchedUser, setUser]);
 
   return (
-    <header className="max-w-[1920px] h-[70px] border-b border-main-300 flex items-center justify-between px-66">
+    <header className="max-w-[1920px] h-[70px] border-b border-main-300 flex items-center justify-between px-68">
       <Link href="/">
         <Image src="/img/Rels.png" alt="logo" width={50} height={50} />
       </Link>
@@ -37,7 +36,6 @@ export default function Header() {
             </Link>
           </>
         )}
-        <HeaderAuth />
       </div>
     </header>
   );

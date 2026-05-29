@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useParams, notFound } from "next/navigation";
+import { useParams, notFound, useRouter } from "next/navigation";
 import Link from "next/link";
 import Badge from "@/components/common/Badge";
 import Button from "@/components/common/Button";
@@ -14,8 +14,6 @@ import Clock from "@/assets/svg/Clock";
 import Location from "@/assets/svg/Location";
 import DeadlineCountdown from "@/components/common/DeadlineCountdown";
 import useAuthStore from "@/stores/authStore";
-import { authUrls } from "@/shared/api/apiUrls";
-import { getOAuthRedirectUri } from "@/shared/lib/getOAuthRedirectUri";
 import {
   getDisplayLectureStatus,
   useGetLecture,
@@ -26,15 +24,16 @@ import {
 
 export default function LectureDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const lectureId = Number(params.lectureId);
-  const { user, initFromSession } = useAuthStore();
+  const { user, initFromSession, accessToken } = useAuthStore();
 
   useEffect(() => {
     const token = initFromSession();
     if (!token) {
-      window.location.href = authUrls.dgStart(getOAuthRedirectUri());
+      router.replace("/login");
     }
-  }, [initFromSession]);
+  }, [initFromSession, router]);
 
   const { data: lecture, isLoading } = useGetLecture(lectureId);
   const { data: enrollments } = useGetEnrollments(lectureId);
@@ -69,6 +68,14 @@ export default function LectureDetailPage() {
   }, [enrollResult, enrollments, user]);
 
   if (isNaN(lectureId)) return notFound();
+
+  if (!accessToken) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
+        <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

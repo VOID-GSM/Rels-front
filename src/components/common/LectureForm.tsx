@@ -1,11 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 
 const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 500;
+const MIN_CAPACITY = 10;
+const MAX_CAPACITY = 30;
+
+const parseLocalDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
 
 export interface LectureFormValues {
   title: string;
@@ -55,34 +63,6 @@ const DEFAULT_VALUES: LectureFormValues = {
   applicationDeadline: "",
 };
 
-function ValidationModal({
-  message,
-  onClose,
-}: {
-  message: string;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-      onClick={onClose}
-    >
-      <div
-        className="mx-4 flex w-full max-w-[360px] flex-col gap-5 rounded-2xl bg-white p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col gap-1.5">
-          <h2 className="text-lg font-bold text-gray-900">입력 확인</h2>
-          <p className="whitespace-pre-line text-sm text-gray-500">{message}</p>
-        </div>
-        <Button onClick={onClose} className="py-2.5">
-          확인
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 export default function LectureForm({
   initialValues,
   onSubmit,
@@ -108,9 +88,6 @@ export default function LectureForm({
   const [applicationDeadline, setApplicationDeadline] = useState(
     init.applicationDeadline,
   );
-  const [validationModalMessage, setValidationModalMessage] = useState<
-    string | null
-  >(null);
 
   const [errors, setErrors] = useState<{
     title?: string;
@@ -134,36 +111,93 @@ export default function LectureForm({
   const validate = () => {
     const next: typeof errors = {};
     const missingFields: string[] = [];
+    let capacityToastMessage: string | null = null;
+    let dateToastMessage: string | null = null;
 
     if (!title.trim()) {
       next.title = "강연 제목을 입력해 주세요.";
+      missingFields.push("강연 제목");
     } else if (title.trim().length > TITLE_MAX_LENGTH) {
       next.title = `강연 제목은 ${TITLE_MAX_LENGTH}자 이내로 입력해 주세요.`;
     }
 
     if (!description.trim()) {
       next.description = "강연 내용을 입력해 주세요.";
+      missingFields.push("강연 내용");
     } else if (description.trim().length > DESCRIPTION_MAX_LENGTH) {
       next.description = `강연 내용은 ${DESCRIPTION_MAX_LENGTH}자 이내로 입력해 주세요.`;
     }
 
     if (capacityMode === "total") {
-      if (
-        totalCapacity === "" ||
-        Number.isNaN(Number(totalCapacity)) ||
-        Number(totalCapacity) < 0
+      const total = Number(totalCapacity);
+
+      if (totalCapacity === "") {
+        next.totalCapacity = "최대 인원을 입력해 주세요.";
+        missingFields.push("최대 인원");
+      } else if (
+        Number.isNaN(total) ||
+        total < 0 ||
+        !Number.isInteger(total)
       ) {
-        next.totalCapacity = "0명 이상의 값을 입력해 주세요.";
+        next.totalCapacity = "0명 이상의 정수를 입력해 주세요.";
+        capacityToastMessage = "최대 인원은 0명 이상의 정수로 입력해 주세요.";
+      } else if (total < MIN_CAPACITY || total > MAX_CAPACITY) {
+        next.totalCapacity = `${MIN_CAPACITY}명 이상 ${MAX_CAPACITY}명 이하로 입력해 주세요.`;
+        capacityToastMessage = `강연 최대 인원은 ${MIN_CAPACITY}명 이상 ${MAX_CAPACITY}명 이하로 설정해 주세요.`;
       }
     } else {
-      if (grade1 === "" || Number.isNaN(Number(grade1)) || Number(grade1) < 0) {
-        next.grade1 = "0명 이상의 값을 입력해 주세요.";
+      const grade1Capacity = Number(grade1);
+      const grade2Capacity = Number(grade2);
+      const grade3Capacity = Number(grade3);
+
+      if (grade1 === "") {
+        next.grade1 = "1학년 인원을 입력해 주세요.";
+        missingFields.push("1학년 인원");
+      } else if (
+        Number.isNaN(grade1Capacity) ||
+        grade1Capacity < 0 ||
+        !Number.isInteger(grade1Capacity)
+      ) {
+        next.grade1 = "0명 이상의 정수를 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
       }
-      if (grade2 === "" || Number.isNaN(Number(grade2)) || Number(grade2) < 0) {
-        next.grade2 = "0명 이상의 값을 입력해 주세요.";
+      if (grade2 === "") {
+        next.grade2 = "2학년 인원을 입력해 주세요.";
+        missingFields.push("2학년 인원");
+      } else if (
+        Number.isNaN(grade2Capacity) ||
+        grade2Capacity < 0 ||
+        !Number.isInteger(grade2Capacity)
+      ) {
+        next.grade2 = "0명 이상의 정수를 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
       }
-      if (grade3 === "" || Number.isNaN(Number(grade3)) || Number(grade3) < 0) {
-        next.grade3 = "0명 이상의 값을 입력해 주세요.";
+      if (grade3 === "") {
+        next.grade3 = "3학년 인원을 입력해 주세요.";
+        missingFields.push("3학년 인원");
+      } else if (
+        Number.isNaN(grade3Capacity) ||
+        grade3Capacity < 0 ||
+        !Number.isInteger(grade3Capacity)
+      ) {
+        next.grade3 = "0명 이상의 정수를 입력해 주세요.";
+        capacityToastMessage =
+          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
+      }
+
+      if (!next.grade1 && !next.grade2 && !next.grade3) {
+        const total = grade1Capacity + grade2Capacity + grade3Capacity;
+
+        if (total < MIN_CAPACITY || total > MAX_CAPACITY) {
+          const message = `학년별 인원 합계는 ${MIN_CAPACITY}명 이상 ${MAX_CAPACITY}명 이하로 입력해 주세요.`;
+
+          next.grade1 = message;
+          next.grade2 = message;
+          next.grade3 = message;
+          capacityToastMessage = message;
+        }
       }
     }
 
@@ -181,14 +215,61 @@ export default function LectureForm({
     }
     if (!applicationDeadline) {
       next.applicationDeadline = "신청 마감일을 입력해 주세요.";
+      missingFields.push("신청 마감일");
+    }
+
+    const lectureDateTime =
+      lectureDate && lectureTime
+        ? parseLocalDateTime(`${lectureDate}T${lectureTime}`)
+        : null;
+    const deadlineDateTime = applicationDeadline
+      ? parseLocalDateTime(applicationDeadline)
+      : null;
+    const isDateChanged =
+      lectureDate !== init.lectureDate || lectureTime !== init.lectureTime;
+    const isDeadlineChanged =
+      applicationDeadline !== init.applicationDeadline;
+
+    if (
+      lectureDateTime &&
+      isDateChanged &&
+      lectureDateTime.getTime() < Date.now()
+    ) {
+      next.lectureDate = "현재 날짜/시간 이후로 선택해 주세요.";
+      next.lectureTime = "현재 날짜/시간 이후로 선택해 주세요.";
+      dateToastMessage = "강연 날짜와 시간은 현재보다 이전으로 설정할 수 없습니다.";
+    }
+
+    if (
+      deadlineDateTime &&
+      isDeadlineChanged &&
+      deadlineDateTime.getTime() < Date.now()
+    ) {
+      next.applicationDeadline = "현재 날짜/시간 이후로 선택해 주세요.";
+      dateToastMessage =
+        dateToastMessage ??
+        "신청 마감일은 현재보다 이전으로 설정할 수 없습니다.";
+    }
+
+    if (
+      lectureDateTime &&
+      deadlineDateTime &&
+      deadlineDateTime.getTime() > lectureDateTime.getTime()
+    ) {
+      next.applicationDeadline = "신청 마감일은 강연 일시 이전이어야 합니다.";
+      dateToastMessage =
+        dateToastMessage ??
+        "신청 마감일은 강연 일시보다 이후로 설정할 수 없습니다.";
     }
 
     setErrors(next);
 
     if (missingFields.length > 0) {
-      setValidationModalMessage(
-        `${missingFields.join(", ")} 항목을 입력해 주세요.`,
-      );
+      toast.error(`${missingFields.join(", ")} 항목을 입력해 주세요.`);
+    } else if (capacityToastMessage) {
+      toast.error(capacityToastMessage);
+    } else if (dateToastMessage) {
+      toast.error(dateToastMessage);
     }
 
     return Object.keys(next).length === 0;
@@ -401,13 +482,6 @@ export default function LectureForm({
         </Button>
         {extraAction}
       </div>
-
-      {validationModalMessage && (
-        <ValidationModal
-          message={validationModalMessage}
-          onClose={() => setValidationModalMessage(null)}
-        />
-      )}
     </div>
   );
 }

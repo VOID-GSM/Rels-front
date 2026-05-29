@@ -1,8 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import QueryProvider from "@/providers/QueryProvider";
-import Header from "@/components/common/Header";
-import NoticeBanner from "@/components/common/NoticeBanner";
+import AppShell from "@/components/common/AppShell";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Rels",
@@ -19,9 +19,8 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <QueryProvider>
-          <Header />
-          <NoticeBanner />
-          {children}
+          <AppShell>{children}</AppShell>
+          <Toaster position="top-center" richColors />
         </QueryProvider>
       </body>
     </html>
