@@ -11,7 +11,7 @@ import { useGetNotice, useUpdateNotice } from "@/entities/notice";
 import type { NoticeType } from "@/entities/notice";
 
 const TITLE_MAX_LENGTH = 360;
-const CONTENT_MAX_LENGTH = 500;
+const CONTENT_MAX_LENGTH = 800;
 
 function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }) {
   const router = useRouter();

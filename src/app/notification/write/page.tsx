@@ -10,7 +10,7 @@ import useAuthStore from "@/stores/authStore";
 import { useCreateNotice } from "@/entities/notice";
 
 const TITLE_MAX_LENGTH = 100;
-const CONTENT_MAX_LENGTH = 500;
+const CONTENT_MAX_LENGTH = 800;
 
 export default function NoticeWritePage() {
   const router = useRouter();
