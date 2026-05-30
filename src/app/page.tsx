@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
 import { getDisplayLectureStatus, useGetLectures } from "@/entities/lecture";
 import type { LectureType, LectureStatusType } from "@/entities/lecture";
-import LectureCard from "@/components/common/LectureCard";
+import LectureCard from "@/components/lecture/LectureCard";
 import Spinner from "@/components/common/Spinner";
-import CreateLectureButton from "@/components/common/CreateLectureButton";
+import CreateLectureButton from "@/components/lecture/CreateLectureButton";
 import { LECTURE_STATUS_TO_BADGE, LECTURE_STATUS_SORT_ORDER } from "@/constants/lecture";
 
 type LectureCategoryKey = "all" | "open" | "confirmed" | "past";

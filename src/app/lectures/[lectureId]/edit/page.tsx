@@ -8,8 +8,8 @@ import Spinner from "@/components/common/Spinner";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import Arrow from "@/assets/svg/Arrow";
 import Delete from "@/assets/svg/Delete";
-import LectureForm from "@/components/common/LectureForm";
-import type { LectureFormData } from "@/components/common/LectureForm";
+import LectureForm from "@/components/lecture/LectureForm";
+import type { LectureFormData } from "@/components/lecture/LectureForm";
 import { useGetLecture, useUpdateLecture, useDeleteLecture } from "@/entities/lecture";
 import type { LectureType } from "@/entities/lecture";
 

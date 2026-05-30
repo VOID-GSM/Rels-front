@@ -6,14 +6,14 @@ import Link from "next/link";
 import Badge from "@/components/common/Badge";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
-import ApplicantList from "@/components/common/ApplicantList";
+import ApplicantList from "@/components/lecture/ApplicantList";
 import Arrow from "@/assets/svg/Arrow";
 import Pencil from "@/assets/svg/Pencil";
 import People from "@/assets/svg/People";
 import Calendar from "@/assets/svg/Calendar";
 import Clock from "@/assets/svg/Clock";
 import Location from "@/assets/svg/Location";
-import DeadlineCountdown from "@/components/common/DeadlineCountdown";
+import DeadlineCountdown from "@/components/lecture/DeadlineCountdown";
 import useAuthStore from "@/stores/authStore";
 import {
   getDisplayLectureStatus,
