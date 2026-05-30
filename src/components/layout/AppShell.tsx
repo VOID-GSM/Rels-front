@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import Header from "@/components/common/Header";
-import NoticeBanner from "@/components/common/NoticeBanner";
+import Header from "./Header";
+import NoticeBanner from "./NoticeBanner";
 
 const FULL_SCREEN_PATHS = ["/login", "/callback"];
 

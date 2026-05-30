@@ -1,7 +1,7 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import QueryProvider from "@/providers/QueryProvider";
-import AppShell from "@/components/common/AppShell";
+import QueryProvider from "@/shared/lib/QueryProvider";
+import AppShell from "@/components/layout/AppShell";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
