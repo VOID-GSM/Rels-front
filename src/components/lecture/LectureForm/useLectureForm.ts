@@ -35,20 +35,20 @@ export function useLectureForm(
 ) {
   const init = { ...DEFAULT_VALUES, ...initialValues };
 
-  const [title, setTitle] = useState(init.title);
-  const [description, setDescription] = useState(init.description);
+  const [title, setTitle] = useState(init.title ?? "");
+  const [description, setDescription] = useState(init.description ?? "");
   const [capacityMode, setCapacityMode] = useState<"total" | "grade">(
     forceCapacityMode ?? init.capacityMode,
   );
-  const [totalCapacity, setTotalCapacity] = useState(init.totalCapacity);
-  const [grade1, setGrade1] = useState(init.grade1);
-  const [grade2, setGrade2] = useState(init.grade2);
-  const [grade3, setGrade3] = useState(init.grade3);
-  const [lectureLocation, setLectureLocation] = useState(init.lectureLocation);
-  const [lectureDate, setLectureDate] = useState(init.lectureDate);
-  const [lectureTime, setLectureTime] = useState(init.lectureTime);
+  const [totalCapacity, setTotalCapacity] = useState(init.totalCapacity ?? "");
+  const [grade1, setGrade1] = useState(init.grade1 ?? "");
+  const [grade2, setGrade2] = useState(init.grade2 ?? "");
+  const [grade3, setGrade3] = useState(init.grade3 ?? "");
+  const [lectureLocation, setLectureLocation] = useState(init.lectureLocation ?? "");
+  const [lectureDate, setLectureDate] = useState(init.lectureDate ?? "");
+  const [lectureTime, setLectureTime] = useState(init.lectureTime ?? "");
   const [applicationDeadline, setApplicationDeadline] = useState(
-    init.applicationDeadline,
+    init.applicationDeadline ?? "",
   );
   const [errors, setErrors] = useState<FormErrors>({});
 

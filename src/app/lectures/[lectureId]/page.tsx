@@ -74,7 +74,8 @@ export default function LectureDetailPage() {
   const usesGradeCapacity = lecture.totalCapacity == null && lecture.capacityByGrade != null;
   const isFull = lecture.enrolledCount >= totalCapacity;
 
-  const userGrade = user?.studentNumber?.charAt(0) as "1" | "2" | "3" | undefined;
+  const rawGrade = user?.studentNumber?.charAt(0);
+  const userGrade = rawGrade === "1" || rawGrade === "2" || rawGrade === "3" ? rawGrade : undefined;
   const isGradeCapacityBlocked =
     usesGradeCapacity &&
     userGrade !== undefined &&

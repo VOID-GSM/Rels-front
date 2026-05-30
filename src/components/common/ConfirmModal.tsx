@@ -5,6 +5,7 @@ interface ConfirmModalProps {
   message: string;
   confirmLabel: string;
   confirmClassName?: string;
+  pendingLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
   isPending: boolean;
@@ -15,6 +16,7 @@ export default function ConfirmModal({
   message,
   confirmLabel,
   confirmClassName,
+  pendingLabel,
   onConfirm,
   onCancel,
   isPending,
@@ -41,7 +43,7 @@ export default function ConfirmModal({
             disabled={isPending}
             className={`py-2.5 ${confirmClassName ?? ""}`}
           >
-            {isPending ? `${confirmLabel} 중..` : confirmLabel}
+            {isPending ? (pendingLabel ?? `${confirmLabel} 중..`) : confirmLabel}
           </Button>
         </div>
       </div>

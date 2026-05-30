@@ -119,6 +119,7 @@ export default function NoticeWritePage() {
           title="공지 등록 확인"
           message="공지를 등록하면 모든 학생에게 공지됩니다. 정말 공지하시겠습니까?"
           confirmLabel="공지하기"
+          pendingLabel="등록 중.."
           onConfirm={handleConfirm}
           onCancel={() => !isPending && setIsConfirmOpen(false)}
           isPending={isPending}

@@ -75,15 +75,17 @@ export default function Home() {
   const router = useRouter();
   const { user, isLoggedIn, accessToken, initFromSession } = useAuthStore();
   const { data: lectures = [], isLoading, isError } = useGetLectures();
-  const [selectedCategory, setSelectedCategory] = useState<LectureCategoryKey>(() => {
-    if (typeof window === "undefined") return "all";
-    return (localStorage.getItem("lectureCategory") as LectureCategoryKey) ?? "all";
-  });
+  const [selectedCategory, setSelectedCategory] = useState<LectureCategoryKey>("all");
 
   useEffect(() => {
     const token = initFromSession();
     if (!token) router.replace("/login");
   }, [initFromSession, router]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("lectureCategory") as LectureCategoryKey;
+    if (saved) setSelectedCategory(saved);
+  }, []);
 
   const myLectures = lectures.filter(
     (l) => isLoggedIn && user && l.creatorId === user.userId,
