@@ -22,6 +22,9 @@ export const useCancelEnrollment = (
     mutationFn: () => cancelEnrollment(lectureId),
     onSuccess: () => {
       queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getAll(),
+      });
+      queryClient.invalidateQueries({
         queryKey: lectureQueryKeys.getOne(lectureId),
       });
       queryClient.invalidateQueries({
@@ -44,6 +47,9 @@ export const useCancelEnrollmentById = (options?: UseCancelEnrollmentOptions) =>
   return useMutation({
     mutationFn: cancelEnrollment,
     onSuccess: (_, lectureId) => {
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getAll(),
+      });
       queryClient.invalidateQueries({
         queryKey: lectureQueryKeys.getOne(lectureId),
       });
