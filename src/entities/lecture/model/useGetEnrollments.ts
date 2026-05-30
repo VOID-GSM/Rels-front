@@ -37,7 +37,7 @@ export const useGetEnrollments = (id: number) => {
     queryKey: lectureQueryKeys.getEnrollments(id),
     queryFn: () => getEnrollments(id),
     enabled: !!id,
-    staleTime: 1000 * 60 * 1,
+    staleTime: 0,
     retry: false,
   });
 };
