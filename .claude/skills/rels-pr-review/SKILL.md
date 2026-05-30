@@ -20,7 +20,7 @@ gh pr view --json number,title,url
 
 ```bash
 # Inline code review comments (line-level)
-gh api repos/{owner}/{repo}/pulls/{PR_NUMBER}/comments \
+gh api repos/:owner/:repo/pulls/{PR_NUMBER}/comments \
   --jq '[.[] | {id, path, line, body, user: .user.login}]'
 
 # General review-level comments
@@ -70,7 +70,7 @@ git rev-parse --short HEAD
 
 Reply using the commit hash from Step 5:
 ```bash
-gh api repos/{owner}/{repo}/pulls/comments/{COMMENT_ID}/replies \
+gh api repos/:owner/:repo/pulls/comments/{COMMENT_ID}/replies \
   -X POST \
   -f body="반영했습니다. {SHORT_HASH}"
 ```

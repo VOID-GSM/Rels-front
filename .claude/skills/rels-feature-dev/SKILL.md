@@ -27,7 +27,11 @@ export default function {PageName}Page() {
   }, [initFromSession, router]);
 
   // Spinner before token is restored — prevents hydration flash
-  if (!accessToken) return <Spinner />;
+  if (!accessToken) return (
+    <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
+      <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
+    </div>
+  );
 
   return (
     <main className="max-w-[1200px] mx-auto px-6 py-10 flex flex-col gap-10">
@@ -57,7 +61,8 @@ export default function {PageName}Page() {
 import { useParams, notFound } from "next/navigation";
 
 const params = useParams();
-const id = Number(params.id);
+// Use the folder param name (e.g. [lectureId] → params.lectureId, [noticeId] → params.noticeId)
+const id = Number(params.lectureId ?? params.noticeId ?? params.id);
 if (isNaN(id)) return notFound();
 ```
 
@@ -66,7 +71,11 @@ if (isNaN(id)) return notFound();
 ```tsx
 const { data, isLoading, isError } = useGetResource(id);
 
-if (isLoading) return <FullScreenSpinner />;
+if (isLoading) return (
+  <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
+    <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
+  </div>
+);
 if (isError) return (
   <p className="text-sm text-gray-400 py-20 text-center">Failed to load.</p>
 );

@@ -60,4 +60,4 @@ src/app/
 
 - If a needed hook or component is missing: request it from the orchestrator
 - When using `notFound()`: verify `src/app/not-found.tsx` exists
-- Dynamic route params: always do `Number(params.id)` + `isNaN` check
+- Dynamic route params: use the exact folder param name (`[lectureId]` → `params.lectureId`, `[noticeId]` → `params.noticeId`), never `params.id` unless the folder is `[id]`
