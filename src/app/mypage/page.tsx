@@ -180,7 +180,9 @@ export default function MyPage() {
   ).map((lecture) => ({
     ...lecture,
     meta: [
-      lecture.creatorName,
+      lecture.creatorStudentNumber
+        ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
+        : lecture.creatorName,
       ENROLLMENT_STATUS_LABEL[lecture.enrollmentStatus] ??
         lecture.enrollmentStatus,
     ]
@@ -241,8 +243,8 @@ export default function MyPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
+        <div className="flex flex-col md:flex-row md:items-start gap-4">
+          <div className="flex-1 border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
             <span className="font-semibold text-base">
               내가 개설한 강연 ({myCreatedLectures.length})
             </span>
@@ -268,7 +270,7 @@ export default function MyPage() {
             )}
           </div>
 
-          <div className="border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
+          <div className="flex-1 border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
             <span className="font-semibold text-base">
               내가 신청한 강연 ({myEnrolledLectures.length})
             </span>
