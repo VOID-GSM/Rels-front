@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
 import Link from "next/link";
 import Button from "@/components/common/Button";
+import Spinner from "@/components/common/Spinner";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import Arrow from "@/assets/svg/Arrow";
 import Delete from "@/assets/svg/Delete";
 import LectureForm from "@/components/common/LectureForm";
@@ -11,52 +13,10 @@ import type { LectureFormData } from "@/components/common/LectureForm";
 import { useGetLecture, useUpdateLecture, useDeleteLecture } from "@/entities/lecture";
 import type { LectureType } from "@/entities/lecture";
 
-function DeleteConfirmModal({
-  onConfirm,
-  onCancel,
-  isPending,
-}: {
-  onConfirm: () => void;
-  onCancel: () => void;
-  isPending: boolean;
-}) {
-  return (
-    <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      onClick={onCancel}
-    >
-      <div
-        className="bg-white rounded-2xl p-6 w-full max-w-[360px] mx-4 flex flex-col gap-5"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col gap-1.5">
-          <h2 className="text-lg font-bold text-gray-900">강연 삭제</h2>
-          <p className="text-sm text-gray-500">
-            강연을 삭제하면 복구할 수 없습니다. 정말 삭제하시겠습니까?
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="cancel" onClick={onCancel} className="py-2.5">
-            취소
-          </Button>
-          <Button
-            onClick={onConfirm}
-            disabled={isPending}
-            className="py-2.5 bg-error border-error hover:bg-error/90"
-          >
-            {isPending ? "삭제 중..." : "삭제"}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function EditForm({ lecture }: { lecture: LectureType }) {
   const router = useRouter();
   const lectureId = lecture.lectureId;
-  const capacityMode =
-    lecture.totalCapacity != null ? "total" : "grade";
+  const capacityMode = lecture.totalCapacity != null ? "total" : "grade";
 
   const { mutate: updateLecture, isPending: isUpdating } = useUpdateLecture(lectureId);
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
@@ -116,7 +76,11 @@ function EditForm({ lecture }: { lecture: LectureType }) {
       </main>
 
       {showDeleteModal && (
-        <DeleteConfirmModal
+        <ConfirmModal
+          title="강연 삭제"
+          message="강연을 삭제하면 복구할 수 없습니다. 정말 삭제하시겠습니까?"
+          confirmLabel="삭제"
+          confirmClassName="bg-error border-error hover:bg-error/90"
           onConfirm={handleConfirmDelete}
           onCancel={() => setShowDeleteModal(false)}
           isPending={isDeleting}
@@ -132,14 +96,7 @@ export default function EditLecturePage() {
   const { data: lecture, isLoading } = useGetLecture(lectureId);
 
   if (isNaN(lectureId)) return notFound();
-
-  if (isLoading || !lecture) {
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-70px)]">
-        <div className="w-8 h-8 border-2 border-main/30 border-t-main rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (isLoading || !lecture) return <Spinner />;
 
   return <EditForm lecture={lecture} />;
 }
