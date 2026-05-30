@@ -106,13 +106,27 @@ Fill every section in Korean. Use `-` bullet points in 작업 내용.
    ```
 8. Output the PR URL
 
-## Base Branch
+## Git Flow
 
-- Default base: `main`
-- If the branch was cut from `develop`, use `develop` as base
+This project follows git flow. Feature branches always target `develop`:
+
+```
+feature/* → develop → main
+```
+
+- **Default base is always `develop`** — always pass `--base develop`
+- `main` as base is only for `hotfix/*` branches
+- Use `git log develop..HEAD --oneline` (not `main..HEAD`) to see commits unique to this branch
+
+## Windows: gh CLI PATH
+
+After a fresh install, PowerShell may not find `gh`. Refresh PATH before running gh commands:
+```powershell
+$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
+```
 
 ## Safety Rules
 
-- Never create a PR from `main` to `main`
+- Never use `main` as base except for hotfix branches
 - Stop and ask user to commit first if `git status` shows uncommitted changes
-- Confirm at least one commit ahead of base before creating PR
+- Confirm at least one commit ahead of `develop` before creating PR
