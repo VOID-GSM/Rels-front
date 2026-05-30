@@ -75,7 +75,11 @@ function LectureGrid({
           key={lecture.lectureId}
           id={String(lecture.lectureId)}
           title={lecture.title}
-          speaker={lecture.creatorName}
+          speaker={
+            lecture.creatorStudentNumber
+              ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
+              : lecture.creatorName
+          }
           status={STATUS_TO_BADGE[getDisplayLectureStatus(lecture)]}
           currentCount={lecture.enrolledCount}
           maxCount={
@@ -100,8 +104,18 @@ export default function Home() {
   const router = useRouter();
   const { user, isLoggedIn, accessToken, initFromSession } = useAuthStore();
   const { data: lectures = [], isLoading, isError } = useGetLectures();
-  const [selectedCategory, setSelectedCategory] =
-    useState<LectureCategoryKey>("all");
+  const [selectedCategory, setSelectedCategory] = useState<LectureCategoryKey>(
+    () => {
+      if (typeof window === "undefined") return "all";
+      const saved = localStorage.getItem("lectureCategory");
+      return (saved as LectureCategoryKey) ?? "all";
+    },
+  );
+
+  const handleCategoryChange = (key: LectureCategoryKey) => {
+    setSelectedCategory(key);
+    localStorage.setItem("lectureCategory", key);
+  };
 
   useEffect(() => {
     const token = initFromSession();
@@ -177,7 +191,7 @@ export default function Home() {
                     <button
                       key={category.key}
                       type="button"
-                      onClick={() => setSelectedCategory(category.key)}
+                      onClick={() => handleCategoryChange(category.key)}
                       className={`h-9 rounded-lg border px-4 text-sm font-medium transition-colors ${
                         isActive
                           ? "border-main bg-main text-black"
