@@ -102,6 +102,12 @@ export default function LectureDetailPage() {
   const isFull = lecture.enrolledCount >= totalCapacity;
   const displayStatus = getDisplayLectureStatus(lecture);
 
+  const userGrade = user?.studentNumber?.charAt(0) as "1" | "2" | "3" | undefined;
+  const isGradeCapacityBlocked =
+    usesGradeCapacity &&
+    userGrade !== undefined &&
+    (lecture.capacityByGrade?.[userGrade] ?? -1) === 0;
+
   const STATUS_TO_BADGE = {
     OPEN: "open",
     CONFIRMED: "confirmed",
@@ -141,7 +147,11 @@ export default function LectureDetailPage() {
           <h1 className="break-words text-xl font-bold text-gray-900">
             {lecture.title}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">{lecture.creatorName}</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {lecture.creatorStudentNumber
+              ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
+              : lecture.creatorName}
+          </p>
         </div>
 
         {/* 설명 */}
@@ -206,6 +216,10 @@ export default function LectureDetailPage() {
         {isCreator ? (
           <Button variant="waiting" disabled className="py-3 mt-2">
             내가 생성한 강연입니다
+          </Button>
+        ) : isGradeCapacityBlocked ? (
+          <Button variant="waiting" disabled className="py-3 mt-2">
+            해당 학년은 신청할 수 없는 강연입니다
           </Button>
         ) : displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED" ? (
           <Button
