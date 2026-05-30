@@ -10,7 +10,6 @@ import {
   useGetMyLectureEnrollments,
 } from "@/entities/lecture";
 import CouncilBadge from "@/components/common/CouncilBadge";
-import Button from "@/components/common/Button";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import Arrow from "@/assets/svg/Arrow";
 import Person from "@/assets/svg/Person";
