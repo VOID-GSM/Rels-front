@@ -6,7 +6,7 @@ import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 
 const TITLE_MAX_LENGTH = 100;
-const DESCRIPTION_MAX_LENGTH = 500;
+const DESCRIPTION_MAX_LENGTH = 800;
 const MIN_CAPACITY = 10;
 const MAX_CAPACITY = 30;
 
