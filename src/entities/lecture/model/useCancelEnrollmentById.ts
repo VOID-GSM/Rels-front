@@ -7,20 +7,17 @@ const cancelEnrollment = (id: number): Promise<void> => {
   return del<void>(lectureUrl.cancelEnrollment(id));
 };
 
-interface UseCancelEnrollmentOptions {
+interface UseCancelEnrollmentByIdOptions {
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
 
-export const useCancelEnrollment = (
-  lectureId: number,
-  options?: UseCancelEnrollmentOptions,
-) => {
+export const useCancelEnrollmentById = (options?: UseCancelEnrollmentByIdOptions) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => cancelEnrollment(lectureId),
-    onSuccess: () => {
+    mutationFn: cancelEnrollment,
+    onSuccess: (_, lectureId) => {
       queryClient.invalidateQueries({ queryKey: lectureQueryKeys.getAll() });
       queryClient.invalidateQueries({ queryKey: lectureQueryKeys.getOne(lectureId) });
       queryClient.invalidateQueries({ queryKey: lectureQueryKeys.getEnrollments(lectureId) });
