@@ -53,26 +53,33 @@ npx tsc --noEmit
 
 Fix any type errors before proceeding.
 
-### Step 5: Commit all changes at once
+### Step 5: Commit per logical unit, then push
 
-Single commit after all code changes are done:
+Group review comments by what they change. Commit each group separately — same rule as `rels-git-commit`. Record the hash of each commit to use in the reply.
+
 ```bash
-git add {changed files}
-git commit -m "fix: 리뷰 코멘트 반영"
+git add {files for this change}
+git commit -m "{type}: {한국어 설명}"
+git rev-parse --short HEAD   # save this hash for the reply
 ```
 
-Get the short hash immediately after:
+Examples of how to split commits:
+- Spinner → inline JSX: `fix: Spinner를 인라인 JSX로 교체`
+- Wrong param name: `fix: 동적 라우트 파라미터명 수정`
+- gh api placeholder: `fix: gh api 경로 플레이스홀더 수정`
+
+After all commits, push once:
 ```bash
-git rev-parse --short HEAD
+git push
 ```
 
 ### Step 6: Post reply to each comment
 
-Reply using the commit hash from Step 5:
+Reply to each comment with the hash of the specific commit that fixed it:
 ```bash
-gh api repos/:owner/:repo/pulls/comments/{COMMENT_ID}/replies \
+gh api repos/VOID-GSM/Rels-front/pulls/{PR_NUMBER}/comments/{COMMENT_ID}/replies \
   -X POST \
-  -f body="반영했습니다. {SHORT_HASH}"
+  -f body="반영했습니다. {HASH_OF_THIS_FIX}"
 ```
 
 Reply format — commit hash only, no description:
