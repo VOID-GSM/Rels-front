@@ -6,12 +6,15 @@ import Link from "next/link";
 import Arrow from "@/assets/svg/Arrow";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
+import Spinner from "@/components/common/Spinner";
+import CharCountTextArea from "@/components/common/CharCountTextArea";
 import useAuthStore from "@/stores/authStore";
 import { useGetNotice, useUpdateNotice } from "@/entities/notice";
 import type { NoticeType } from "@/entities/notice";
-
-const TITLE_MAX_LENGTH = 360;
-const CONTENT_MAX_LENGTH = 800;
+import {
+  NOTICE_TITLE_MAX_LENGTH as TITLE_MAX_LENGTH,
+  NOTICE_CONTENT_MAX_LENGTH as CONTENT_MAX_LENGTH,
+} from "@/constants/notification";
 
 function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }) {
   const router = useRouter();
@@ -30,13 +33,11 @@ function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }
     } else if (title.trim().length > TITLE_MAX_LENGTH) {
       next.title = `공지 제목은 ${TITLE_MAX_LENGTH}자 이내로 입력해 주세요.`;
     }
-
     if (!content.trim()) {
       next.content = "공지 내용을 입력해 주세요.";
     } else if (content.trim().length > CONTENT_MAX_LENGTH) {
       next.content = `공지 내용은 ${CONTENT_MAX_LENGTH}자 이내로 입력해 주세요.`;
     }
-
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -68,9 +69,7 @@ function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }
               maxLength={TITLE_MAX_LENGTH}
               onChange={(e) => {
                 setTitle(e.target.value.slice(0, TITLE_MAX_LENGTH));
-                if (errors.title) {
-                  setErrors((prev) => ({ ...prev, title: undefined }));
-                }
+                if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
               }}
               error={errors.title}
             />
@@ -79,34 +78,18 @@ function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }
             </p>
           </div>
 
-          <div className="flex w-full flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">
-              공지 내용
-            </label>
-            <textarea
-              placeholder="공지 내용을 입력해 주세요."
-              value={content}
-              maxLength={CONTENT_MAX_LENGTH}
-              onChange={(e) => {
-                setContent(e.target.value.slice(0, CONTENT_MAX_LENGTH));
-                if (errors.content) {
-                  setErrors((prev) => ({ ...prev, content: undefined }));
-                }
-              }}
-              rows={8}
-              className={`w-full resize-none rounded-md border px-3 py-2 placeholder:text-gray-400 break-words whitespace-pre-wrap focus:outline-none transition-colors ${
-                errors.content
-                  ? "border-error focus:border-error"
-                  : "border-main-300 focus:border-main"
-              }`}
-            />
-            <p className="text-right text-xs text-gray-400">
-              {content.length}/{CONTENT_MAX_LENGTH}
-            </p>
-            {errors.content && (
-              <p className="text-xs text-error">{errors.content}</p>
-            )}
-          </div>
+          <CharCountTextArea
+            label="공지 내용"
+            placeholder="공지 내용을 입력해 주세요."
+            value={content}
+            maxLength={CONTENT_MAX_LENGTH}
+            rows={8}
+            onChange={(v) => {
+              setContent(v);
+              if (errors.content) setErrors((prev) => ({ ...prev, content: undefined }));
+            }}
+            error={errors.content}
+          />
         </div>
 
         <Button onClick={handleSave} disabled={isPending} className="py-3">
@@ -134,13 +117,7 @@ export default function NoticeEditPage() {
     }
   }, [notice, user, router]);
 
-  if (isLoading || !notice || !user) {
-    return (
-      <div className="flex min-h-[calc(100vh-70px)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-main/30 border-t-main" />
-      </div>
-    );
-  }
+  if (isLoading || !notice || !user) return <Spinner />;
 
   return <EditForm notice={notice} noticeId={noticeId} />;
 }
