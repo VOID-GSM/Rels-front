@@ -1,6 +1,5 @@
 import axiosInstance from "@/shared/lib/axios";
 
-// 클라이언트 전용: axios 인스턴스를 사용한 HTTP 메서드 래퍼
 // withCredentials: true로 httpOnly 쿠키가 자동 전송됨
 
 export const get = <T>(url: string): Promise<T> => {

@@ -1,0 +1,2 @@
+export const NOTICE_TITLE_MAX_LENGTH = 100;
+export const NOTICE_CONTENT_MAX_LENGTH = 800;

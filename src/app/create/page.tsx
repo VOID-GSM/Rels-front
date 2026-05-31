@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Arrow from "@/assets/svg/Arrow";
-import LectureForm from "@/components/common/LectureForm";
-import type { LectureFormData } from "@/components/common/LectureForm";
+import LectureForm from "@/components/lecture/LectureForm";
+import type { LectureFormData } from "@/components/lecture/LectureForm";
 import { useCreateLecture } from "@/entities/lecture";
 
 export default function CreateLecturePage() {

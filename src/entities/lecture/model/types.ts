@@ -23,6 +23,7 @@ export interface MyEnrolledLecture {
   lectureStatus: LectureStatusType;
   enrollmentStatus: "ENROLLED" | "WAITING" | string;
   creatorName: string;
+  creatorStudentNumber?: string;
   lectureLocation: string | null;
   lectureDate: string | null;
   lectureTime: string | null;
@@ -58,6 +59,7 @@ export interface LectureType {
   description: string;
   creatorId: number;
   creatorName: string;
+  creatorStudentNumber?: string;
   lectureStatus: LectureStatusType;
   capacityByGrade?: GradeCapacities;
   totalCapacity?: number | null;

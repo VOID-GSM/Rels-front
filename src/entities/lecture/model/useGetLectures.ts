@@ -13,7 +13,7 @@ export const useGetLectures = () => {
   return useQuery({
     queryKey: lectureQueryKeys.getAll(),
     queryFn: getLectures,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
     retry: false,
   });
 };

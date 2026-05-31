@@ -42,6 +42,9 @@ export const useEnrollLecture = (
         },
       );
       queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getAll(),
+      });
+      queryClient.invalidateQueries({
         queryKey: lectureQueryKeys.getEnrollments(lectureId),
       });
       queryClient.invalidateQueries({
