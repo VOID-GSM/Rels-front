@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { usePWAInstall } from "@/shared/lib/usePWAInstall";
+import { usePWAStore } from "@/stores/pwaStore";
 
 export default function PWAInstallBanner() {
-  const { isInstallable, install, dismiss } = usePWAInstall();
+  const { isInstallable, bannerDismissed, install, dismissBanner } =
+    usePWAStore();
 
-  if (!isInstallable) return null;
+  if (!isInstallable || bannerDismissed) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 border-t border-main-200 bg-white px-4 py-3 shadow-lg">
@@ -27,7 +28,7 @@ export default function PWAInstallBanner() {
       </div>
       <div className="flex shrink-0 gap-2">
         <button
-          onClick={dismiss}
+          onClick={dismissBanner}
           className="px-2 py-1 text-xs text-gray-400"
         >
           나중에

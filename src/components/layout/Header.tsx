@@ -4,14 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import useAuthStore from "@/stores/authStore";
+import { usePWAStore } from "@/stores/pwaStore";
 import { useGetUserInfo } from "@/entities/auth";
 import More from "@/assets/svg/More";
 import Cancel from "@/assets/svg/Cancel";
+import Download from "@/assets/svg/Download";
 
 export default function Header() {
   const { isLoggedIn, setUser, initFromSession } = useAuthStore();
   const { data: fetchedUser } = useGetUserInfo();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { isInstallable, install } = usePWAStore();
 
   // 새로고침 후 sessionStorage 토큰 복원
   useEffect(() => {
@@ -39,18 +42,15 @@ export default function Header() {
     };
   }, [isSidebarOpen]);
 
+  const sharedNavLinkClass =
+    "rounded-md px-3 py-2 font-medium transition-colors hover:bg-main-100 md:px-0 md:py-0 md:hover:bg-transparent";
+
   const navLinks = (
     <>
-      <Link
-        href="/notification"
-        className="rounded-md px-3 py-2 font-medium transition-colors hover:bg-main-100 md:px-0 md:py-0 md:hover:bg-transparent"
-      >
+      <Link href="/notification" className={sharedNavLinkClass}>
         공지사항
       </Link>
-      <Link
-        href="/mypage"
-        className="rounded-md px-3 py-2 font-medium transition-colors hover:bg-main-100 md:px-0 md:py-0 md:hover:bg-transparent"
-      >
+      <Link href="/mypage" className={sharedNavLinkClass}>
         마이페이지
       </Link>
     </>
@@ -60,11 +60,29 @@ export default function Header() {
     <>
       <header className="mx-auto flex h-[70px] w-full max-w-[1920px] items-center justify-between border-b border-main-300 px-4 sm:px-8 lg:px-20 xl:px-68">
         <Link href="/">
-          <Image src="/img/Rels.png" alt="logo" width={50} height={50} />
+          <Image
+            src="/img/Rels.png"
+            alt="logo"
+            width={50}
+            height={50}
+            priority
+          />
         </Link>
         {isLoggedIn && (
           <>
-            <nav className="hidden items-center gap-4 md:flex">{navLinks}</nav>
+            <nav className="hidden items-center gap-4 md:flex">
+              {navLinks}
+              {isInstallable && (
+                <button
+                  type="button"
+                  onClick={install}
+                  className="flex items-center gap-1.5 font-medium text-main transition-colors hover:opacity-70"
+                >
+                  <Download />
+                  앱 설치
+                </button>
+              )}
+            </nav>
             <button
               type="button"
               aria-label="메뉴 열기"
@@ -112,6 +130,21 @@ export default function Header() {
             >
               {navLinks}
             </nav>
+            {isInstallable && (
+              <div className="mt-auto border-t border-main-100 px-4 py-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    install();
+                    setIsSidebarOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 font-medium text-main transition-colors hover:bg-main-100"
+                >
+                  <Download />
+                  앱으로 설치하기
+                </button>
+              </div>
+            )}
           </aside>
         </>
       )}
