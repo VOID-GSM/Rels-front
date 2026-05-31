@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import QueryProvider from "@/shared/lib/QueryProvider";
 import AppShell from "@/components/layout/AppShell";
+import PWAProvider from "@/components/layout/PWAProvider";
 import { Toaster } from "sonner";
 
 export const viewport: Viewport = {
@@ -37,6 +38,7 @@ export default function RootLayout({
         <QueryProvider>
           <AppShell>{children}</AppShell>
           <Toaster position="top-center" richColors />
+          <PWAProvider />
         </QueryProvider>
       </body>
     </html>
