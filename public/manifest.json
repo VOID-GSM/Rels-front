@@ -1,0 +1,17 @@
+{
+  "name": "Rels",
+  "short_name": "Rels",
+  "description": "광주소프트웨어마이스터고 학생 주도 강연 개설 및 신청 기반 릴레이 스터디 관리 서비스",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff2dd",
+  "theme_color": "#ffb235",
+  "icons": [
+    {
+      "src": "/img/Rels.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
