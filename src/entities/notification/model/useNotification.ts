@@ -4,7 +4,7 @@ import { post } from "@/shared/api";
 import { notificationUrl } from "@/shared/api/apiUrls";
 import type { PushSubscriptionPayload } from "./types";
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
@@ -13,7 +13,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   for (let i = 0; i < rawData.length; i++) {
     output[i] = rawData.charCodeAt(i);
   }
-  return output;
+  return buffer;
 }
 
 export function usePushSubscription() {
