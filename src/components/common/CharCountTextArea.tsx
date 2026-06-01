@@ -17,12 +17,14 @@ export default function CharCountTextArea({
   rows = 5,
   error,
 }: CharCountTextAreaProps) {
+  const safeValue = value ?? "";
+
   return (
     <div className="flex w-full flex-col gap-1">
       <label className="text-sm font-medium text-gray-700">{label}</label>
       <textarea
         placeholder={placeholder}
-        value={value}
+        value={safeValue}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
         rows={rows}
@@ -33,7 +35,7 @@ export default function CharCountTextArea({
         }`}
       />
       <p className="text-right text-xs text-gray-400">
-        {value.length}/{maxLength}
+        {safeValue.length}/{maxLength}
       </p>
       {error && <p className="text-xs text-error">{error}</p>}
     </div>
