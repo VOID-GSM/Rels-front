@@ -21,10 +21,15 @@ export default function ConfirmModal({
   onCancel,
   isPending,
 }: ConfirmModalProps) {
+  const handleCancel = () => {
+    if (isPending) return;
+    onCancel();
+  };
+
   return (
     <div
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-      onClick={onCancel}
+      onClick={handleCancel}
     >
       <div
         className="bg-white rounded-2xl p-6 w-full max-w-[360px] mx-4 flex flex-col gap-5"
@@ -35,7 +40,7 @@ export default function ConfirmModal({
           <p className="text-sm text-gray-500">{message}</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="cancel" onClick={onCancel} className="py-2.5">
+          <Button variant="cancel" onClick={handleCancel} disabled={isPending} className="py-2.5">
             취소
           </Button>
           <Button
