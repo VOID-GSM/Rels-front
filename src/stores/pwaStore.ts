@@ -35,9 +35,12 @@ export const usePWAStore = create<PWAStore>((set) => ({
 
   install: async () => {
     if (!_deferredPrompt) return;
-    await _deferredPrompt.prompt();
-    const { outcome } = await _deferredPrompt.userChoice;
-    if (outcome === "accepted") {
+    try {
+      await _deferredPrompt.prompt();
+      await _deferredPrompt.userChoice;
+    } catch (error) {
+      console.error("PWA installation failed:", error);
+    } finally {
       _deferredPrompt = null;
       set({ isInstallable: false });
     }
