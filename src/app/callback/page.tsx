@@ -29,7 +29,6 @@ function CallbackContent() {
           throw new Error("code 또는 state가 없습니다.");
         }
 
-        // 백엔드에 code + state 전달 → accessToken 수신
         const { accessToken } = await get<OAuthSignInType>(
           authUrls.dgCallback(code, state),
         );
@@ -37,10 +36,8 @@ function CallbackContent() {
         // 토큰을 sessionStorage에 먼저 저장 (axios 인터셉터가 읽을 수 있게)
         sessionStorage.setItem("accessToken", accessToken);
 
-        // 유저 정보 조회
         const user = await get<UserInfoType>(authUrl.getUserInfo());
 
-        // Zustand에 토큰 + 유저 정보 저장
         setAuth(accessToken, user);
 
         router.replace("/");

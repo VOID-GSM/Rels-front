@@ -1,5 +1,3 @@
-// src/components/common/Button.tsx
-
 type ButtonVariant = "primary" | "cancel" | "waiting";
 
 interface ButtonProps {

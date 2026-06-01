@@ -1,4 +1,3 @@
-// TanStack Query 쿼리 키 중앙 관리
 export const authQueryKeys = {
   all: ["auth"] as const,
   getUserInfo: () => [...authQueryKeys.all, "getUserInfo"] as const,
@@ -11,6 +10,10 @@ export const lectureQueryKeys = {
   getOne: (id: number) => [...lectureQueryKeys.all, id] as const,
   getEnrollments: (id: number) => [...lectureQueryKeys.all, id, "enrollments"] as const,
   getMyEnrollments: () => [...lectureQueryKeys.all, "enrollments", "me"] as const,
+};
+
+export const notificationQueryKeys = {
+  all: ["notification"] as const,
 };
 
 export const noticeQueryKeys = {
