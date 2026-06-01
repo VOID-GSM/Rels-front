@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import useAuthStore from "@/stores/authStore";
-import { usePWAStore } from "@/stores/pwaStore";
 import { useGetUserInfo } from "@/entities/auth";
 import More from "@/assets/svg/More";
 import Cancel from "@/assets/svg/Cancel";
@@ -14,7 +13,6 @@ export default function Header() {
   const { isLoggedIn, setUser, initFromSession } = useAuthStore();
   const { data: fetchedUser } = useGetUserInfo();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { isInstallable, install } = usePWAStore();
 
   // 새로고침 후 sessionStorage 토큰 복원
   useEffect(() => {
@@ -72,16 +70,12 @@ export default function Header() {
           <>
             <nav className="hidden items-center gap-4 md:flex">
               {navLinks}
-              {isInstallable && (
-                <button
-                  type="button"
-                  onClick={install}
-                  className="flex items-center gap-1.5 font-medium text-main transition-colors hover:opacity-70"
-                >
-                  <Download />
-                  앱 설치
-                </button>
-              )}
+              <Link
+                href="/pwa-install"
+                className="flex items-center gap-1.5 font-medium transition-colors hover:opacity-70"
+              >
+                앱 설치 안내
+              </Link>
             </nav>
             <button
               type="button"
@@ -130,21 +124,15 @@ export default function Header() {
             >
               {navLinks}
             </nav>
-            {isInstallable && (
-              <div className="mt-auto border-t border-main-100 px-4 py-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    install();
-                    setIsSidebarOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 font-medium text-main transition-colors hover:bg-main-100"
-                >
-                  <Download />
-                  앱으로 설치하기
-                </button>
-              </div>
-            )}
+            <div className="mt-auto border-t border-main-100 px-4 py-4">
+              <Link
+                href="/pwa-install"
+                onClick={() => setIsSidebarOpen(false)}
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 font-medium text-main transition-colors hover:bg-main-100"
+              >
+                <Download />앱 설치 안내
+              </Link>
+            </div>
           </aside>
         </>
       )}
