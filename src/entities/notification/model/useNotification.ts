@@ -4,16 +4,15 @@ import { post } from "@/shared/api";
 import { notificationUrl } from "@/shared/api/apiUrls";
 import type { PushSubscriptionPayload } from "./types";
 
-function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
-  const buffer = new ArrayBuffer(rawData.length);
-  const output = new Uint8Array(buffer);
+  const output = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; i++) {
     output[i] = rawData.charCodeAt(i);
   }
-  return buffer;
+  return output;
 }
 
 export function usePushSubscription() {
