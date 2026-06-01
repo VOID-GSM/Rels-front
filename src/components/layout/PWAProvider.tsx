@@ -13,8 +13,12 @@ export default function PWAProvider() {
   const { capture } = usePWAStore();
 
   useEffect(() => {
+    // 개발 환경에서는 next-pwa가 비활성화되므로 sw-push.js를 직접 등록
+    // 프로덕션에서는 next-pwa가 worker/index.ts를 sw.js에 통합하여 처리
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/sw-push.js").catch(() => {});
+    if (process.env.NODE_ENV === "development") {
+      navigator.serviceWorker.register("/sw-push.js").catch(() => {});
+    }
   }, []);
 
   useEffect(() => {
