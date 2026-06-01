@@ -23,6 +23,10 @@ export const noticeUrl = {
   delete: (id: number) => `/api/notices/${id}`,
 } as const;
 
+export const notificationUrl = {
+  subscribe: () => "/api/notifications/subscribe",
+} as const;
+
 export const authUrls = {
   dgStart: (redirectUri: string) =>
     `/api/auth/dg/start?redirectUri=${encodeURIComponent(redirectUri)}`,

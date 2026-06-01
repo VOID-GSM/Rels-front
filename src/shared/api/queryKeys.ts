@@ -12,6 +12,10 @@ export const lectureQueryKeys = {
   getMyEnrollments: () => [...lectureQueryKeys.all, "enrollments", "me"] as const,
 };
 
+export const notificationQueryKeys = {
+  all: ["notification"] as const,
+};
+
 export const noticeQueryKeys = {
   all: ["notices"] as const,
   getAll: () => [...noticeQueryKeys.all, "list"] as const,
