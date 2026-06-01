@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import Arrow from "@/assets/svg/Arrow";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
-import ConfirmModal from "@/components/common/ConfirmModal";
+
+const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
+  ssr: false,
+});
 import useAuthStore from "@/stores/authStore";
 import { useGetNotices, useDeleteNotice } from "@/entities/notice";
 

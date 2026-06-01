@@ -9,8 +9,12 @@ import {
   useDeleteLecture,
   useGetMyLectureEnrollments,
 } from "@/entities/lecture";
+import dynamic from "next/dynamic";
 import CouncilBadge from "@/components/common/CouncilBadge";
-import ConfirmModal from "@/components/common/ConfirmModal";
+
+const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
+  ssr: false,
+});
 import Arrow from "@/assets/svg/Arrow";
 import Person from "@/assets/svg/Person";
 import HashTag from "@/assets/svg/HashTag";

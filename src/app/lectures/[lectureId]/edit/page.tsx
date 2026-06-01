@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
-import ConfirmModal from "@/components/common/ConfirmModal";
+
+const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
+  ssr: false,
+});
 import Arrow from "@/assets/svg/Arrow";
 import Delete from "@/assets/svg/Delete";
 import LectureForm from "@/components/lecture/LectureForm";
