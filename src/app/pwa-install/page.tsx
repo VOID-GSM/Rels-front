@@ -61,7 +61,7 @@ const MOBILE_STEPS: { os: string; steps: string[] }[] = [
   {
     os: "iOS (Safari)",
     steps: [
-      "하단 공유 버튼(□↑)을 탭하세요.",
+      "하단 공유 버튼을 탭하세요.",
       '"홈 화면에 추가"를 탭하세요.',
       '오른쪽 상단 "추가"를 탭하면 홈 화면에 Rels 아이콘이 추가됩니다.',
     ],
