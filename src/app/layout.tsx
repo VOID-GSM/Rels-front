@@ -12,7 +12,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Rels",
+  title: "Rels - 릴레이스터디",
   description:
     "광주소프트웨어마이스터고 학생 주도 강연 개설 및 신청 기반 릴레이 스터디 관리 서비스 Rels",
   manifest: "/manifest.json",
