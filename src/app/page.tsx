@@ -44,7 +44,7 @@ function LectureGrid({
   }
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,300px))] gap-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
       {sortLectures(lectures).map((lecture) => (
         <LectureCard
           key={lecture.lectureId}

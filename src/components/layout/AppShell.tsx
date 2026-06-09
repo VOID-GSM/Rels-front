@@ -1,8 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import Header from "./Header";
-import NoticeBanner from "./NoticeBanner";
+
+const NoticeBanner = dynamic(() => import("./NoticeBanner"), { ssr: false });
 
 const FULL_SCREEN_PATHS = ["/login", "/callback"];
 

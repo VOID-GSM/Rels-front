@@ -3,10 +3,16 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, notFound, useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import Badge from "@/components/common/Badge";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
-import ApplicantList from "@/components/lecture/ApplicantList";
+
+const ApplicantList = dynamic(() => import("@/components/lecture/ApplicantList"), {
+  loading: () => (
+    <div className="border border-main-200 rounded-2xl animate-pulse bg-main-100 w-full h-32" />
+  ),
+});
 import Arrow from "@/assets/svg/Arrow";
 import Pencil from "@/assets/svg/Pencil";
 import People from "@/assets/svg/People";

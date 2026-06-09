@@ -19,9 +19,10 @@ export const getDisplayLectureStatus = (
       `${lecture.lectureDate}T${lecture.lectureTime}`,
     );
 
+    const ONE_HOUR_MS = 60 * 60 * 1000;
     if (
       !Number.isNaN(lectureDateTime.getTime()) &&
-      lectureDateTime.getTime() < Date.now()
+      lectureDateTime.getTime() + ONE_HOUR_MS < Date.now()
     ) {
       return "CLOSED";
     }
