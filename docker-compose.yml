@@ -1,0 +1,12 @@
+services:
+  fronted:
+    build: .
+    container_name: rels-frontend
+    ports: 
+      - "3000:3000"
+    networks:
+      - rels-network
+    restart: unless-stopped
+networks:
+  rels-network:
+    external: true
