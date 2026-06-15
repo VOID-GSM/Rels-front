@@ -2,20 +2,18 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, develop, feat/dockerfile ]
   pull_request:
-    branches: [main, develop]
-
+    branches: [ main, develop ]
 jobs:
-  ci:
+  ci: 
     name: Lint, Type Check & Build
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -24,15 +22,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
+      - name: Lint 
         run: npm run lint
 
-      - name: Type check
+      - name: Type Check
         run: npx tsc --noEmit
 
       - name: Build
         run: npm run build
-
+        # 디코봇 알림인데 성공 알림
       - name: Notify Discord (success)
         if: success()
         uses: sarisia/actions-status-discord@v1
@@ -40,9 +38,9 @@ jobs:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: success
           title: CI 통과
-          description: "브랜치: `${{ github.ref_name }}` | ${{ github.event_name }}"
+          description: "브랜치: '${{ github.ref_name }}' | 작성자: '${{ github.actor }}'"
           color: 0x57F287
-
+        # 디코봇 알림인데 실패 알림
       - name: Notify Discord (failure)
         if: failure()
         uses: sarisia/actions-status-discord@v1
@@ -50,6 +48,5 @@ jobs:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: failure
           title: CI 실패
-          description: "브랜치: `${{ github.ref_name }}` | ${{ github.event_name }}"
+          description: "브랜치: '${{ github.ref_name }}' | 작성자: '${{ github.actor }}'"
           color: 0xED4245
-
