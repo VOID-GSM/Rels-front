@@ -4,29 +4,46 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
-import { authUrls } from "@/shared/api/apiUrls";
+import { get } from "@/shared/api";
+import { authUrl, authUrls } from "@/shared/api/apiUrls";
 import { getOAuthRedirectUri } from "@/shared/lib/getOAuthRedirectUri";
+import type { UserInfoType } from "@/entities/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isLoggedIn, initFromSession } = useAuthStore();
+  const { initFromSession, clearAuth, setAuth } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    const token = initFromSession();
-    if (token || isLoggedIn) {
-      router.replace("/");
-    } else {
-      queueMicrotask(() => {
+
+    // sessionStorage에 토큰이 남아 있어도 만료됐을 수 있습니다.
+    // 검증 없이 홈으로 보내면 만료 토큰일 때 홈과 로그인 사이에 갇히므로
+    // /api/auth/me로 확인한 뒤에만 이동합니다.
+    const verifySession = async () => {
+      const token = initFromSession();
+
+      if (!token) {
         if (isMounted) setIsChecking(false);
-      });
-    }
+        return;
+      }
+
+      try {
+        const user = await get<UserInfoType>(authUrl.getUserInfo());
+        setAuth(token, user);
+        router.replace("/");
+      } catch {
+        clearAuth();
+        if (isMounted) setIsChecking(false);
+      }
+    };
+
+    verifySession();
 
     return () => {
       isMounted = false;
     };
-  }, [initFromSession, isLoggedIn, router]);
+  }, [initFromSession, clearAuth, setAuth, router]);
 
   const handleLogin = () => {
     window.location.href = authUrls.dgStart(getOAuthRedirectUri());

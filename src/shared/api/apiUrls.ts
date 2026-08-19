@@ -1,5 +1,6 @@
 // 백엔드 API 엔드포인트는 Next rewrite를 통해 같은 출처의 /api 경로로 프록시됩니다.
 export const authUrl = {
+  // 변경 시 shared/lib/axios.ts의 AUTH_VERIFY_PATH도 함께 수정해야 합니다.
   getUserInfo: () => "/api/auth/me",
 } as const;
 
