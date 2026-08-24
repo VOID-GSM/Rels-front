@@ -3,22 +3,68 @@
 @theme {
   --font-family-sans: Pretendard, sans-serif;
 
-  --color-main: #ffb235;
-  --color-main-300: #ffc669;
-  --color-main-200: #ffd89a;
-  --color-main-100: #ffe7bf;
+  /* Brand: amber stays at full strength and lives in fills, not in text.
+     Amber text on white never clears contrast without turning brown, and that
+     brown is what made the palette look muddy. */
+  --color-main: #ffb02e;
+  --color-main-100: #ffe6b8;
+  --color-main-soft: #fff4de;
+  /* Only for the focus outline, where a dark accent is the point. */
+  --color-main-strong: #a35a00;
 
-  --color-background: #fff2dd;
+  /* Surfaces */
+  --color-canvas: #fbfaf8;
+  --color-surface: #ffffff;
 
-  --color-gray-900: #282828;
-  --color-gray-700: #3a3939;
-  --color-gray-600: #545454;
-  --color-gray-500: #767676;
-  --color-gray-400: #a2a2a2;
-  --color-gray-200: #d0d0d0;
+  /* Neutrals: warm, but with the green cast pulled out and the mid tones kept
+     light enough that secondary text still reads. */
+  --color-gray-900: #1a1a19;
+  --color-gray-800: #2c2b29;
+  --color-gray-700: #423f3c;
+  --color-gray-600: #5c5854;
+  --color-gray-500: #7b7671;
+  --color-gray-400: #a6a19b;
+  --color-gray-300: #ccc7c1;
+  --color-gray-200: #e6e2dd;
+  --color-gray-100: #f1efeb;
+  --color-gray-50: #f8f7f4;
 
-  --color-error: #ff3838;
-  --color-success: #8dff63;
+  --color-error: #d93a34;
+  --color-error-soft: #fdeeed;
+  --color-success: #1f9d63;
+  --color-success-soft: #e8f7ef;
+
+  /* Elevation replaces borders. e1 rests, e2 groups, e3 lifts, e4 floats. */
+  --shadow-e1: 0 1px 2px rgba(28, 27, 25, 0.06), 0 1px 3px rgba(28, 27, 25, 0.05);
+  --shadow-e2: 0 1px 2px rgba(28, 27, 25, 0.05), 0 8px 20px -10px rgba(28, 27, 25, 0.17);
+  --shadow-e3: 0 2px 4px rgba(28, 27, 25, 0.06), 0 16px 34px -12px rgba(28, 27, 25, 0.26);
+  --shadow-e4: 0 4px 8px rgba(28, 27, 25, 0.06), 0 32px 64px -24px rgba(28, 27, 25, 0.35);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-family-sans);
+    background-color: var(--color-canvas);
+    color: var(--color-gray-900);
+    -webkit-font-smoothing: antialiased;
+    /* Korean must not break inside a word: break on spaces only, and let the
+       rare unbreakable string overflow-wrap instead. */
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  /* Headings are the only place with negative tracking; it keeps them dense
+     without needing a heavier weight. */
+  h1,
+  h2 {
+    letter-spacing: -0.02em;
+  }
+
+  /* Counts, capacities and the countdown all change in place — tabular figures
+     stop them from jittering. */
+  :where(.tnum) {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @layer utilities {
@@ -29,8 +75,48 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
+
+  /* Single focus treatment across the app. Outline, not box-shadow, so it never
+     fights with the elevation shadows. */
+  .focusable {
+    outline: none;
+  }
+  .focusable:focus-visible {
+    outline: 2px solid var(--color-main-strong);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+
+  /* Fields are drawn by a fill, not a border. Focus then only has to add the
+     ring. */
+  .field {
+    background-color: var(--color-gray-50);
+    box-shadow: 0 0 0 1px transparent;
+    transition: box-shadow 0.15s ease, background-color 0.15s ease;
+  }
+  .field:focus {
+    outline: none;
+    background-color: var(--color-surface);
+    box-shadow: 0 0 0 2px var(--color-main);
+  }
+  .field-error {
+    box-shadow: 0 0 0 1px var(--color-error);
+  }
+  .field-error:focus {
+    box-shadow: 0 0 0 2px var(--color-error);
+  }
 }
 
-body {
-  font-family: var(--font-family-sans);
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover {
+    transform: none !important;
+  }
 }
