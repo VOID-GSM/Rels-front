@@ -16,7 +16,7 @@ export default function NotFound() {
         href="/"
         className="focusable mt-4 rounded-xl bg-main px-5 py-2.5 text-sm font-semibold text-gray-900 shadow-e2 transition-[box-shadow,transform] duration-200 hover:-translate-y-px hover:shadow-e3"
       >
-        강연 목록으로
+        홈으로
       </Link>
     </div>
   );

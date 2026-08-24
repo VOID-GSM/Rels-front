@@ -53,7 +53,7 @@ export default function NotificationPage() {
   return (
     <>
       <PageShell>
-        <BackLink href="/">강연 목록</BackLink>
+        <BackLink href="/">이번 주 강연</BackLink>
         <PageHeader
           className="mt-5 pb-10"
           title="공지사항"
