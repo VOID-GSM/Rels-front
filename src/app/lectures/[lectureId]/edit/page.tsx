@@ -2,19 +2,26 @@
 
 import { useState } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
-import Link from "next/link";
 import dynamic from "next/dynamic";
+import PageShell from "@/components/layout/PageShell";
+import PageHeader from "@/components/layout/PageHeader";
+import BackLink from "@/components/layout/BackLink";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
 
 const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
   ssr: false,
 });
-import Arrow from "@/assets/svg/Arrow";
 import Delete from "@/assets/svg/Delete";
 import LectureForm from "@/components/lecture/LectureForm";
 import type { LectureFormData } from "@/components/lecture/LectureForm";
-import { useGetLecture, useUpdateLecture, useDeleteLecture } from "@/entities/lecture";
+import {
+  useGetLecture,
+  useUpdateLecture,
+  useDeleteLecture,
+  MOCK_LECTURES,
+} from "@/entities/lecture";
+import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import type { LectureType } from "@/entities/lecture";
 
 function EditForm({ lecture }: { lecture: LectureType }) {
@@ -36,18 +43,14 @@ function EditForm({ lecture }: { lecture: LectureType }) {
 
   return (
     <>
-      <main className="max-w-[600px] mx-auto px-6 py-10 flex flex-col gap-6">
-        <Link
-          href={`/lectures/${lectureId}`}
-          className="flex items-center gap-1 text-sm text-gray-500 w-fit"
-        >
-          <Arrow />
-          취소
-        </Link>
-
-        <div className="border border-main-200 rounded-2xl p-8 flex flex-col gap-6">
-          <h1 className="text-xl font-bold text-gray-900">강연 수정</h1>
-          <LectureForm
+      <PageShell>
+        <BackLink href={`/lectures/${lectureId}`}>강연 상세</BackLink>
+        <PageHeader
+          className="mt-5 pb-4"
+          title="강연 수정"
+          description="이미 신청한 학생이 있다면 인원과 일정 변경에 주의해 주세요."
+        />
+        <LectureForm
             initialValues={{
               title: lecture.title,
               description: lecture.description,
@@ -69,22 +72,21 @@ function EditForm({ lecture }: { lecture: LectureType }) {
                 variant="cancel"
                 onClick={() => setShowDeleteModal(true)}
                 disabled={isUpdating || isDeleting}
-                className="py-3 flex items-center justify-center gap-2"
+                className="w-fit gap-2 px-6 py-3.5"
               >
                 <Delete />
                 삭제
               </Button>
             }
-          />
-        </div>
-      </main>
+        />
+      </PageShell>
 
       {showDeleteModal && (
         <ConfirmModal
           title="강연 삭제"
           message="강연을 삭제하면 복구할 수 없습니다. 정말 삭제하시겠습니까?"
           confirmLabel="삭제"
-          confirmClassName="bg-error border-error hover:bg-error/90"
+          confirmVariant="danger"
           onConfirm={handleConfirmDelete}
           onCancel={() => setShowDeleteModal(false)}
           isPending={isDeleting}
@@ -97,10 +99,15 @@ function EditForm({ lecture }: { lecture: LectureType }) {
 export default function EditLecturePage() {
   const params = useParams();
   const lectureId = Number(params.lectureId);
-  const { data: lecture, isLoading } = useGetLecture(lectureId);
+  const { data: fetchedLecture, isLoading } = useGetLecture(lectureId);
+  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 화면을 채웁니다.
+  const isPreview = useDesignPreview();
+  const lecture = isPreview
+    ? MOCK_LECTURES.find((l) => l.lectureId === lectureId)
+    : fetchedLecture;
 
   if (isNaN(lectureId)) return notFound();
-  if (isLoading || !lecture) return <Spinner />;
+  if ((!isPreview && isLoading) || !lecture) return <Spinner />;
 
   return <EditForm lecture={lecture} />;
 }

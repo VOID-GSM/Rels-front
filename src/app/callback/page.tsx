@@ -85,20 +85,22 @@ function CallbackContent() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#191919]">
-        <p className="text-red-400 text-lg font-semibold mb-2">로그인 오류</p>
-        <p className="text-white/70 text-sm text-center px-4">{error}</p>
-        <p className="text-white/40 text-xs mt-4">
-          3초 후 로그인 페이지로 이동합니다...
-        </p>
+      <div className="flex min-h-dvh items-center justify-center bg-canvas px-6">
+        <div className="flex w-full max-w-[400px] flex-col items-center gap-2 rounded-2xl bg-surface p-9 text-center shadow-e3">
+          <p className="text-base font-bold text-error">로그인하지 못했습니다</p>
+          <p className="text-sm leading-relaxed text-gray-600">{error}</p>
+          <p className="mt-3 text-xs text-gray-500">
+            잠시 후 로그인 페이지로 돌아갑니다.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#191919]">
-      <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mb-4" />
-      <p className="text-white/60 text-sm">로그인 처리 중...</p>
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-canvas">
+      <div className="h-7 w-7 animate-spin rounded-full border-2 border-gray-200 border-t-main" />
+      <p className="text-sm text-gray-600">로그인하는 중</p>
     </div>
   );
 }
@@ -107,8 +109,8 @@ export default function CallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-[#191919]">
-          <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="flex min-h-dvh items-center justify-center bg-canvas">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-gray-200 border-t-main" />
         </div>
       }
     >

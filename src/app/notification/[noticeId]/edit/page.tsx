@@ -2,14 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import Arrow from "@/assets/svg/Arrow";
+import PageShell from "@/components/layout/PageShell";
+import PageHeader from "@/components/layout/PageHeader";
+import BackLink from "@/components/layout/BackLink";
+import FormSection from "@/components/layout/FormSection";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
 import CharCountTextArea from "@/components/common/CharCountTextArea";
 import useAuthStore from "@/stores/authStore";
-import { useGetNotice, useUpdateNotice } from "@/entities/notice";
+import { useGetNotice, useUpdateNotice, MOCK_NOTICES } from "@/entities/notice";
+import { MOCK_USER } from "@/entities/auth";
+import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import type { NoticeType } from "@/entities/notice";
 import {
   NOTICE_TITLE_MAX_LENGTH as TITLE_MAX_LENGTH,
@@ -48,55 +52,59 @@ function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }
   };
 
   return (
-    <main className="mx-auto flex max-w-[600px] flex-col gap-6 px-6 py-10">
-      <Link
-        href="/notification"
-        className="flex w-fit items-center gap-1 text-sm text-gray-500"
+    <PageShell size="narrow">
+      <BackLink href="/notification">공지 목록</BackLink>
+      <PageHeader
+        className="mt-5 pb-4"
+        title="공지 수정"
+        description="이미 읽은 학생에게는 다시 알림이 가지 않습니다."
+      />
+
+      <FormSection
+        title="공지 내용"
+        description="모든 학생이 목록과 상단 배너에서 보게 됩니다. 핵심을 먼저 적어 주세요."
       >
-        <Arrow />
-        취소
-      </Link>
-
-      <div className="flex flex-col gap-6 rounded-2xl border border-main-200 p-8">
-        <h1 className="text-xl font-bold text-gray-900">공지 수정</h1>
-
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <Input
-              label="공지 제목"
-              placeholder="공지 제목을 입력해 주세요."
-              value={title}
-              maxLength={TITLE_MAX_LENGTH}
-              onChange={(e) => {
-                setTitle(e.target.value.slice(0, TITLE_MAX_LENGTH));
-                if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
-              }}
-              error={errors.title}
-            />
-            <p className="text-right text-xs text-gray-400">
-              {title.length}/{TITLE_MAX_LENGTH}
-            </p>
-          </div>
-
-          <CharCountTextArea
-            label="공지 내용"
-            placeholder="공지 내용을 입력해 주세요."
-            value={content}
-            maxLength={CONTENT_MAX_LENGTH}
-            rows={8}
-            onChange={(v) => {
-              setContent(v);
-              if (errors.content) setErrors((prev) => ({ ...prev, content: undefined }));
+        <div className="flex flex-col gap-1">
+          <Input
+            label="공지 제목"
+            placeholder="예) 6월 릴레이 스터디 신청 기간 안내"
+            value={title}
+            maxLength={TITLE_MAX_LENGTH}
+            onChange={(e) => {
+              setTitle(e.target.value.slice(0, TITLE_MAX_LENGTH));
+              if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
             }}
-            error={errors.content}
+            error={errors.title}
           />
+          <p className="tnum text-right text-xs text-gray-500">
+            {title.length}/{TITLE_MAX_LENGTH}
+          </p>
         </div>
 
-        <Button onClick={handleSave} disabled={isPending} className="py-3">
-          {isPending ? "수정 중.." : "수정"}
+        <CharCountTextArea
+          label="공지 내용"
+          placeholder="언제부터 언제까지, 무엇을 해야 하는지 적어 주세요."
+          value={content}
+          maxLength={CONTENT_MAX_LENGTH}
+          rows={10}
+          onChange={(v) => {
+            setContent(v);
+            if (errors.content) setErrors((prev) => ({ ...prev, content: undefined }));
+          }}
+          error={errors.content}
+        />
+      </FormSection>
+
+      <div className="pt-6">
+        <Button
+          onClick={handleSave}
+          disabled={isPending}
+          className="w-fit px-8 py-3.5"
+        >
+          {isPending ? "수정 중" : "수정"}
         </Button>
       </div>
-    </main>
+    </PageShell>
   );
 }
 
@@ -104,8 +112,14 @@ export default function NoticeEditPage() {
   const params = useParams();
   const router = useRouter();
   const noticeId = Number(params.noticeId);
-  const { data: notice, isLoading } = useGetNotice(noticeId);
-  const { user } = useAuthStore();
+  const { data: fetchedNotice, isLoading } = useGetNotice(noticeId);
+  const { user: loggedInUser } = useAuthStore();
+  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 화면을 채웁니다.
+  const isPreview = useDesignPreview();
+  const user = isPreview ? MOCK_USER : loggedInUser;
+  const notice = isPreview
+    ? MOCK_NOTICES.content.find((n) => n.id === noticeId)
+    : fetchedNotice;
 
   useEffect(() => {
     if (notice && user) {
@@ -117,7 +131,7 @@ export default function NoticeEditPage() {
     }
   }, [notice, user, router]);
 
-  if (isLoading || !notice || !user) return <Spinner />;
+  if ((!isPreview && isLoading) || !notice || !user) return <Spinner />;
 
   return <EditForm notice={notice} noticeId={noticeId} />;
 }
