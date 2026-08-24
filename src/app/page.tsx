@@ -100,15 +100,29 @@ export default function ThisWeekPage() {
 
   if (!lecture) {
     return (
-      <PageShell className="flex min-h-[60vh] flex-col items-center justify-center gap-5 text-center">
+      /* 헤더(68px)와 PageShell 상하 여백(32/96px)을 뺀 높이 안에서 가운데를 잡으면
+         화면 기준으로도 가운데에 옵니다. 공지 배너가 떠 있을 때 스크롤이 생기지
+         않도록 여유분을 조금 더 뺐습니다. */
+      <PageShell className="flex min-h-[calc(100dvh-260px)] flex-col items-center justify-center text-center">
         <h1 className="text-3xl font-bold text-gray-900">
           이번 주엔 열린 강연이 없습니다
         </h1>
-        <p className="max-w-[40ch] text-sm leading-relaxed text-gray-600">
-          아무도 강연을 열지 않았습니다. 나눠 줄 만한 걸 알고 있다면 이번 주는
-          당신 차례입니다.
+        {/* 제목과 설명은 한 덩어리로 읽혀야 해서 붙이고, 행동 유도만 떼어 놓습니다. */}
+        <p className="mt-2.5 max-w-[52ch] text-sm leading-relaxed text-gray-600">
+          학생이 직접 주제를 선정해 발표하는
+          <br />
+          자율 참여형 지식 공유 컨퍼런스를 개최해봐요!
         </p>
-        <CreateLectureButton />
+        <div className="mt-8">
+          <CreateLectureButton />
+        </div>
+        {/* 이번 주가 비어 있어도 지난 강연은 남아 있으므로 목록으로 가는 길을 둡니다. */}
+        <Link
+          href="/lectures"
+          className="focusable mt-4 rounded-lg text-sm font-medium text-gray-500 underline-offset-4 transition-colors hover:text-gray-900 hover:underline"
+        >
+          전체 강연 보기
+        </Link>
       </PageShell>
     );
   }
