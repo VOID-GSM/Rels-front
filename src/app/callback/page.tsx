@@ -53,6 +53,9 @@ function CallbackContent() {
 
         setError(
           getApiErrorMessage(err, {
+            // 같은 400이라도 state 만료 / redirectUri 미등록 / 파라미터 누락으로
+            // 원인이 갈립니다. 백엔드가 사유를 내려주면 그것을 우선 노출합니다.
+            preferServerMessage: true,
             timeout:
               "로그인 처리가 지연되어 시간이 초과되었습니다. 다시 시도해주세요.",
             statusMessages: {
