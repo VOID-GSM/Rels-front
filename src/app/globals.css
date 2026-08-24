@@ -15,7 +15,7 @@
   /* Surfaces. The ground stays on the brand's warm side, but sits closer to
      peach than to yellow: a yellow ground reads as aged paper, while a
      desaturated grey reads dirty and a cool grey fights the amber. */
-  --color-canvas: #fcfcfb;
+  --color-canvas: #f8f8f7;
   --color-surface: #ffffff;
 
   /* Neutrals on the same warm axis, but with the green cast kept out so they
