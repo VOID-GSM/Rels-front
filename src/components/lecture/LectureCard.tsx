@@ -3,7 +3,7 @@ import Badge from "@/components/common/Badge";
 import type { BadgeVariant } from "@/components/common/Badge";
 import SeatMeter from "./SeatMeter";
 
-export interface LectureCardProps {
+interface LectureCardProps {
   title: string;
   speaker: string;
   status: BadgeVariant;
@@ -12,8 +12,7 @@ export interface LectureCardProps {
   waitingCount?: number;
 }
 
-/** 링크 없이 카드 겉모습만 그립니다. 개설 폼의 미리보기가 이걸 그대로 씁니다. */
-export function LectureCardContent({
+function LectureCardContent({
   title,
   speaker,
   status,
@@ -56,7 +55,7 @@ export function LectureCardContent({
   );
 }
 
-export const LECTURE_CARD_SURFACE =
+const CARD_SURFACE =
   "flex h-full w-full flex-col overflow-hidden rounded-2xl bg-surface shadow-e2";
 
 export default function LectureCard({
@@ -66,7 +65,7 @@ export default function LectureCard({
   return (
     <Link
       href={`/lectures/${id}`}
-      className={`focusable lift ${LECTURE_CARD_SURFACE} transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-e3`}
+      className={`focusable lift ${CARD_SURFACE} transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-e3`}
     >
       <LectureCardContent {...content} />
     </Link>

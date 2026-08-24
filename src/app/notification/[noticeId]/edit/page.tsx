@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import PageShell from "@/components/layout/PageShell";
 import PageHeader from "@/components/layout/PageHeader";
 import BackLink from "@/components/layout/BackLink";
-import FormSection from "@/components/layout/FormSection";
+import FormSection, { FormActions } from "@/components/layout/FormSection";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
@@ -95,15 +95,15 @@ function EditForm({ notice, noticeId }: { notice: NoticeType; noticeId: number }
         />
       </FormSection>
 
-      <div className="pt-6">
+      <FormActions>
         <Button
           onClick={handleSave}
           disabled={isPending}
-          className="w-fit px-8 py-3.5"
+          className="h-11 w-full"
         >
           {isPending ? "수정 중" : "수정"}
         </Button>
-      </div>
+      </FormActions>
     </PageShell>
   );
 }

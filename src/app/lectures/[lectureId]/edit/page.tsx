@@ -43,7 +43,7 @@ function EditForm({ lecture }: { lecture: LectureType }) {
 
   return (
     <>
-      <PageShell>
+      <PageShell size="narrow">
         <BackLink href={`/lectures/${lectureId}`}>강연 상세</BackLink>
         <PageHeader
           className="mt-5 pb-4"
@@ -72,7 +72,7 @@ function EditForm({ lecture }: { lecture: LectureType }) {
                 variant="cancel"
                 onClick={() => setShowDeleteModal(true)}
                 disabled={isUpdating || isDeleting}
-                className="w-fit gap-2 px-6 py-3.5"
+                className="h-11 w-fit gap-2 px-7"
               >
                 <Delete />
                 삭제

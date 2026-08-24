@@ -17,8 +17,8 @@ export default function CreateLecturePage() {
   };
 
   return (
-    <PageShell>
-      <BackLink href="/">강연 목록</BackLink>
+    <PageShell size="narrow">
+      <BackLink href="/lectures">전체 강연</BackLink>
       <PageHeader
         className="mt-5 pb-4"
         title="강연 개설"
