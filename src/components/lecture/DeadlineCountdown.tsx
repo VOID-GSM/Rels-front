@@ -2,18 +2,27 @@
 
 import { useState, useEffect } from "react";
 
+const DAY = 86400000;
+
 function getTimeLeft(deadline: string) {
   const diff = new Date(deadline).getTime() - Date.now();
   if (diff <= 0) return null;
   return {
-    days: Math.floor(diff / 86400000),
-    hours: Math.floor((diff % 86400000) / 3600000),
+    diff,
+    days: Math.floor(diff / DAY),
+    hours: Math.floor((diff % DAY) / 3600000),
     minutes: Math.floor((diff % 3600000) / 60000),
     seconds: Math.floor((diff % 60000) / 1000),
   };
 }
 
-export default function DeadlineCountdown({ deadline }: { deadline: string }) {
+export default function DeadlineCountdown({
+  deadline,
+  className = "text-xs",
+}: {
+  deadline: string;
+  className?: string;
+}) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(deadline));
 
   useEffect(() => {
@@ -22,16 +31,23 @@ export default function DeadlineCountdown({ deadline }: { deadline: string }) {
   }, [deadline]);
 
   if (!timeLeft) {
-    return <span className="text-xs font-medium text-red-500">신청 마감됨</span>;
+    return (
+      <span className={`font-bold text-error ${className}`}>신청 마감</span>
+    );
   }
 
-  const { days, hours, minutes, seconds } = timeLeft;
+  const { diff, days, hours, minutes, seconds } = timeLeft;
   const timeStr = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
+  // 하루 안쪽으로 들어오면 색으로 급한 티를 냅니다.
+  const isUrgent = diff < DAY;
+
   return (
-    <span className="text-xs font-medium text-main">
+    <span
+      className={`tnum font-bold ${isUrgent ? "text-error" : "text-gray-900"} ${className}`}
+    >
       {days > 0 ? `${days}일 ` : ""}
-      {timeStr} 남음
+      {timeStr}
     </span>
   );
 }

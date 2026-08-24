@@ -1,58 +1,74 @@
+import Link from "next/link";
 import Badge from "@/components/common/Badge";
 import type { BadgeVariant } from "@/components/common/Badge";
-import People from "@/assets/svg/People";
-import Link from "next/link";
+import SeatMeter from "./SeatMeter";
 
-interface LectureCardProps {
-  id: string;
+export interface LectureCardProps {
   title: string;
   speaker: string;
   status: BadgeVariant;
   currentCount: number;
   maxCount?: number;
   waitingCount?: number;
-  onClick?: () => void;
 }
 
-export default function LectureCard({
-  id,
+/** 링크 없이 카드 겉모습만 그립니다. 개설 폼의 미리보기가 이걸 그대로 씁니다. */
+export function LectureCardContent({
   title,
   speaker,
   status,
   currentCount,
   maxCount,
   waitingCount,
-  onClick,
 }: LectureCardProps) {
-  const inner = (
-    <div className="max-w-[300px] w-full flex flex-col justify-between border border-main-200 rounded-2xl p-5 gap-3 cursor-pointer hover:shadow-md transition-shadow h-[200px]">
-      {/* 상단 */}
-      <div className="flex flex-col gap-2">
-        <Badge variant={status} />
-        <p className="line-clamp-2 break-words text-lg font-bold text-gray-900">
-          {title}
-        </p>
-        <p className="break-words text-sm text-gray-500">{speaker}</p>
-      </div>
+  return (
+    <>
+      <div className="flex flex-1 flex-col justify-between gap-3 p-5">
+        <div className="flex flex-col gap-2">
+          <Badge variant={status} />
+          <p className="line-clamp-2 break-words text-[17px] font-bold leading-snug text-gray-900">
+            {title}
+          </p>
+        </div>
 
-      {/* 하단 */}
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-1 text-sm text-gray-500">
-          <People />
-          <span>
-            {maxCount ? `${currentCount}/${maxCount}명` : `${currentCount}명`}
-          </span>
-          {waitingCount && waitingCount > 0 ? (
-            <span className="ml-1">(대기 {waitingCount}명)</span>
-          ) : null}
+        <div className="flex flex-col gap-1">
+          <p className="truncate text-sm text-gray-600">{speaker}</p>
+          <div className="tnum flex items-baseline gap-1.5 text-sm text-gray-600">
+            <span className="font-semibold text-gray-900">{currentCount}</span>
+            {maxCount ? (
+              <span className="text-gray-500">/ {maxCount}명</span>
+            ) : (
+              <span className="text-gray-500">명 신청</span>
+            )}
+            {waitingCount && waitingCount > 0 ? (
+              <span className="text-xs text-gray-500">대기 {waitingCount}</span>
+            ) : null}
+          </div>
         </div>
       </div>
-    </div>
+
+      <SeatMeter
+        enrolled={currentCount}
+        capacity={maxCount ?? 0}
+        muted={status === "closed" || status === "unconfirmed"}
+      />
+    </>
   );
+}
 
-  if (onClick) {
-    return <div onClick={onClick}>{inner}</div>;
-  }
+export const LECTURE_CARD_SURFACE =
+  "flex h-full w-full flex-col overflow-hidden rounded-2xl bg-surface shadow-e2";
 
-  return <Link href={`/lectures/${id}`}>{inner}</Link>;
+export default function LectureCard({
+  id,
+  ...content
+}: LectureCardProps & { id: string }) {
+  return (
+    <Link
+      href={`/lectures/${id}`}
+      className={`focusable lift ${LECTURE_CARD_SURFACE} transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-e3`}
+    >
+      <LectureCardContent {...content} />
+    </Link>
+  );
 }
