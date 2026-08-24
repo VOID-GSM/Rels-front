@@ -9,7 +9,7 @@ export default function Plus() {
     >
       <path
         d="M12.6667 8.6653H8.66666V12.6653H7.33333V8.6653H3.33333V7.33197H7.33333V3.33197H8.66666V7.33197H12.6667V8.6653Z"
-        fill="black"
+        fill="currentColor"
       />
     </svg>
   );

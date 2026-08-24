@@ -7,15 +7,15 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export default function Input({ label, error, ...props }: InputProps) {
   return (
-    <div className="flex flex-col gap-1 w-full">
+    <div className="flex w-full flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-medium text-gray-700">{label}</label>
+        <label className="text-xs font-semibold tracking-wide text-gray-600">
+          {label}
+        </label>
       )}
       <input
-        className={`w-full h-9 px-3 border rounded-md placeholder:text-gray-400 focus:outline-none transition-colors ${
-          error
-            ? "border-error focus:border-error"
-            : "border-main-300 focus:border-main"
+        className={`field h-11 w-full rounded-xl px-3.5 text-sm text-gray-900 placeholder:text-gray-400 ${
+          error ? "field-error" : ""
         }`}
         {...props}
       />

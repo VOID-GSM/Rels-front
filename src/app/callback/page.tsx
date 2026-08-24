@@ -5,12 +5,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
 import { get } from "@/shared/api";
 import { authUrl, authUrls } from "@/shared/api/apiUrls";
+import { getApiErrorMessage } from "@/shared/lib/getApiErrorMessage";
 import type { OAuthSignInType, UserInfoType } from "@/entities/auth";
+
+// 토큰 교환은 백엔드가 DataGSM과 서버-투-서버 통신 후 유저 프로비저닝까지 하므로
+// 전역 10초 타임아웃으로는 부족합니다. 이 요청에만 넉넉한 값을 적용합니다.
+const OAUTH_EXCHANGE_TIMEOUT_MS = 60000;
 
 function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setAuth } = useAuthStore();
+  const { setAuth, clearAuth } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
   const called = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -31,6 +36,7 @@ function CallbackContent() {
 
         const { accessToken } = await get<OAuthSignInType>(
           authUrls.dgCallback(code, state),
+          { timeout: OAUTH_EXCHANGE_TIMEOUT_MS },
         );
 
         // 토큰을 sessionStorage에 먼저 저장 (axios 인터셉터가 읽을 수 있게)
@@ -42,12 +48,31 @@ function CallbackContent() {
 
         router.replace("/");
       } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "알 수 없는 오류가 발생했습니다.";
-        setError(message);
-        timerRef.current = setTimeout(() => router.replace("/"), 3000);
+        // 실패 시 절반만 저장된 토큰이 남지 않도록 정리
+        clearAuth();
+
+        setError(
+          getApiErrorMessage(err, {
+            // 같은 400이라도 state 만료 / redirectUri 미등록 / 파라미터 누락으로
+            // 원인이 갈립니다. 백엔드가 사유를 내려주면 그것을 우선 노출합니다.
+            preferServerMessage: true,
+            timeout:
+              "로그인 처리가 지연되어 시간이 초과되었습니다. 다시 시도해주세요.",
+            statusMessages: {
+              // 인증 코드는 일회용이라 만료되거나 이미 사용되면 재시도할 수 없습니다.
+              400: "인증 정보가 만료되었습니다. 다시 로그인해주세요.",
+              403: "계정 정보를 확인할 수 없습니다. 다시 로그인해주세요.",
+              // 백엔드가 응답은 했지만 로그인 처리를 끝내지 못한 경우입니다.
+              500: "로그인 처리 중 서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+              // 백엔드가 DataGSM 인증 서버와 통신하지 못한 경우입니다.
+              502: "인증 서버와 연결하지 못했습니다. 잠시 후 다시 시도해주세요.",
+              504: "인증 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요.",
+            },
+          }),
+        );
+
+        // 로그인 재시도 동선을 위해 홈이 아닌 로그인 페이지로 보냅니다.
+        timerRef.current = setTimeout(() => router.replace("/login"), 3000);
       }
     };
 
@@ -56,22 +81,26 @@ function CallbackContent() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [searchParams, setAuth, router]);
+  }, [searchParams, setAuth, clearAuth, router]);
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#191919]">
-        <p className="text-red-400 text-lg font-semibold mb-2">로그인 오류</p>
-        <p className="text-white/70 text-sm text-center px-4">{error}</p>
-        <p className="text-white/40 text-xs mt-4">3초 후 홈으로 이동합니다...</p>
+      <div className="flex min-h-dvh items-center justify-center bg-canvas px-6">
+        <div className="flex w-full max-w-[400px] flex-col items-center gap-2 rounded-2xl bg-surface p-9 text-center shadow-e3">
+          <p className="text-base font-bold text-error">로그인하지 못했습니다</p>
+          <p className="text-sm leading-relaxed text-gray-600">{error}</p>
+          <p className="mt-3 text-xs text-gray-500">
+            잠시 후 로그인 페이지로 돌아갑니다.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#191919]">
-      <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin mb-4" />
-      <p className="text-white/60 text-sm">로그인 처리 중...</p>
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-canvas">
+      <div className="h-7 w-7 animate-spin rounded-full border-2 border-gray-200 border-t-main" />
+      <p className="text-sm text-gray-600">로그인하는 중</p>
     </div>
   );
 }
@@ -80,8 +109,8 @@ export default function CallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-[#191919]">
-          <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="flex min-h-dvh items-center justify-center bg-canvas">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-gray-200 border-t-main" />
         </div>
       }
     >

@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import dynamic from "next/dynamic";
-import Arrow from "@/assets/svg/Arrow";
+import PageShell from "@/components/layout/PageShell";
+import PageHeader from "@/components/layout/PageHeader";
+import BackLink from "@/components/layout/BackLink";
+import FormSection, { FormActions } from "@/components/layout/FormSection";
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
@@ -15,6 +17,8 @@ const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
 import CharCountTextArea from "@/components/common/CharCountTextArea";
 import useAuthStore from "@/stores/authStore";
 import { useCreateNotice } from "@/entities/notice";
+import { MOCK_USER } from "@/entities/auth";
+import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import {
   NOTICE_TITLE_MAX_LENGTH as TITLE_MAX_LENGTH,
   NOTICE_CONTENT_MAX_LENGTH as CONTENT_MAX_LENGTH,
@@ -22,7 +26,10 @@ import {
 
 export default function NoticeWritePage() {
   const router = useRouter();
-  const { user, isLoggedIn } = useAuthStore();
+  const { user: loggedInUser, isLoggedIn } = useAuthStore();
+  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 유저(관리자)로 화면을 봅니다.
+  const isPreview = useDesignPreview();
+  const user = isPreview ? MOCK_USER : loggedInUser;
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
@@ -68,55 +75,59 @@ export default function NoticeWritePage() {
 
   return (
     <>
-      <main className="mx-auto flex max-w-[600px] flex-col gap-6 px-6 py-10">
-        <Link
-          href="/notification"
-          className="flex w-fit items-center gap-1 text-sm text-gray-500"
+      <PageShell size="narrow">
+        <BackLink href="/notification">공지 목록</BackLink>
+        <PageHeader
+          className="mt-5 pb-4"
+          title="공지 작성"
+          description="등록하면 모든 학생의 화면 상단에 배너로 노출됩니다."
+        />
+
+        <FormSection
+          title="공지 내용"
+          description="모든 학생이 목록과 상단 배너에서 보게 됩니다. 핵심을 먼저 적어 주세요."
         >
-          <Arrow />
-          뒤로
-        </Link>
-
-        <div className="flex flex-col gap-6 rounded-2xl border border-main-200 p-8">
-          <h1 className="text-xl font-bold text-gray-900">공지 작성</h1>
-
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
-              <Input
-                label="공지 제목"
-                placeholder="공지 제목을 입력해 주세요."
-                value={title}
-                maxLength={TITLE_MAX_LENGTH}
-                onChange={(e) => {
-                  setTitle(e.target.value.slice(0, TITLE_MAX_LENGTH));
-                  if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
-                }}
-                error={errors.title}
-              />
-              <p className="text-right text-xs text-gray-400">
-                {title.length}/{TITLE_MAX_LENGTH}
-              </p>
-            </div>
-
-            <CharCountTextArea
-              label="공지 내용"
-              placeholder="공지 내용을 입력해 주세요."
-              value={content}
-              maxLength={CONTENT_MAX_LENGTH}
-              rows={8}
-              onChange={(v) => {
-                setContent(v);
-                if (errors.content) setErrors((prev) => ({ ...prev, content: undefined }));
+          <div className="flex flex-col gap-1">
+            <Input
+              label="공지 제목"
+              placeholder="예) 6월 릴레이 스터디 신청 기간 안내"
+              value={title}
+              maxLength={TITLE_MAX_LENGTH}
+              onChange={(e) => {
+                setTitle(e.target.value.slice(0, TITLE_MAX_LENGTH));
+                if (errors.title) setErrors((prev) => ({ ...prev, title: undefined }));
               }}
-              error={errors.content}
+              error={errors.title}
             />
+            <p className="tnum text-right text-xs text-gray-500">
+              {title.length}/{TITLE_MAX_LENGTH}
+            </p>
           </div>
 
-          <Button onClick={handleSubmitClick} disabled={isPending} className="py-3">
+          <CharCountTextArea
+            label="공지 내용"
+            placeholder="언제부터 언제까지, 무엇을 해야 하는지 적어 주세요."
+            value={content}
+            maxLength={CONTENT_MAX_LENGTH}
+            rows={10}
+            onChange={(v) => {
+              setContent(v);
+              if (errors.content) setErrors((prev) => ({ ...prev, content: undefined }));
+            }}
+            error={errors.content}
+          />
+          </FormSection>
+
+        <FormActions>
+          <Button
+            onClick={handleSubmitClick}
+            disabled={isPending}
+            className="h-11 w-full"
+          >
             공지 등록
           </Button>
-        </div>
-      </main>
+        </FormActions>
+      </PageShell>
 
       {isConfirmOpen && (
         <ConfirmModal

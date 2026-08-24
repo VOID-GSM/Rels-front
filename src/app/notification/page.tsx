@@ -3,15 +3,23 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import Arrow from "@/assets/svg/Arrow";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
+import PageShell from "@/components/layout/PageShell";
+import PageHeader from "@/components/layout/PageHeader";
+import BackLink from "@/components/layout/BackLink";
 
 const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
   ssr: false,
 });
 import useAuthStore from "@/stores/authStore";
-import { useGetNotices, useDeleteNotice } from "@/entities/notice";
+import {
+  useGetNotices,
+  useDeleteNotice,
+  MOCK_NOTICES,
+} from "@/entities/notice";
+import { MOCK_USER } from "@/entities/auth";
+import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("ko-KR", {
@@ -22,15 +30,19 @@ function formatDate(dateStr: string) {
 }
 
 export default function NotificationPage() {
-  const { user } = useAuthStore();
-  const { data, isLoading } = useGetNotices();
+  const { user: loggedInUser } = useAuthStore();
+  const { data, isLoading: isFetching } = useGetNotices();
+  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 화면을 채웁니다.
+  const isPreview = useDesignPreview();
+  const user = isPreview ? MOCK_USER : loggedInUser;
+  const isLoading = isPreview ? false : isFetching;
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const { mutate: deleteNotice, isPending: isDeleting } = useDeleteNotice({
     onSuccess: () => setDeleteTargetId(null),
     onError: () => setDeleteTargetId(null),
   });
 
-  const notices = data?.content ?? [];
+  const notices = (isPreview ? MOCK_NOTICES : data)?.content ?? [];
   const isAdmin = user?.role === "ADMIN";
 
   const handleConfirmDelete = () => {
@@ -40,78 +52,86 @@ export default function NotificationPage() {
 
   return (
     <>
-      <main className="max-w-[800px] mx-auto px-6 py-10 flex flex-col gap-6">
-        <Link href="/" className="flex items-center gap-1 text-sm text-gray-500 w-fit">
-          <Arrow />
-          뒤로
-        </Link>
-
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900">공지 목록</h1>
-          {isAdmin && (
-            <Link href="/notification/write">
-              <Button className="py-2 px-4 w-fit">공지 작성</Button>
-            </Link>
-          )}
-        </div>
+      <PageShell>
+        <BackLink href="/">이번 주 강연</BackLink>
+        <PageHeader
+          className="mt-5 pb-10"
+          title="공지사항"
+          description="학생회가 올린 안내입니다. 신청 기간과 운영 규칙은 여기에서 먼저 공지됩니다."
+          actions={
+            isAdmin && (
+              <Link href="/notification/write">
+                <Button className="w-fit px-5 py-2.5">공지 작성</Button>
+              </Link>
+            )
+          }
+        />
 
         {isLoading ? (
           <Spinner className="py-20" />
         ) : notices.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-20">
-            등록된 공지가 없습니다.
+          <p className="rounded-2xl bg-surface px-6 py-20 text-center text-sm text-gray-500 shadow-e1">
+            아직 올라온 공지가 없습니다.
           </p>
         ) : (
-          <div className="flex flex-col gap-4">
+          /* 날짜를 왼쪽 레일에 두고 본문을 오른쪽으로 흘리는 기록형 목록 */
+          <div className="flex flex-col gap-3">
             {notices.map((notice) => {
               const canEdit = user?.userId === notice.authorId || isAdmin;
               return (
-                <div
+                <article
                   key={notice.id}
-                  className="border border-main-200 rounded-2xl p-6 flex flex-col gap-3"
+                  className="grid gap-x-10 gap-y-3 rounded-2xl bg-surface p-6 shadow-e2 md:grid-cols-[160px_minmax(0,1fr)] md:p-8"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1 flex-col gap-1">
-                      <h2 className="break-words text-base font-bold text-gray-900">
+                  <div className="flex flex-row items-baseline gap-3 md:flex-col md:gap-1.5">
+                    <time className="tnum text-sm font-semibold text-gray-900">
+                      {formatDate(notice.createdAt)}
+                    </time>
+                    <span className="text-xs text-gray-500">
+                      {notice.authorName}
+                    </span>
+                  </div>
+
+                  <div className="flex min-w-0 flex-col gap-3">
+                    <div className="flex items-start justify-between gap-4">
+                      <h2 className="break-words text-lg font-bold leading-snug text-gray-900">
                         {notice.title}
                       </h2>
-                      <span className="text-xs text-gray-400">
-                        {formatDate(notice.createdAt)}
-                      </span>
+                      {canEdit && (
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Link
+                            href={`/notification/${notice.id}/edit`}
+                            className="focusable rounded-lg px-2.5 py-1.5 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                          >
+                            수정
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTargetId(notice.id)}
+                            className="focusable rounded-lg px-2.5 py-1.5 text-xs font-semibold text-error transition-colors hover:bg-error-soft"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    {canEdit && (
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Link
-                          href={`/notification/${notice.id}/edit`}
-                          className="text-xs text-gray-500 border border-gray-300 rounded-md px-3 py-1 hover:bg-gray-50 transition-colors"
-                        >
-                          수정
-                        </Link>
-                        <button
-                          onClick={() => setDeleteTargetId(notice.id)}
-                          className="text-xs text-error border border-error rounded-md px-3 py-1 hover:bg-error/5 transition-colors"
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    )}
+                    <p className="max-w-[74ch] whitespace-pre-wrap break-words text-sm leading-7 text-gray-700">
+                      {notice.content}
+                    </p>
                   </div>
-                  <p className="break-words whitespace-pre-wrap text-sm leading-relaxed text-gray-700">
-                    {notice.content}
-                  </p>
-                </div>
+                </article>
               );
             })}
           </div>
         )}
-      </main>
+      </PageShell>
 
       {deleteTargetId !== null && (
         <ConfirmModal
           title="공지 삭제"
           message="공지를 삭제하면 복구할 수 없습니다. 정말 삭제하시겠습니까?"
           confirmLabel="삭제"
-          confirmClassName="bg-error border-error hover:bg-error/90"
+          confirmVariant="danger"
           onConfirm={handleConfirmDelete}
           onCancel={() => setDeleteTargetId(null)}
           isPending={isDeleting}

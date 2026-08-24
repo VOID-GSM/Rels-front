@@ -16,6 +16,8 @@ export const useGetUserInfo = () => {
     queryKey: authQueryKeys.getUserInfo(),
     queryFn: getUserInfo,
     enabled: isLoggedIn,
+    // 만료 토큰 재시도는 의미가 없고 세션 정리만 늦추므로 재시도하지 않습니다.
+    retry: false,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   });

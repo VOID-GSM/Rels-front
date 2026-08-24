@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { usePWAStore } from "@/stores/pwaStore";
 import Download from "@/assets/svg/Download";
+import PageShell from "@/components/layout/PageShell";
 
 const BENEFITS: { icon: string; title: string; description: string }[] = [
   {
@@ -61,7 +62,7 @@ const MOBILE_STEPS: { os: string; steps: string[] }[] = [
   {
     os: "iOS (Safari)",
     steps: [
-      "하단 공유 버튼(□↑)을 탭하세요.",
+      "하단 공유 버튼을 탭하세요.",
       '"홈 화면에 추가"를 탭하세요.',
       '오른쪽 상단 "추가"를 탭하면 홈 화면에 Rels 아이콘이 추가됩니다.',
     ],
@@ -70,12 +71,12 @@ const MOBILE_STEPS: { os: string; steps: string[] }[] = [
 
 function StepCard({ title, steps }: { title: string; steps: string[] }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-main-200 bg-white p-5">
-      <p className="font-semibold text-gray-800">{title}</p>
+    <div className="flex flex-col gap-3 rounded-2xl bg-surface p-5 shadow-e2">
+      <p className="text-sm font-bold text-gray-900">{title}</p>
       <ol className="flex flex-col gap-2.5">
         {steps.map((step, i) => (
           <li key={i} className="flex gap-3 text-sm text-gray-600">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-main text-xs font-bold text-white">
+            <span className="tnum mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-main text-xs font-bold text-gray-900">
               {i + 1}
             </span>
             {step}
@@ -90,8 +91,8 @@ export default function PWAInstallPage() {
   const { isInstallable, install } = usePWAStore();
 
   return (
-    <main className="mx-auto flex max-w-[800px] flex-col gap-10 px-6 py-10">
-      <div className="flex flex-col items-center gap-4 text-center">
+    <PageShell className="flex flex-col gap-16">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-5">
         <Image
           src="/img/Rels_logo_192x192.png"
           alt="Rels"
@@ -99,17 +100,20 @@ export default function PWAInstallPage() {
           height={72}
           className="rounded-2xl"
         />
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Rels 앱 설치</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            홈 화면에 추가하고 더 빠르게 사용하세요
+        <div className="flex min-w-0 flex-col gap-2">
+          <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
+            Rels 앱 설치
+          </h1>
+          <p className="max-w-[52ch] text-sm leading-relaxed text-gray-600">
+            홈 화면에 추가하면 브라우저 없이 바로 열리고, 신청 결과와 공지를
+            알림으로 받아볼 수 있습니다.
           </p>
         </div>
         {isInstallable && (
           <button
             type="button"
             onClick={install}
-            className="flex items-center gap-2 rounded-xl bg-main px-6 py-3 font-semibold text-white shadow-sm transition-opacity hover:opacity-80"
+            className="focusable ml-auto flex shrink-0 items-center gap-2 rounded-xl bg-main px-6 py-3 font-semibold text-gray-900 shadow-e2 transition-[box-shadow,transform] duration-200 hover:-translate-y-px hover:shadow-e3"
           >
             <Download />
             앱 설치하기
@@ -118,17 +122,17 @@ export default function PWAInstallPage() {
       </div>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-bold text-gray-900">앱을 설치하면 뭐가 좋나요?</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <h2 className="text-base font-bold text-gray-900">설치하면 달라지는 것</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {BENEFITS.map(({ icon, title, description }) => (
             <div
               key={title}
-              className="flex gap-4 rounded-xl border border-main-200 bg-white p-5"
+              className="flex gap-4 rounded-2xl bg-surface p-5 shadow-e2"
             >
               <span className="text-2xl leading-none">{icon}</span>
               <div className="flex flex-col gap-1">
-                <p className="font-semibold text-gray-900">{title}</p>
-                <p className="text-sm leading-relaxed text-gray-500">{description}</p>
+                <p className="text-sm font-bold text-gray-900">{title}</p>
+                <p className="text-sm leading-relaxed text-gray-600">{description}</p>
               </div>
             </div>
           ))}
@@ -136,8 +140,8 @@ export default function PWAInstallPage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-bold text-gray-900">💻 노트북 / PC에서 설치</h2>
-        <div className="flex flex-col gap-4">
+        <h2 className="text-base font-bold text-gray-900">노트북 · PC에서 설치</h2>
+        <div className="grid gap-4 lg:grid-cols-2">
           {DESKTOP_STEPS.map(({ browser, steps }) => (
             <StepCard key={browser} title={browser} steps={steps} />
           ))}
@@ -145,13 +149,13 @@ export default function PWAInstallPage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-bold text-gray-900">📱 모바일에서 설치</h2>
-        <div className="flex flex-col gap-4">
+        <h2 className="text-base font-bold text-gray-900">모바일에서 설치</h2>
+        <div className="grid gap-4 lg:grid-cols-2">
           {MOBILE_STEPS.map(({ os, steps }) => (
             <StepCard key={os} title={os} steps={steps} />
           ))}
         </div>
       </section>
-    </main>
+    </PageShell>
   );
 }
