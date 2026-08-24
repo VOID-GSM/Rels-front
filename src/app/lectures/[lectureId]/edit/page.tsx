@@ -19,9 +19,7 @@ import {
   useGetLecture,
   useUpdateLecture,
   useDeleteLecture,
-  MOCK_LECTURES,
 } from "@/entities/lecture";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import type { LectureType } from "@/entities/lecture";
 
 function EditForm({ lecture }: { lecture: LectureType }) {
@@ -99,15 +97,10 @@ function EditForm({ lecture }: { lecture: LectureType }) {
 export default function EditLecturePage() {
   const params = useParams();
   const lectureId = Number(params.lectureId);
-  const { data: fetchedLecture, isLoading } = useGetLecture(lectureId);
-  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 화면을 채웁니다.
-  const isPreview = useDesignPreview();
-  const lecture = isPreview
-    ? MOCK_LECTURES.find((l) => l.lectureId === lectureId)
-    : fetchedLecture;
+  const { data: lecture, isLoading } = useGetLecture(lectureId);
 
   if (isNaN(lectureId)) return notFound();
-  if ((!isPreview && isLoading) || !lecture) return <Spinner />;
+  if (isLoading || !lecture) return <Spinner />;
 
   return <EditForm lecture={lecture} />;
 }

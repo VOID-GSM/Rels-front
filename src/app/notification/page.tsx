@@ -13,13 +13,7 @@ const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
   ssr: false,
 });
 import useAuthStore from "@/stores/authStore";
-import {
-  useGetNotices,
-  useDeleteNotice,
-  MOCK_NOTICES,
-} from "@/entities/notice";
-import { MOCK_USER } from "@/entities/auth";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
+import { useGetNotices, useDeleteNotice } from "@/entities/notice";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("ko-KR", {
@@ -30,19 +24,15 @@ function formatDate(dateStr: string) {
 }
 
 export default function NotificationPage() {
-  const { user: loggedInUser } = useAuthStore();
-  const { data, isLoading: isFetching } = useGetNotices();
-  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 화면을 채웁니다.
-  const isPreview = useDesignPreview();
-  const user = isPreview ? MOCK_USER : loggedInUser;
-  const isLoading = isPreview ? false : isFetching;
+  const { user } = useAuthStore();
+  const { data, isLoading } = useGetNotices();
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const { mutate: deleteNotice, isPending: isDeleting } = useDeleteNotice({
     onSuccess: () => setDeleteTargetId(null),
     onError: () => setDeleteTargetId(null),
   });
 
-  const notices = (isPreview ? MOCK_NOTICES : data)?.content ?? [];
+  const notices = data?.content ?? [];
   const isAdmin = user?.role === "ADMIN";
 
   const handleConfirmDelete = () => {

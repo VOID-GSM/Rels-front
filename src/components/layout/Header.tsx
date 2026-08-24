@@ -6,24 +6,16 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import useAuthStore from "@/stores/authStore";
 import { useGetUserInfo } from "@/entities/auth";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import More from "@/assets/svg/More";
 import Cancel from "@/assets/svg/Cancel";
 import Download from "@/assets/svg/Download";
 
 export default function Header() {
-  const { isLoggedIn, setUser, initFromSession } = useAuthStore();
+  const { isLoggedIn, setUser } = useAuthStore();
   const pathname = usePathname();
   const { data: fetchedUser } = useGetUserInfo();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // 디자인 작업용 임시 처리: 비로그인 상태에서도 전체 메뉴를 보여줍니다.
-  const isPreview = useDesignPreview();
-  const showNav = isLoggedIn || isPreview;
-
-  // 새로고침 후 sessionStorage 토큰 복원
-  useEffect(() => {
-    initFromSession();
-  }, [initFromSession]);
+  const showNav = isLoggedIn;
 
   // isLoggedIn 복원 후 useGetUserInfo가 자동 호출되면 user 상태에 반영
   useEffect(() => {

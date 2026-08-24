@@ -7,10 +7,7 @@ import {
   useCancelEnrollmentById,
   useDeleteLecture,
   useGetMyLectureEnrollments,
-  MOCK_MY_LECTURE_ENROLLMENTS,
 } from "@/entities/lecture";
-import { MOCK_USER } from "@/entities/auth";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import { formatLectureDate } from "@/shared/lib/formatLectureSchedule";
 import dynamic from "next/dynamic";
 import CouncilBadge from "@/components/common/CouncilBadge";
@@ -50,17 +47,10 @@ function ProfileFact({
 }
 
 export default function MyPage() {
-  const { user: loggedInUser, clearAuth } = useAuthStore();
+  const { user, clearAuth } = useAuthStore();
   const router = useRouter();
-  const { data: fetchedEnrollments, isLoading: isFetching } =
+  const { data: myLectureEnrollments, isLoading } =
     useGetMyLectureEnrollments();
-  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 화면을 채웁니다.
-  const isPreview = useDesignPreview();
-  const user = isPreview ? MOCK_USER : loggedInUser;
-  const myLectureEnrollments = isPreview
-    ? MOCK_MY_LECTURE_ENROLLMENTS
-    : fetchedEnrollments;
-  const isLoading = isPreview ? false : isFetching;
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
   const { mutate: cancelEnrollment, isPending: isCancelling } =
     useCancelEnrollmentById();
@@ -68,7 +58,7 @@ export default function MyPage() {
 
   const handleLogout = () => {
     clearAuth();
-    router.replace("/");
+    router.replace("/login");
   };
 
   if (!user) {

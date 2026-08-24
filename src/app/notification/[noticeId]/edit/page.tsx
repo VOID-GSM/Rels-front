@@ -11,9 +11,7 @@ import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
 import CharCountTextArea from "@/components/common/CharCountTextArea";
 import useAuthStore from "@/stores/authStore";
-import { useGetNotice, useUpdateNotice, MOCK_NOTICES } from "@/entities/notice";
-import { MOCK_USER } from "@/entities/auth";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
+import { useGetNotice, useUpdateNotice } from "@/entities/notice";
 import type { NoticeType } from "@/entities/notice";
 import {
   NOTICE_TITLE_MAX_LENGTH as TITLE_MAX_LENGTH,
@@ -112,14 +110,8 @@ export default function NoticeEditPage() {
   const params = useParams();
   const router = useRouter();
   const noticeId = Number(params.noticeId);
-  const { data: fetchedNotice, isLoading } = useGetNotice(noticeId);
-  const { user: loggedInUser } = useAuthStore();
-  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 화면을 채웁니다.
-  const isPreview = useDesignPreview();
-  const user = isPreview ? MOCK_USER : loggedInUser;
-  const notice = isPreview
-    ? MOCK_NOTICES.content.find((n) => n.id === noticeId)
-    : fetchedNotice;
+  const { data: notice, isLoading } = useGetNotice(noticeId);
+  const { user } = useAuthStore();
 
   useEffect(() => {
     if (notice && user) {
@@ -131,7 +123,7 @@ export default function NoticeEditPage() {
     }
   }, [notice, user, router]);
 
-  if ((!isPreview && isLoading) || !notice || !user) return <Spinner />;
+  if (isLoading || !notice || !user) return <Spinner />;
 
   return <EditForm notice={notice} noticeId={noticeId} />;
 }
