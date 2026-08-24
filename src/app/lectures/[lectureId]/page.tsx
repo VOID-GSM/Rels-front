@@ -39,16 +39,6 @@ import {
   formatLectureTime,
 } from "@/shared/lib/formatLectureSchedule";
 
-/** 장소·날짜·시간처럼 짧은 값은 라벨 위, 값 아래로 쌓아 가로로 늘어놓습니다. */
-function FactItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <dt className="text-xs font-medium text-gray-500">{label}</dt>
-      <dd className="text-sm font-semibold text-gray-900">{value}</dd>
-    </div>
-  );
-}
-
 export default function LectureDetailPage() {
   const params = useParams();
   const lectureId = Number(params.lectureId);
@@ -117,8 +107,7 @@ export default function LectureDetailPage() {
     lecture.totalCapacity == null && lecture.capacityByGrade != null;
   const isFull = lecture.enrolledCount >= totalCapacity;
   const seatsLeft = Math.max(totalCapacity - lecture.enrolledCount, 0);
-  const isPast =
-    displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED";
+  const isPast = displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED";
 
   const rawGrade = user?.studentNumber?.charAt(0);
   const userGrade =
@@ -130,11 +119,33 @@ export default function LectureDetailPage() {
     userGrade !== undefined &&
     (lecture.capacityByGrade?.[userGrade] ?? -1) === 0;
 
-  const facts = [
-    { label: "장소", value: lecture.lectureLocation },
-    { label: "날짜", value: formatLectureDate(lecture.lectureDate) },
-    { label: "시간", value: formatLectureTime(lecture.lectureTime) },
-  ].filter((f): f is { label: string; value: string } => Boolean(f.value));
+  const [deadlineDate, deadlineTime] = (
+    lecture.applicationDeadline ?? ""
+  ).split("T");
+  const deadlineText = [
+    formatLectureDate(deadlineDate),
+    formatLectureTime(deadlineTime),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  // 제목 아래는 강연자 한 줄, 그 아래 "언제·어디서" 한 줄로만 둡니다. 마감 일시는
+  // 신청 버튼 아래로 내려서 상단이 값 목록처럼 보이지 않게 합니다.
+  const scheduleText = [
+    formatLectureDate(lecture.lectureDate),
+    formatLectureTime(lecture.lectureTime),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const speakerText = lecture.creatorStudentNumber
+    ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
+    : lecture.creatorName;
+  // 강연자·일정·장소를 한 줄에 두되, 이름만 진하게 해서 시선이 먼저 걸리게 합니다.
+  const metaParts = [
+    { text: speakerText, strong: true },
+    { text: scheduleText, strong: false },
+    { text: lecture.lectureLocation ?? "", strong: false },
+  ].filter((part) => Boolean(part.text));
 
   const enrollAction = isCreator ? (
     <Button variant="waiting" disabled className="w-full py-3.5">
@@ -172,113 +183,140 @@ export default function LectureDetailPage() {
   );
 
   return (
-    <PageShell>
-      <BackLink href="/">강연 목록</BackLink>
+    <PageShell size="narrow">
+      <BackLink href="/lectures">전체 강연</BackLink>
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-16">
-        {/* 본문 — 카드에 담지 않고 캔버스 위에 그대로 흐르게 둡니다. */}
-        <div className="flex min-w-0 flex-col">
-          <div className="flex flex-wrap items-center gap-5">
-            <Badge variant={LECTURE_STATUS_TO_BADGE[displayStatus]} />
-            {(isCreator || isAdmin) && (
-              <Link
-                href={`/lectures/${lectureId}/edit`}
-                className="focusable inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold text-gray-600 transition-colors hover:text-gray-900"
-              >
-                <Pencil />
-                수정
-              </Link>
-            )}
-          </div>
-
-          <h1 className="mt-3 max-w-[22ch] text-3xl font-bold leading-[1.2] text-gray-900 md:text-[40px]">
-            {lecture.title}
-          </h1>
-          <p className="mt-3 text-sm text-gray-600">
-            {lecture.creatorStudentNumber
-              ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
-              : lecture.creatorName}
-          </p>
-
-          {facts.length > 0 && (
-            <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-5">
-              {facts.map((fact) => (
-                <FactItem key={fact.label} {...fact} />
-              ))}
-              {usesGradeCapacity && (
-                <FactItem
-                  label="학년별 정원"
-                  value={(["1", "2", "3"] as const)
-                    .map((g) => `${g}학년 ${lecture.capacityByGrade![g] ?? 0}`)
-                    .join(" · ")}
-                />
-              )}
-            </dl>
+      <div className="mt-6 flex flex-col md:mt-8">
+        <div className="flex flex-wrap items-center gap-4">
+          <Badge variant={LECTURE_STATUS_TO_BADGE[displayStatus]} />
+          {(isCreator || isAdmin) && (
+            <Link
+              href={`/lectures/${lectureId}/edit`}
+              className="focusable inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold text-gray-600 transition-colors hover:text-gray-900"
+            >
+              <Pencil />
+              수정
+            </Link>
           )}
-
-          <p className="mt-8 max-w-[70ch] whitespace-pre-wrap break-words text-[15px] leading-8 text-gray-700">
-            {lecture.description}
-          </p>
-
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
-            <ApplicantList
-              type="applicant"
-              currentCount={lecture.enrolledCount}
-              maxCount={totalCapacity}
-              applicants={enrollments?.enrolled ?? []}
-            />
-            <ApplicantList
-              type="waiting"
-              waitingCount={lecture.waitingCount}
-              applicants={enrollments?.waiting ?? []}
-            />
-          </div>
         </div>
 
-        {/* 신청 패널 — 스크롤을 따라오는 오른쪽 레일 */}
-        <aside className="lg:sticky lg:top-[94px] lg:h-fit">
-          <div className="flex flex-col gap-5 rounded-2xl bg-surface p-6 shadow-e2">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-xs font-semibold tracking-wide text-gray-600">
-                  신청 현황
+        <h1 className="mt-3 text-[32px] font-bold leading-[1.15] tracking-[-0.03em] text-gray-900 md:text-[42px]">
+          {lecture.title}
+        </h1>
+
+        <p className="mt-3.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1 text-[15px]">
+          {metaParts.map((part, index) => (
+            <span
+              key={`${index}-${part.text}`}
+              className={
+                part.strong ? "font-semibold text-gray-900" : "text-gray-600"
+              }
+            >
+              {index > 0 && (
+                <span aria-hidden className="mr-2.5 text-gray-300">
+                  ·
                 </span>
-                <span className="tnum text-sm text-gray-600">
-                  <span className="text-base font-bold text-gray-900">
-                    {lecture.enrolledCount}
-                  </span>
-                  <span className="text-gray-500"> / {totalCapacity}명</span>
+              )}
+              {part.text}
+            </span>
+          ))}
+        </p>
+
+        {/* 신청에 필요한 값은 한 카드 안에 묶습니다. 낱개로 흩어 놓으면 각각은
+            읽히지만 무엇을 먼저 봐야 할지가 사라집니다. */}
+        <div className="mt-7 rounded-2xl bg-surface p-5 shadow-e1 md:p-6">
+          <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium text-gray-500">
+                남은 자리
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span
+                  className={`tnum text-[32px] font-bold leading-none tracking-[-0.03em] ${
+                    seatsLeft === 0 ? "text-gray-300" : "text-gray-900"
+                  }`}
+                >
+                  {seatsLeft}
+                </span>
+                <span className="tnum text-sm text-gray-500">
+                  / {totalCapacity}자리
                 </span>
               </div>
-              <SeatMeter
-                enrolled={lecture.enrolledCount}
-                capacity={totalCapacity}
-                muted={isPast}
-                className="h-1 rounded-full"
-              />
-              <p className="tnum text-xs text-gray-600">
-                {isFull
-                  ? `정원이 찼습니다 · 대기 ${lecture.waitingCount}명`
-                  : `${seatsLeft}자리 남음`}
-              </p>
             </div>
 
             {lecture.applicationDeadline && displayStatus !== "CLOSED" && (
-              <div className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3.5 py-3">
-                <span className="text-xs text-gray-600">신청 마감까지</span>
-                <DeadlineCountdown deadline={lecture.applicationDeadline} />
+              <div className="flex flex-col gap-1 sm:items-end">
+                <span className="text-xs font-medium text-gray-500">
+                  신청 마감까지
+                </span>
+                <DeadlineCountdown
+                  deadline={lecture.applicationDeadline}
+                  className="text-[22px] leading-none tracking-[-0.02em]"
+                />
               </div>
             )}
+          </div>
 
+          <SeatMeter
+            enrolled={lecture.enrolledCount}
+            capacity={totalCapacity}
+            muted={isPast}
+            className="mt-4 h-2 rounded-full"
+          />
+
+          <div className="mt-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs text-gray-500">
+            <span className="tnum">
+              {lecture.enrolledCount}명 신청
+              {lecture.waitingCount > 0
+                ? ` · 대기 ${lecture.waitingCount}명`
+                : ""}
+            </span>
+            {usesGradeCapacity && (
+              <span className="tnum">
+                {(["1", "2", "3"] as const)
+                  .map((g) => `${g}학년 ${lecture.capacityByGrade![g] ?? 0}`)
+                  .join(" · ")}
+              </span>
+            )}
+          </div>
+
+          <div className="mt-5 flex flex-col gap-2">
             {enrollAction}
-
             {enrollResult === "ERROR" && (
-              <p className="text-center text-xs text-error">
+              <p className="text-center text-sm text-error">
                 신청하지 못했습니다. 잠시 후 다시 시도해 주세요.
               </p>
             )}
+            {lecture.applicationDeadline && displayStatus !== "CLOSED" && (
+              <p className="tnum text-center text-xs text-gray-500">
+                {deadlineText} 마감
+              </p>
+            )}
           </div>
-        </aside>
+        </div>
+
+        <section className="mt-12">
+          <h2 className="text-2xl font-bold tracking-[-0.02em] text-gray-900">
+            강연 소개
+          </h2>
+          <p className="mt-5 whitespace-pre-wrap break-words text-[19px] leading-9 text-gray-800">
+            {lecture.description}
+          </p>
+        </section>
+
+        <div className="mt-12 grid gap-4 sm:grid-cols-2">
+          <ApplicantList
+            type="applicant"
+            currentCount={lecture.enrolledCount}
+            maxCount={totalCapacity}
+            applicants={enrollments?.enrolled ?? []}
+          />
+          <ApplicantList
+            type="waiting"
+            waitingCount={lecture.waitingCount}
+            applicants={enrollments?.waiting ?? []}
+          />
+        </div>
       </div>
     </PageShell>
   );
