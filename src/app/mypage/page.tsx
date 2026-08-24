@@ -115,18 +115,13 @@ export default function MyPage() {
   return (
     <>
       <PageShell>
-        <BackLink href="/">강연 목록</BackLink>
+        <BackLink href="/">이번 주 강연</BackLink>
 
         {/* 프로필은 세로로 쌓지 않고 가로 띠 하나로 펼칩니다. */}
         <section className="mt-6 flex flex-wrap items-center gap-x-12 gap-y-6 rounded-2xl bg-surface px-6 py-6 shadow-e2 md:px-8">
-          <div className="flex items-center gap-4">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-main text-xl font-bold text-gray-900">
-              {user.name.slice(0, 1)}
-            </span>
-            <div className="flex flex-col gap-1.5">
-              <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-              {user.role === "ADMIN" && <CouncilBadge />}
-            </div>
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+            {user.role === "ADMIN" && <CouncilBadge />}
           </div>
 
           <div className="flex flex-wrap items-center gap-x-12 gap-y-5">
