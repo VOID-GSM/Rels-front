@@ -48,7 +48,7 @@ const getTotalCapacity = (lecture: LectureType) =>
 function LectureGrid({ lectures }: { lectures: LectureType[] }) {
   if (lectures.length === 0) {
     return (
-      <p className="rounded-2xl bg-surface px-6 py-16 text-center text-sm text-gray-500 shadow-e1">
+      <p className="py-16 text-center text-sm text-gray-500">
         아직 이 조건에 맞는 강연이 없습니다.
       </p>
     );
@@ -115,9 +115,16 @@ export default function Home() {
         className="mt-5 pb-10"
         title="전체 강연"
         description={
-          isLoading
-            ? "불러오는 중"
-            : `학생이 직접 여는 릴레이 스터디입니다. 지금까지 ${lectures.length}개가 열렸고, ${openCount}개를 신청할 수 있습니다.`
+          isLoading ? (
+            "불러오는 중"
+          ) : (
+            <>
+              학생이 직접 여는 릴레이 스터디입니다.
+              <br />
+              지금까지 {lectures.length}개가 열렸고, {openCount}개를 신청할 수
+              있습니다.
+            </>
+          )
         }
         actions={<CreateLectureButton />}
       />
