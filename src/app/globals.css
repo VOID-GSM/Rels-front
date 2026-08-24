@@ -12,22 +12,24 @@
   /* Only for the focus outline, where a dark accent is the point. */
   --color-main-strong: #a35a00;
 
-  /* Surfaces */
-  --color-canvas: #fbfaf8;
+  /* Surfaces. The ground stays on the brand's warm side, but sits closer to
+     peach than to yellow: a yellow ground reads as aged paper, while a
+     desaturated grey reads dirty and a cool grey fights the amber. */
+  --color-canvas: #fcfcfb;
   --color-surface: #ffffff;
 
-  /* Neutrals: warm, but with the green cast pulled out and the mid tones kept
-     light enough that secondary text still reads. */
-  --color-gray-900: #1a1a19;
-  --color-gray-800: #2c2b29;
-  --color-gray-700: #423f3c;
-  --color-gray-600: #5c5854;
-  --color-gray-500: #7b7671;
-  --color-gray-400: #a6a19b;
-  --color-gray-300: #ccc7c1;
-  --color-gray-200: #e6e2dd;
-  --color-gray-100: #f1efeb;
-  --color-gray-50: #f8f7f4;
+  /* Neutrals on the same warm axis, but with the green cast kept out so they
+     stay clean rather than olive. */
+  --color-gray-900: #1c1917;
+  --color-gray-800: #292524;
+  --color-gray-700: #44403c;
+  --color-gray-600: #57534e;
+  --color-gray-500: #78716c;
+  --color-gray-400: #a8a29e;
+  --color-gray-300: #d6d3d1;
+  --color-gray-200: #e7e3df;
+  --color-gray-100: #f2efeb;
+  --color-gray-50: #faf8f5;
 
   --color-error: #d93a34;
   --color-error-soft: #fdeeed;
@@ -35,9 +37,9 @@
   --color-success-soft: #e8f7ef;
 
   /* Elevation replaces borders. e1 rests, e2 groups, e3 lifts, e4 floats. */
-  --shadow-e1: 0 1px 2px rgba(28, 27, 25, 0.06), 0 1px 3px rgba(28, 27, 25, 0.05);
-  --shadow-e2: 0 1px 2px rgba(28, 27, 25, 0.05), 0 8px 20px -10px rgba(28, 27, 25, 0.17);
-  --shadow-e3: 0 2px 4px rgba(28, 27, 25, 0.06), 0 16px 34px -12px rgba(28, 27, 25, 0.26);
+  --shadow-e1: 0 1px 2px rgba(28, 27, 25, 0.1), 0 1px 3px rgba(28, 27, 25, 0.09);
+  --shadow-e2: 0 1px 2px rgba(28, 27, 25, 0.09), 0 8px 20px -8px rgba(28, 27, 25, 0.28);
+  --shadow-e3: 0 2px 4px rgba(28, 27, 25, 0.1), 0 16px 34px -10px rgba(28, 27, 25, 0.38);
   --shadow-e4: 0 4px 8px rgba(28, 27, 25, 0.06), 0 32px 64px -24px rgba(28, 27, 25, 0.35);
 }
 
@@ -87,16 +89,18 @@
     border-radius: inherit;
   }
 
-  /* Fields are drawn by a fill, not a border. Focus then only has to add the
-     ring. */
+  /* Fields sit on white with a hairline ring drawn by a shadow, not a border.
+     Focus just thickens the ring in the brand colour. */
   .field {
-    background-color: var(--color-gray-50);
-    box-shadow: 0 0 0 1px transparent;
-    transition: box-shadow 0.15s ease, background-color 0.15s ease;
+    background-color: var(--color-surface);
+    box-shadow: 0 0 0 1px var(--color-gray-200);
+    transition: box-shadow 0.15s ease;
+  }
+  .field:hover:not(:focus) {
+    box-shadow: 0 0 0 1px var(--color-gray-300);
   }
   .field:focus {
     outline: none;
-    background-color: var(--color-surface);
     box-shadow: 0 0 0 2px var(--color-main);
   }
   .field-error {
