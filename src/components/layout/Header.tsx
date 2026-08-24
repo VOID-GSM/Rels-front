@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import useAuthStore from "@/stores/authStore";
 import { useGetUserInfo } from "@/entities/auth";
+import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import More from "@/assets/svg/More";
 import Cancel from "@/assets/svg/Cancel";
 import Download from "@/assets/svg/Download";
@@ -13,6 +14,9 @@ export default function Header() {
   const { isLoggedIn, setUser, initFromSession } = useAuthStore();
   const { data: fetchedUser } = useGetUserInfo();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // 디자인 작업용 임시 처리: 비로그인 상태에서도 전체 메뉴를 보여줍니다.
+  const isPreview = useDesignPreview();
+  const showNav = isLoggedIn || isPreview;
 
   // 새로고침 후 sessionStorage 토큰 복원
   useEffect(() => {
@@ -41,60 +45,63 @@ export default function Header() {
   }, [isSidebarOpen]);
 
   const sharedNavLinkClass =
-    "rounded-md px-3 py-2 font-medium transition-colors hover:bg-main-100 md:px-0 md:py-0 md:hover:bg-transparent";
+    "focusable rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900";
 
   const navLinks = (
     <>
+      {/* 디자인 시안 비교용 임시 링크 (작업 종료 후 제거) */}
+      {isPreview && (
+        <Link href="/this-week" className={sharedNavLinkClass}>
+          이번 주 시안
+        </Link>
+      )}
       <Link href="/notification" className={sharedNavLinkClass}>
         공지사항
       </Link>
       <Link href="/mypage" className={sharedNavLinkClass}>
         마이페이지
       </Link>
+      <Link href="/pwa-install" className={sharedNavLinkClass}>
+        앱 설치 안내
+      </Link>
     </>
   );
 
   return (
     <>
-      <header className="mx-auto flex h-[70px] w-full max-w-[1920px] items-center justify-between border-b border-main-300 px-4 sm:px-8 lg:px-20 xl:px-68">
-        <Link href="/">
-          <Image
-            src="/img/Rels.png"
-            alt="logo"
-            width={50}
-            height={50}
-            priority
-          />
-        </Link>
-        {isLoggedIn && (
-          <>
-            <nav className="hidden items-center gap-4 md:flex">
-              {navLinks}
-              <Link
-                href="/pwa-install"
-                className="flex items-center gap-1.5 font-medium transition-colors hover:opacity-70"
+      <header className="sticky top-0 z-30 bg-surface/80 shadow-e1 backdrop-blur-md">
+        <div className="mx-auto flex h-[70px] w-full max-w-[1440px] items-center justify-between px-6 md:px-10 xl:px-16">
+          <Link href="/" className="focusable rounded-lg" aria-label="Rels 홈">
+            <Image
+              src="/img/Rels.png"
+              alt="Rels"
+              width={44}
+              height={44}
+              priority
+            />
+          </Link>
+          {showNav && (
+            <>
+              <nav className="hidden items-center gap-1 md:flex">{navLinks}</nav>
+              <button
+                type="button"
+                aria-label="메뉴 열기"
+                aria-expanded={isSidebarOpen}
+                aria-controls="mobile-sidebar"
+                onClick={() => setIsSidebarOpen(true)}
+                className="focusable flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 md:hidden"
               >
-                앱 설치 안내
-              </Link>
-            </nav>
-            <button
-              type="button"
-              aria-label="메뉴 열기"
-              aria-expanded={isSidebarOpen}
-              aria-controls="mobile-sidebar"
-              onClick={() => setIsSidebarOpen(true)}
-              className="flex md:hidden"
-            >
-              <More />
-            </button>
-          </>
-        )}
+                <More />
+              </button>
+            </>
+          )}
+        </div>
       </header>
 
-      {isLoggedIn && (
+      {showNav && (
         <>
           <div
-            className={`fixed inset-0 z-40 bg-black/35 transition-opacity md:hidden ${
+            className={`fixed inset-0 z-40 bg-gray-900/25 backdrop-blur-[2px] transition-opacity md:hidden ${
               isSidebarOpen
                 ? "pointer-events-auto opacity-100"
                 : "pointer-events-none opacity-0"
@@ -103,32 +110,37 @@ export default function Header() {
           />
           <aside
             id="mobile-sidebar"
-            className={`fixed right-0 top-0 z-50 flex h-dvh w-[260px] max-w-[82vw] flex-col bg-white transition-transform duration-200 md:hidden ${
+            className={`fixed right-0 top-0 z-50 flex h-dvh w-[268px] max-w-[82vw] flex-col rounded-l-2xl bg-surface shadow-e4 transition-transform duration-200 md:hidden ${
               isSidebarOpen ? "translate-x-0" : "translate-x-full"
             }`}
           >
-            <div className="flex h-[70px] items-center justify-between border-b border-main-300 px-4">
-              <Image src="/img/Rels.png" alt="logo" width={42} height={42} />
+            <div className="flex h-[70px] items-center justify-between px-5">
+              <Image src="/img/Rels.png" alt="Rels" width={38} height={38} />
               <button
                 type="button"
                 aria-label="메뉴 닫기"
                 onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center justify-center leading-none"
+                className="focusable flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100"
               >
                 <Cancel />
               </button>
             </div>
             <nav
-              className="flex flex-col gap-1 px-4 py-4"
+              className="flex flex-col gap-0.5 px-3 py-2"
               onClick={() => setIsSidebarOpen(false)}
             >
-              {navLinks}
+              <Link href="/notification" className={sharedNavLinkClass}>
+                공지사항
+              </Link>
+              <Link href="/mypage" className={sharedNavLinkClass}>
+                마이페이지
+              </Link>
             </nav>
-            <div className="mt-auto border-t border-main-100 px-4 py-4">
+            <div className="mt-auto p-3">
               <Link
                 href="/pwa-install"
                 onClick={() => setIsSidebarOpen(false)}
-                className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 font-medium text-main transition-colors hover:bg-main-100"
+                className="focusable flex w-full items-center gap-2 rounded-xl bg-main-100 px-4 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-main"
               >
                 <Download />앱 설치 안내
               </Link>
