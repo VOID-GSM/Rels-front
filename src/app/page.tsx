@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import Arrow from "@/assets/svg/Arrow";
@@ -18,13 +18,9 @@ import {
   useEnrollLecture,
   useCancelEnrollment,
   useGetEnrollments,
-  MOCK_LECTURES,
-  getMockEnrollments,
 } from "@/entities/lecture";
 import type { LectureType } from "@/entities/lecture";
-import { MOCK_USER } from "@/entities/auth";
 import { LECTURE_STATUS_TO_BADGE } from "@/constants/lecture";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import {
   formatLectureDate,
   formatLectureTime,
@@ -62,24 +58,14 @@ function pickFeatured(lectures: LectureType[]) {
 }
 
 export default function ThisWeekPage() {
-  const { user: loggedInUser, initFromSession, isLoggedIn } = useAuthStore();
-  const isPreview = useDesignPreview();
+  const { user } = useAuthStore();
 
-  useEffect(() => {
-    initFromSession();
-  }, [initFromSession]);
+  const { data: lectures = [], isLoading } = useGetLectures();
 
-  const { data: fetchedLectures = [], isLoading } = useGetLectures();
-
-  const user = isPreview ? MOCK_USER : loggedInUser;
-  const lectures = isPreview ? MOCK_LECTURES : fetchedLectures;
   const lecture = useMemo(() => pickFeatured(lectures), [lectures]);
   const lectureId = lecture?.lectureId ?? 0;
 
-  const { data: fetchedEnrollments } = useGetEnrollments(lectureId);
-  const enrollments = isPreview
-    ? getMockEnrollments(lectureId)
-    : fetchedEnrollments;
+  const { data: enrollments } = useGetEnrollments(lectureId);
 
   const [enrollResult, setEnrollResult] = useState<
     "ENROLLED" | "WAITING" | "ERROR" | null
@@ -110,7 +96,7 @@ export default function ThisWeekPage() {
     return null;
   }, [enrollResult, enrollments, user]);
 
-  if (isLoading && !isPreview) return <Spinner />;
+  if (isLoading) return <Spinner />;
 
   if (!lecture) {
     return (
@@ -122,7 +108,7 @@ export default function ThisWeekPage() {
           아무도 강연을 열지 않았습니다. 나눠 줄 만한 걸 알고 있다면 이번 주는
           당신 차례입니다.
         </p>
-        {(isLoggedIn || isPreview) && <CreateLectureButton />}
+        <CreateLectureButton />
       </PageShell>
     );
   }

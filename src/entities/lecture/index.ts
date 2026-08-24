@@ -20,11 +20,3 @@ export { useCancelEnrollment } from "./model/useCancelEnrollment";
 export { useCancelEnrollmentById } from "./model/useCancelEnrollmentById";
 export { useGetEnrollments } from "./model/useGetEnrollments";
 export { getDisplayLectureStatus } from "./model/status";
-
-// 디자인 작업용 임시 목 데이터 (작업 종료 후 제거)
-export {
-  MOCK_LECTURES,
-  MOCK_USER_ID,
-  MOCK_MY_LECTURE_ENROLLMENTS,
-  getMockEnrollments,
-} from "./model/mocks";

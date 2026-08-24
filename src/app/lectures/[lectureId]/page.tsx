@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -28,12 +28,8 @@ import {
   useEnrollLecture,
   useCancelEnrollment,
   useGetEnrollments,
-  MOCK_LECTURES,
-  getMockEnrollments,
 } from "@/entities/lecture";
-import { MOCK_USER } from "@/entities/auth";
 import { LECTURE_STATUS_TO_BADGE } from "@/constants/lecture";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import {
   formatLectureDate,
   formatLectureTime,
@@ -42,24 +38,10 @@ import {
 export default function LectureDetailPage() {
   const params = useParams();
   const lectureId = Number(params.lectureId);
-  const { user: loggedInUser, initFromSession, accessToken } = useAuthStore();
-  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 상세를 보여줍니다.
-  const isPreview = useDesignPreview();
+  const { user, accessToken } = useAuthStore();
 
-  useEffect(() => {
-    initFromSession();
-  }, [initFromSession]);
-
-  const { data: fetchedLecture, isLoading } = useGetLecture(lectureId);
-  const { data: fetchedEnrollments } = useGetEnrollments(lectureId);
-
-  const user = isPreview ? MOCK_USER : loggedInUser;
-  const lecture = isPreview
-    ? MOCK_LECTURES.find((l) => l.lectureId === lectureId)
-    : fetchedLecture;
-  const enrollments = isPreview
-    ? getMockEnrollments(lectureId)
-    : fetchedEnrollments;
+  const { data: lecture, isLoading } = useGetLecture(lectureId);
+  const { data: enrollments } = useGetEnrollments(lectureId);
 
   const [enrollResult, setEnrollResult] = useState<
     "ENROLLED" | "WAITING" | "ERROR" | null
@@ -91,7 +73,7 @@ export default function LectureDetailPage() {
   }, [enrollResult, enrollments, user]);
 
   if (isNaN(lectureId)) return notFound();
-  if (!isPreview && (!accessToken || isLoading)) return <Spinner />;
+  if (!accessToken || isLoading) return <Spinner />;
   if (!lecture) return notFound();
 
   const isCreator = user?.userId === lecture.creatorId;

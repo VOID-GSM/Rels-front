@@ -4,16 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import Notification from "@/assets/svg/Notification";
 import Cancel from "@/assets/svg/Cancel";
-import { useGetNotices, MOCK_NOTICES } from "@/entities/notice";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
+import { useGetNotices } from "@/entities/notice";
 
 const DISMISSED_KEY = "dismissedNoticeId";
 
 export default function NoticeBanner() {
-  const { data } = useGetNotices();
-  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 데이터로 채웁니다.
-  const isPreview = useDesignPreview();
-  const notices = isPreview ? MOCK_NOTICES : data;
+  const { data: notices } = useGetNotices();
   const latestNotice = notices?.content?.[0];
 
   // 닫은 공지 id를 기억해 뒀다가, 새 공지가 올라오면 다시 띄웁니다.

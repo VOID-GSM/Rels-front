@@ -17,8 +17,6 @@ const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
 import CharCountTextArea from "@/components/common/CharCountTextArea";
 import useAuthStore from "@/stores/authStore";
 import { useCreateNotice } from "@/entities/notice";
-import { MOCK_USER } from "@/entities/auth";
-import { useDesignPreview } from "@/shared/lib/useDesignPreview";
 import {
   NOTICE_TITLE_MAX_LENGTH as TITLE_MAX_LENGTH,
   NOTICE_CONTENT_MAX_LENGTH as CONTENT_MAX_LENGTH,
@@ -26,10 +24,7 @@ import {
 
 export default function NoticeWritePage() {
   const router = useRouter();
-  const { user: loggedInUser, isLoggedIn } = useAuthStore();
-  // 디자인 작업용 임시 처리: 비로그인 상태에서는 목 유저(관리자)로 화면을 봅니다.
-  const isPreview = useDesignPreview();
-  const user = isPreview ? MOCK_USER : loggedInUser;
+  const { user, isLoggedIn } = useAuthStore();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
