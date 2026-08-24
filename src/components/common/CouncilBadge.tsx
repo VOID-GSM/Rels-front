@@ -2,9 +2,9 @@ import Security from "@/assets/svg/Security";
 
 export default function CouncilBadge() {
   return (
-    <div className="flex items-center gap-1.5 bg-main text-black px-2 py-1 rounded-lg text-xs font-semibold w-fit">
+    <span className="flex w-fit items-center gap-1.5 rounded-full bg-main px-2.5 py-1 text-xs font-semibold text-gray-900">
       <Security />
       학생회
-    </div>
+    </span>
   );
 }

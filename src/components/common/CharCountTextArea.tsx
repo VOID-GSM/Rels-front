@@ -20,24 +20,30 @@ export default function CharCountTextArea({
   const safeValue = value ?? "";
 
   return (
-    <div className="flex w-full flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+    <div className="flex w-full flex-col gap-1.5">
+      <label className="text-xs font-semibold tracking-wide text-gray-600">
+        {label}
+      </label>
       <textarea
         placeholder={placeholder}
         value={safeValue}
         maxLength={maxLength}
         onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
         rows={rows}
-        className={`w-full resize-none rounded-md border px-3 py-2 placeholder:text-gray-400 break-words whitespace-pre-wrap focus:outline-none transition-colors ${
-          error
-            ? "border-error focus:border-error"
-            : "border-main-300 focus:border-main"
+        className={`field w-full resize-none whitespace-pre-wrap break-words rounded-xl px-3.5 py-3 text-sm leading-relaxed text-gray-900 placeholder:text-gray-400 ${
+          error ? "field-error" : ""
         }`}
       />
-      <p className="text-right text-xs text-gray-400">
-        {safeValue.length}/{maxLength}
-      </p>
-      {error && <p className="text-xs text-error">{error}</p>}
+      <div className="flex items-center justify-between gap-2">
+        {error ? (
+          <p className="text-xs text-error">{error}</p>
+        ) : (
+          <span aria-hidden />
+        )}
+        <p className="tnum text-xs text-gray-500">
+          {safeValue.length}/{maxLength}
+        </p>
+      </div>
     </div>
   );
 }
