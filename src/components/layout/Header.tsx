@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import useAuthStore from "@/stores/authStore";
 import { useGetUserInfo } from "@/entities/auth";
@@ -12,6 +13,7 @@ import Download from "@/assets/svg/Download";
 
 export default function Header() {
   const { isLoggedIn, setUser, initFromSession } = useAuthStore();
+  const pathname = usePathname();
   const { data: fetchedUser } = useGetUserInfo();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // 디자인 작업용 임시 처리: 비로그인 상태에서도 전체 메뉴를 보여줍니다.
@@ -44,45 +46,64 @@ export default function Header() {
     };
   }, [isSidebarOpen]);
 
-  const sharedNavLinkClass =
-    "focusable rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900";
+  const NAV_ITEMS = [
+    { href: "/", label: "이번 주" },
+    { href: "/lectures", label: "전체 강연" },
+    { href: "/notification", label: "공지사항" },
+    { href: "/mypage", label: "마이페이지" },
+    { href: "/pwa-install", label: "앱 설치 안내" },
+  ];
 
-  const navLinks = (
-    <>
-      {/* 디자인 시안 비교용 임시 링크 (작업 종료 후 제거) */}
-      {isPreview && (
-        <Link href="/this-week" className={sharedNavLinkClass}>
-          이번 주 시안
-        </Link>
-      )}
-      <Link href="/notification" className={sharedNavLinkClass}>
-        공지사항
-      </Link>
-      <Link href="/mypage" className={sharedNavLinkClass}>
-        마이페이지
-      </Link>
-      <Link href="/pwa-install" className={sharedNavLinkClass}>
-        앱 설치 안내
-      </Link>
-    </>
-  );
+  // "/"는 정확히 일치할 때만 현재 위치로 봅니다. 아니면 모든 경로에서 켜집니다.
+  const isCurrent = (href: string) =>
+    href === "/" ? pathname === "/" : pathname?.startsWith(href);
+
+  // 가로 네비는 회색 알약 대신 밑줄로 현재 위치를 표시합니다. 흰 헤더 위의
+  // 회색 면은 탁해 보이고, 밑줄은 브랜드 색을 쓸 수 있습니다.
+  const topNavClass = (href: string) =>
+    `focusable relative rounded-lg px-3 py-2 text-sm transition-colors ${
+      isCurrent(href)
+        ? "font-semibold text-gray-900 after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-full after:bg-main"
+        : "font-medium text-gray-500 hover:text-gray-900"
+    }`;
+
+  // 세로 목록에서는 밑줄이 어색해서 왼쪽 막대로 표시합니다.
+  const sideNavClass = (href: string) =>
+    `focusable relative rounded-lg py-2.5 pl-4 pr-3 text-sm transition-colors ${
+      isCurrent(href)
+        ? "font-semibold text-gray-900 before:absolute before:left-0 before:top-1/2 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-main"
+        : "font-medium text-gray-500 hover:text-gray-900"
+    }`;
+
+  const navLinks = NAV_ITEMS.map((item) => (
+    <Link key={item.href} href={item.href} className={topNavClass(item.href)}>
+      {item.label}
+    </Link>
+  ));
 
   return (
     <>
-      <header className="sticky top-0 z-30 bg-surface/80 shadow-e1 backdrop-blur-md">
-        <div className="mx-auto flex h-[70px] w-full max-w-[1440px] items-center justify-between px-6 md:px-10 xl:px-16">
-          <Link href="/" className="focusable rounded-lg" aria-label="Rels 홈">
+      <header className="sticky top-0 z-30 bg-surface/75 shadow-e1 backdrop-blur-md">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1440px] items-center justify-between px-6 md:px-10 xl:px-16">
+          <Link
+            href="/"
+            className="focusable flex items-center gap-2 rounded-lg"
+            aria-label="Rels 홈"
+          >
             <Image
               src="/img/Rels.png"
-              alt="Rels"
-              width={44}
-              height={44}
+              alt=""
+              width={34}
+              height={34}
               priority
             />
+            <span className="text-lg font-bold tracking-[-0.02em] text-gray-900">
+              Rels
+            </span>
           </Link>
           {showNav && (
             <>
-              <nav className="hidden items-center gap-1 md:flex">{navLinks}</nav>
+              <nav className="hidden items-center gap-0.5 md:flex">{navLinks}</nav>
               <button
                 type="button"
                 aria-label="메뉴 열기"
@@ -114,7 +135,7 @@ export default function Header() {
               isSidebarOpen ? "translate-x-0" : "translate-x-full"
             }`}
           >
-            <div className="flex h-[70px] items-center justify-between px-5">
+            <div className="flex h-[68px] items-center justify-between px-5">
               <Image src="/img/Rels.png" alt="Rels" width={38} height={38} />
               <button
                 type="button"
@@ -129,13 +150,19 @@ export default function Header() {
               className="flex flex-col gap-0.5 px-3 py-2"
               onClick={() => setIsSidebarOpen(false)}
             >
-              <Link href="/notification" className={sharedNavLinkClass}>
-                공지사항
-              </Link>
-              <Link href="/mypage" className={sharedNavLinkClass}>
-                마이페이지
-              </Link>
+              {NAV_ITEMS.filter((item) => item.href !== "/pwa-install").map(
+                (item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={sideNavClass(item.href)}
+                  >
+                    {item.label}
+                  </Link>
+                ),
+              )}
             </nav>
+
             <div className="mt-auto p-3">
               <Link
                 href="/pwa-install"
