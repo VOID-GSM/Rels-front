@@ -6,6 +6,7 @@ export const authUrl = {
 
 export const lectureUrl = {
   getAll: () => "/api/lectures",
+  getPending: () => "/api/lectures/pending",
   create: () => "/api/lectures",
   getOne: (id: number) => `/api/lectures/${id}`,
   update: (id: number) => `/api/lectures/${id}`,
@@ -13,6 +14,9 @@ export const lectureUrl = {
   enroll: (id: number) => `/api/lectures/${id}/enrollments`,
   cancelEnrollment: (id: number) => `/api/lectures/${id}/enrollments`,
   getEnrollments: (id: number) => `/api/lectures/${id}/enrollments`,
+  updateApproval: (id: number) => `/api/lectures/${id}/approval`,
+  getAttendances: (id: number) => `/api/lectures/${id}/attendances`,
+  updateAttendances: (id: number) => `/api/lectures/${id}/attendances`,
   getMyEnrollments: () => "/api/lectures/enrollments/me",
 } as const;
 
