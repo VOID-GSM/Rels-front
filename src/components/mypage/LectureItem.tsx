@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { MyCreatedLecture, MyEnrolledLecture } from "@/entities/lecture";
-import { LECTURE_STATUS_LABEL } from "@/constants/lecture";
+import {
+  LECTURE_APPROVAL_NOTICE,
+  LECTURE_STATUS_LABEL,
+} from "@/constants/lecture";
 
 export type MyPageLectureItem = (MyCreatedLecture | MyEnrolledLecture) & {
   meta?: string;
@@ -20,8 +23,27 @@ export default function LectureItem({
   const statusLabel =
     LECTURE_STATUS_LABEL[lecture.lectureStatus] ?? lecture.lectureStatus;
 
+  // 개설한 강연에만 붙습니다. 승인 전에는 강연 상태보다 이게 먼저 알 일입니다.
+  const approvalStatus =
+    "approvalStatus" in lecture ? lecture.approvalStatus : undefined;
+  const isRejected = approvalStatus === "REJECTED";
+  const approvalNotice =
+    approvalStatus === "PENDING"
+      ? LECTURE_APPROVAL_NOTICE.PENDING
+      : isRejected
+        ? LECTURE_APPROVAL_NOTICE.REJECTED
+        : null;
+  const rejectionReason =
+    isRejected && "rejectionReason" in lecture ? lecture.rejectionReason : null;
+
   return (
-    <li className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100">
+    <li
+      className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors ${
+        approvalNotice
+          ? "bg-gray-100 hover:bg-gray-200"
+          : "bg-gray-50 hover:bg-gray-100"
+      }`}
+    >
       <Link
         href={`/lectures/${lecture.lectureId}`}
         className="focusable flex min-w-0 flex-1 flex-col gap-1 rounded-lg"
@@ -30,8 +52,25 @@ export default function LectureItem({
           {lecture.title}
         </span>
         <span className="line-clamp-1 text-xs text-gray-600">
-          {lecture.meta ? `${lecture.meta} · ${statusLabel}` : statusLabel}
+          {lecture.meta ? `${lecture.meta} · ` : ""}
+          {approvalNotice ? (
+            <span
+              className={`font-semibold ${
+                isRejected ? "text-error" : "text-gray-500"
+              }`}
+            >
+              {approvalNotice}
+            </span>
+          ) : (
+            statusLabel
+          )}
         </span>
+        {/* 거절 사유는 다시 열어 볼 때 가장 먼저 찾는 내용이라 제목 바로 밑에 둡니다. */}
+        {rejectionReason && (
+          <span className="line-clamp-1 text-xs text-gray-600">
+            사유 · {rejectionReason}
+          </span>
+        )}
       </Link>
       <button
         type="button"

@@ -8,6 +8,10 @@ import {
   LECTURE_MIN_CAPACITY,
   LECTURE_MAX_CAPACITY,
 } from "@/constants/lecture";
+import {
+  getEnrollmentOpenAt,
+  formatEnrollmentOpenAt,
+} from "@/shared/lib/enrollmentWindow";
 import type { LectureFormValues, LectureFormData, FormErrors } from "./types";
 
 const DEFAULT_VALUES: LectureFormValues = {
@@ -32,6 +36,8 @@ const parseLocalDateTime = (value: string) => {
 export function useLectureForm(
   initialValues?: Partial<LectureFormValues>,
   forceCapacityMode?: "total" | "grade",
+  /** 수정 화면에서만 넘깁니다. 새로 만들 때는 지금 시각이 개설 시각입니다. */
+  createdAt?: string | null,
 ) {
   const init = { ...DEFAULT_VALUES, ...initialValues };
 
@@ -44,7 +50,9 @@ export function useLectureForm(
   const [grade1, setGrade1] = useState(init.grade1 ?? "");
   const [grade2, setGrade2] = useState(init.grade2 ?? "");
   const [grade3, setGrade3] = useState(init.grade3 ?? "");
-  const [lectureLocation, setLectureLocation] = useState(init.lectureLocation ?? "");
+  const [lectureLocation, setLectureLocation] = useState(
+    init.lectureLocation ?? "",
+  );
   const [lectureDate, setLectureDate] = useState(init.lectureDate ?? "");
   const [lectureTime, setLectureTime] = useState(init.lectureTime ?? "");
   const [applicationDeadline, setApplicationDeadline] = useState(
@@ -106,7 +114,8 @@ export function useLectureForm(
       } else if (Number.isNaN(g1) || g1 < 0 || !Number.isInteger(g1)) {
         next.grade1 = "0명 이상의 정수를 입력해 주세요.";
         capacityToastMessage =
-          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
+          capacityToastMessage ??
+          "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
       }
       if (grade2 === "") {
         next.grade2 = "2학년 인원을 입력해 주세요.";
@@ -114,7 +123,8 @@ export function useLectureForm(
       } else if (Number.isNaN(g2) || g2 < 0 || !Number.isInteger(g2)) {
         next.grade2 = "0명 이상의 정수를 입력해 주세요.";
         capacityToastMessage =
-          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
+          capacityToastMessage ??
+          "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
       }
       if (grade3 === "") {
         next.grade3 = "3학년 인원을 입력해 주세요.";
@@ -122,7 +132,8 @@ export function useLectureForm(
       } else if (Number.isNaN(g3) || g3 < 0 || !Number.isInteger(g3)) {
         next.grade3 = "0명 이상의 정수를 입력해 주세요.";
         capacityToastMessage =
-          capacityToastMessage ?? "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
+          capacityToastMessage ??
+          "학년별 인원은 0명 이상의 정수로 입력해 주세요.";
       }
 
       if (!next.grade1 && !next.grade2 && !next.grade3) {
@@ -165,16 +176,44 @@ export function useLectureForm(
       lectureDate !== init.lectureDate || lectureTime !== init.lectureTime;
     const isDeadlineChanged = applicationDeadline !== init.applicationDeadline;
 
-    if (lectureDateTime && isDateChanged && lectureDateTime.getTime() < Date.now()) {
+    if (
+      lectureDateTime &&
+      isDateChanged &&
+      lectureDateTime.getTime() < Date.now()
+    ) {
       next.lectureDate = "현재 날짜/시간 이후로 선택해 주세요.";
       next.lectureTime = "현재 날짜/시간 이후로 선택해 주세요.";
-      dateToastMessage = "강연 날짜와 시간은 현재보다 이전으로 설정할 수 없습니다.";
+      dateToastMessage =
+        "강연 날짜와 시간은 현재보다 이전으로 설정할 수 없습니다.";
     }
 
-    if (deadlineDateTime && isDeadlineChanged && deadlineDateTime.getTime() < Date.now()) {
+    if (
+      deadlineDateTime &&
+      isDeadlineChanged &&
+      deadlineDateTime.getTime() < Date.now()
+    ) {
       next.applicationDeadline = "현재 날짜/시간 이후로 선택해 주세요.";
       dateToastMessage =
-        dateToastMessage ?? "신청 마감일은 현재보다 이전으로 설정할 수 없습니다.";
+        dateToastMessage ??
+        "신청 마감일은 현재보다 이전으로 설정할 수 없습니다.";
+    }
+
+    // 신청은 16:20에 열립니다. 그전에 마감하면 아무도 신청할 수 없습니다.
+    const enrollmentOpenAt = getEnrollmentOpenAt(
+      createdAt ?? new Date().toISOString(),
+    );
+
+    if (
+      deadlineDateTime &&
+      isDeadlineChanged &&
+      enrollmentOpenAt &&
+      deadlineDateTime.getTime() <= enrollmentOpenAt.getTime()
+    ) {
+      const openText = formatEnrollmentOpenAt(enrollmentOpenAt);
+      next.applicationDeadline = `${openText} 이후로 선택해 주세요.`;
+      dateToastMessage =
+        dateToastMessage ??
+        `신청은 ${openText}부터 받습니다. 마감은 그 이후로 정해 주세요.`;
     }
 
     if (
@@ -184,7 +223,8 @@ export function useLectureForm(
     ) {
       next.applicationDeadline = "신청 마감일은 강연 일시 이전이어야 합니다.";
       dateToastMessage =
-        dateToastMessage ?? "신청 마감일은 강연 일시보다 이후로 설정할 수 없습니다.";
+        dateToastMessage ??
+        "신청 마감일은 강연 일시보다 이후로 설정할 수 없습니다.";
     }
 
     setErrors(next);

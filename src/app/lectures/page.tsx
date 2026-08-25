@@ -70,6 +70,7 @@ function LectureGrid({ lectures }: { lectures: LectureType[] }) {
           currentCount={lecture.enrolledCount}
           maxCount={getTotalCapacity(lecture)}
           waitingCount={lecture.waitingCount}
+          approvalStatus={lecture.approvalStatus}
         />
       ))}
     </div>

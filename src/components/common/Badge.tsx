@@ -1,4 +1,7 @@
-export type BadgeVariant = "open" | "confirmed" | "closed" | "unconfirmed";
+import { LECTURE_APPROVAL_NOTICE } from "@/constants/lecture";
+
+export type BadgeVariant =
+  "open" | "confirmed" | "closed" | "unconfirmed" | "pending" | "rejected";
 
 interface BadgeProps {
   variant: BadgeVariant;
@@ -33,13 +36,26 @@ const BADGE_CONFIG: Record<
     dot: "bg-gray-500",
     text: "text-gray-500",
   },
+  // 학생회 승인 전. 개설자 본인에게만 보입니다.
+  pending: {
+    label: LECTURE_APPROVAL_NOTICE.PENDING,
+    dot: "shadow-[inset_0_0_0_2px_var(--color-gray-400)]",
+    text: "text-gray-500",
+  },
+  rejected: {
+    label: LECTURE_APPROVAL_NOTICE.REJECTED,
+    dot: "bg-error",
+    text: "text-error",
+  },
 };
 
 export default function Badge({ variant }: BadgeProps) {
   const { label, dot, text } = BADGE_CONFIG[variant];
 
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${text}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold ${text}`}
+    >
       <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
       {label}
     </span>

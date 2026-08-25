@@ -4,9 +4,11 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import Arrow from "@/assets/svg/Arrow";
+import Pencil from "@/assets/svg/Pencil";
 import Badge from "@/components/common/Badge";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
+import { toast } from "sonner";
 import SeatMeter from "@/components/lecture/SeatMeter";
 import DeadlineCountdown from "@/components/lecture/DeadlineCountdown";
 import PageShell from "@/components/layout/PageShell";
@@ -18,6 +20,8 @@ import {
   useEnrollLecture,
   useCancelEnrollment,
   useGetEnrollments,
+  useGetAttendances,
+  useUpdateAttendances,
 } from "@/entities/lecture";
 import type { LectureType } from "@/entities/lecture";
 import { LECTURE_STATUS_TO_BADGE } from "@/constants/lecture";
@@ -25,9 +29,23 @@ import {
   formatLectureDate,
   formatLectureTime,
 } from "@/shared/lib/formatLectureSchedule";
+import {
+  getEnrollmentOpenAt,
+  formatEnrollmentOpenAt,
+  isBeforeOpen,
+} from "@/shared/lib/enrollmentWindow";
 
 const ApplicantList = dynamic(
   () => import("@/components/lecture/ApplicantList"),
+  {
+    loading: () => (
+      <div className="h-32 w-full animate-pulse rounded-2xl bg-surface shadow-e1" />
+    ),
+  },
+);
+
+const AttendanceList = dynamic(
+  () => import("@/components/lecture/AttendanceList"),
   {
     loading: () => (
       <div className="h-32 w-full animate-pulse rounded-2xl bg-surface shadow-e1" />
@@ -42,6 +60,11 @@ const ApplicantList = dynamic(
  */
 function pickFeatured(lectures: LectureType[]) {
   const live = lectures.filter((l) => {
+    // 승인 전이거나 거절된 강연이 목록에 섞여 오면(개설자·학생회 시점) 첫 화면
+    // 전체를 차지해 버립니다. 이번 주 강연은 공개된 것 중에서만 고릅니다.
+    if (l.approvalStatus === "PENDING" || l.approvalStatus === "REJECTED")
+      return false;
+
     const status = getDisplayLectureStatus(l);
     return status === "OPEN" || status === "CONFIRMED";
   });
@@ -59,6 +82,7 @@ function pickFeatured(lectures: LectureType[]) {
 
 export default function ThisWeekPage() {
   const { user } = useAuthStore();
+  const isAdmin = user?.role === "ADMIN";
 
   const { data: lectures = [], isLoading } = useGetLectures();
 
@@ -66,6 +90,22 @@ export default function ThisWeekPage() {
   const lectureId = lecture?.lectureId ?? 0;
 
   const { data: enrollments } = useGetEnrollments(lectureId);
+
+  // 상세 페이지와 같은 규칙입니다. 출석부는 학생회만 보고, 그 외에는 요청하지 않습니다.
+  const {
+    data: attendances,
+    isLoading: isLoadingAttendances,
+    isError: isAttendancesError,
+  } = useGetAttendances(lectureId, { enabled: isAdmin });
+  const { mutate: saveAttendances, isPending: isSavingAttendances } =
+    useUpdateAttendances(lectureId, {
+      onSuccess: () => toast.success("출석을 저장했습니다."),
+      onError: () =>
+        toast.error("출석을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요."),
+    });
+
+  // 카운트다운이 0에 닿는 순간 이 값이 켜지면서 신청 버튼이 풀립니다.
+  const [hasEnrollmentOpened, setHasEnrollmentOpened] = useState(false);
 
   const [enrollResult, setEnrollResult] = useState<
     "ENROLLED" | "WAITING" | "ERROR" | null
@@ -138,6 +178,11 @@ export default function ThisWeekPage() {
   const isCreator = user?.userId === lecture.creatorId;
   const otherCount = lectures.length - 1;
 
+  // 상세 페이지와 같은 규칙입니다. 신청은 7교시가 끝나는 16:20부터 받습니다.
+  const enrollmentOpenAt = getEnrollmentOpenAt(lecture.createdAt);
+  const isBeforeEnrollmentOpen =
+    !hasEnrollmentOpened && isBeforeOpen(enrollmentOpenAt);
+
   const [deadlineDate, deadlineTime] = (
     lecture.applicationDeadline ?? ""
   ).split("T");
@@ -167,8 +212,17 @@ export default function ThisWeekPage() {
 
   return (
     <PageShell size="narrow">
-      <div className="mt-6 md:mt-12">
+      <div className="mt-6 flex flex-wrap items-center gap-4 md:mt-12">
         <Badge variant={LECTURE_STATUS_TO_BADGE[displayStatus]} />
+        {(isCreator || isAdmin) && (
+          <Link
+            href={`/lectures/${lecture.lectureId}/edit`}
+            className="focusable inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold text-gray-600 transition-colors hover:text-gray-900"
+          >
+            <Pencil />
+            수정
+          </Link>
+        )}
       </div>
 
       <h1 className="mt-4 text-[40px] font-bold leading-[1.15] tracking-[-0.03em] text-gray-900 md:text-[52px]">
@@ -213,16 +267,32 @@ export default function ThisWeekPage() {
           </div>
         </div>
 
-        {lecture.applicationDeadline && (
+        {/* 아직 신청이 안 열렸으면 마감이 아니라 시작까지를 셉니다. */}
+        {isBeforeEnrollmentOpen && enrollmentOpenAt ? (
           <div className="flex flex-col gap-2">
             <span className="text-xs font-medium text-gray-500">
-              신청 마감까지
+              신청 시작까지
             </span>
             <DeadlineCountdown
-              deadline={lecture.applicationDeadline}
+              deadline={enrollmentOpenAt.toISOString()}
+              endedLabel="신청 시작"
+              urgent={false}
+              onEnd={() => setHasEnrollmentOpened(true)}
               className="text-[32px] leading-[0.95] tracking-[-0.02em]"
             />
           </div>
+        ) : (
+          lecture.applicationDeadline && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium text-gray-500">
+                신청 마감까지
+              </span>
+              <DeadlineCountdown
+                deadline={lecture.applicationDeadline}
+                className="text-[32px] leading-[0.95] tracking-[-0.02em]"
+              />
+            </div>
+          )
         )}
       </div>
 
@@ -245,6 +315,10 @@ export default function ThisWeekPage() {
         {isCreator ? (
           <Button variant="waiting" disabled className="w-full py-3">
             내가 개설한 강연입니다
+          </Button>
+        ) : isBeforeEnrollmentOpen && enrollmentOpenAt ? (
+          <Button variant="waiting" disabled className="w-full py-3">
+            {formatEnrollmentOpenAt(enrollmentOpenAt)}부터 신청
           </Button>
         ) : enrollStatus ? (
           <>
@@ -296,16 +370,30 @@ export default function ThisWeekPage() {
       </section>
 
       <div className="mt-16 grid gap-4 sm:grid-cols-2">
-        <ApplicantList
-          type="applicant"
-          currentCount={lecture.enrolledCount}
-          maxCount={totalCapacity}
-          applicants={enrollments?.enrolled ?? []}
-        />
+        {/* 학생회는 이번 주 강연 화면에서 바로 출석을 찍고 명단을 복사합니다. */}
+        {isAdmin ? (
+          <AttendanceList
+            currentCount={lecture.enrolledCount}
+            maxCount={totalCapacity}
+            attendances={attendances ?? []}
+            isLoading={isLoadingAttendances}
+            isError={isAttendancesError}
+            isSaving={isSavingAttendances}
+            onSave={saveAttendances}
+          />
+        ) : (
+          <ApplicantList
+            type="applicant"
+            currentCount={lecture.enrolledCount}
+            maxCount={totalCapacity}
+            applicants={enrollments?.enrolled ?? []}
+          />
+        )}
         <ApplicantList
           type="waiting"
           waitingCount={lecture.waitingCount}
           applicants={enrollments?.waiting ?? []}
+          copyable={isAdmin}
         />
       </div>
 
