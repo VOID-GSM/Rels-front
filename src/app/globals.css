@@ -111,6 +111,53 @@
   }
 }
 
+/* Ambient motion. Slow enough to read as light shifting rather than as an
+   animation asking for attention. The reduced-motion block below stops all of
+   it, so nothing here needs its own guard. */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, -6%, 0) scale(1.12);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Fills the active carousel dot over one slide's lifetime. */
+@keyframes sweep {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@layer utilities {
+  .animate-drift {
+    animation: drift 24s ease-in-out infinite;
+  }
+  .animate-rise {
+    animation: rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-sweep {
+    animation: sweep 5s linear both;
+    transform-origin: left center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

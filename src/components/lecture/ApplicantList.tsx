@@ -1,9 +1,12 @@
 import People from "@/assets/svg/People";
 import Clock from "@/assets/svg/Clock";
 import type { EnrollmentApplicant } from "@/entities/lecture";
+import CopyApplicantsButton from "@/components/lecture/CopyApplicantsButton";
 
 type ApplicantListProps = {
   applicants: EnrollmentApplicant[];
+  /** 학생회만 명단 복사 버튼을 봅니다. */
+  copyable?: boolean;
 } & (
   | {
       type: "applicant";
@@ -25,12 +28,13 @@ export default function ApplicantList({
   maxCount,
   waitingCount,
   applicants,
+  copyable = false,
 }: ApplicantListProps) {
   const isApplicant = type === "applicant";
 
   return (
     <section className="flex w-full flex-col gap-4 rounded-2xl bg-surface p-5 shadow-e2">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <span className="text-main">
           {isApplicant ? <People /> : <Clock />}
         </span>
@@ -40,6 +44,9 @@ export default function ApplicantList({
         <span className="tnum text-sm text-gray-500">
           {isApplicant ? `${currentCount}/${maxCount}` : waitingCount}
         </span>
+        {copyable && applicants.length > 0 && (
+          <CopyApplicantsButton applicants={applicants} className="ml-auto" />
+        )}
       </div>
 
       {applicants.length === 0 ? (

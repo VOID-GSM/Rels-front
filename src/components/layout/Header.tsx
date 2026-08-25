@@ -11,7 +11,7 @@ import Cancel from "@/assets/svg/Cancel";
 import Download from "@/assets/svg/Download";
 
 export default function Header() {
-  const { isLoggedIn, setUser } = useAuthStore();
+  const { isLoggedIn, setUser, user } = useAuthStore();
   const pathname = usePathname();
   const { data: fetchedUser } = useGetUserInfo();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -38,17 +38,25 @@ export default function Header() {
     };
   }, [isSidebarOpen]);
 
+  // 강연 승인은 학생회만 씁니다. /lectures 보다 앞에 두면 강연 흐름이 이어집니다.
   const NAV_ITEMS = [
     { href: "/", label: "이번 주" },
     { href: "/lectures", label: "전체 강연" },
+    ...(user?.role === "ADMIN"
+      ? [{ href: "/lectures/pending", label: "강연 승인" }]
+      : []),
     { href: "/notification", label: "공지사항" },
     { href: "/mypage", label: "마이페이지" },
     { href: "/pwa-install", label: "앱 설치 안내" },
   ];
 
   // "/"는 정확히 일치할 때만 현재 위치로 봅니다. 아니면 모든 경로에서 켜집니다.
-  const isCurrent = (href: string) =>
-    href === "/" ? pathname === "/" : pathname?.startsWith(href);
+  const isCurrent = (href: string) => {
+    if (href === "/") return pathname === "/";
+    // /lectures 가 /lectures/pending 에서도 켜지면 현재 위치가 두 개로 보입니다.
+    if (href === "/lectures") return pathname?.startsWith("/lectures") && !pathname.startsWith("/lectures/pending");
+    return pathname?.startsWith(href);
+  };
 
   // 가로 네비는 회색 알약 대신 밑줄로 현재 위치를 표시합니다. 흰 헤더 위의
   // 회색 면은 탁해 보이고, 밑줄은 브랜드 색을 쓸 수 있습니다.

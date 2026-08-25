@@ -27,12 +27,15 @@ function EditForm({ lecture }: { lecture: LectureType }) {
   const lectureId = lecture.lectureId;
   const capacityMode = lecture.totalCapacity != null ? "total" : "grade";
 
-  const { mutate: updateLecture, isPending: isUpdating } = useUpdateLecture(lectureId);
+  const { mutate: updateLecture, isPending: isUpdating } =
+    useUpdateLecture(lectureId);
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleSubmit = (data: LectureFormData) => {
-    updateLecture(data, { onSuccess: () => router.push(`/lectures/${lectureId}`) });
+    updateLecture(data, {
+      onSuccess: () => router.push(`/lectures/${lectureId}`),
+    });
   };
 
   const handleConfirmDelete = () => {
@@ -49,33 +52,34 @@ function EditForm({ lecture }: { lecture: LectureType }) {
           description="이미 신청한 학생이 있다면 인원과 일정 변경에 주의해 주세요."
         />
         <LectureForm
-            initialValues={{
-              title: lecture.title,
-              description: lecture.description,
-              capacityMode,
-              totalCapacity: String(lecture.totalCapacity ?? ""),
-              grade1: String(lecture.capacityByGrade?.["1"] ?? ""),
-              grade2: String(lecture.capacityByGrade?.["2"] ?? ""),
-              grade3: String(lecture.capacityByGrade?.["3"] ?? ""),
-              lectureLocation: lecture.lectureLocation ?? "",
-              lectureDate: lecture.lectureDate ?? "",
-              lectureTime: lecture.lectureTime ?? "",
-              applicationDeadline: lecture.applicationDeadline ?? "",
-            }}
-            onSubmit={handleSubmit}
-            isPending={isUpdating}
-            submitLabel="저장"
-            extraAction={
-              <Button
-                variant="cancel"
-                onClick={() => setShowDeleteModal(true)}
-                disabled={isUpdating || isDeleting}
-                className="h-11 w-fit gap-2 px-7"
-              >
-                <Delete />
-                삭제
-              </Button>
-            }
+          initialValues={{
+            title: lecture.title,
+            description: lecture.description,
+            capacityMode,
+            totalCapacity: String(lecture.totalCapacity ?? ""),
+            grade1: String(lecture.capacityByGrade?.["1"] ?? ""),
+            grade2: String(lecture.capacityByGrade?.["2"] ?? ""),
+            grade3: String(lecture.capacityByGrade?.["3"] ?? ""),
+            lectureLocation: lecture.lectureLocation ?? "",
+            lectureDate: lecture.lectureDate ?? "",
+            lectureTime: lecture.lectureTime ?? "",
+            applicationDeadline: lecture.applicationDeadline ?? "",
+          }}
+          onSubmit={handleSubmit}
+          isPending={isUpdating}
+          submitLabel="저장"
+          createdAt={lecture.createdAt}
+          extraAction={
+            <Button
+              variant="cancel"
+              onClick={() => setShowDeleteModal(true)}
+              disabled={isUpdating || isDeleting}
+              className="h-11 w-fit gap-2 px-7"
+            >
+              <Delete />
+              삭제
+            </Button>
+          }
         />
       </PageShell>
 
