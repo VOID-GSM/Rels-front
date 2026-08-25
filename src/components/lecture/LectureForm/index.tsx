@@ -5,6 +5,7 @@ import Button from "@/components/common/Button";
 import CharCountTextArea from "@/components/common/CharCountTextArea";
 import FormSection, { FormActions } from "@/components/layout/FormSection";
 import { useLectureForm } from "./useLectureForm";
+import { ENROLLMENT_OPEN_TIME } from "@/shared/lib/enrollmentWindow";
 import {
   LECTURE_TITLE_MAX_LENGTH as TITLE_MAX_LENGTH,
   LECTURE_DESCRIPTION_MAX_LENGTH as DESCRIPTION_MAX_LENGTH,
@@ -20,6 +21,8 @@ interface LectureFormProps {
   submitLabel: string;
   extraAction?: React.ReactNode;
   forceCapacityMode?: "total" | "grade";
+  /** 수정 화면에서만 넘깁니다. 신청이 열리는 시각을 계산하는 데 씁니다. */
+  createdAt?: string | null;
 }
 
 export default function LectureForm({
@@ -29,6 +32,7 @@ export default function LectureForm({
   submitLabel,
   extraAction,
   forceCapacityMode,
+  createdAt,
 }: LectureFormProps) {
   const {
     values,
@@ -38,7 +42,7 @@ export default function LectureForm({
     handleModeChange,
     validate,
     buildSubmitData,
-  } = useLectureForm(initialValues, forceCapacityMode);
+  } = useLectureForm(initialValues, forceCapacityMode, createdAt);
 
   const {
     title,
@@ -232,16 +236,22 @@ export default function LectureForm({
           />
         </div>
 
-        <Input
-          label="신청 마감일"
-          type="datetime-local"
-          value={applicationDeadline}
-          onChange={(e) => {
-            setApplicationDeadline(e.target.value);
-            clearError("applicationDeadline");
-          }}
-          error={errors.applicationDeadline}
-        />
+        <div className="flex flex-col gap-1.5">
+          <Input
+            label="신청 마감일"
+            type="datetime-local"
+            value={applicationDeadline}
+            onChange={(e) => {
+              setApplicationDeadline(e.target.value);
+              clearError("applicationDeadline");
+            }}
+            error={errors.applicationDeadline}
+          />
+          {/* 신청 시작은 입력받지 않고 개설 시각에서 자동으로 정해집니다. */}
+          <p className="text-xs text-gray-500">
+            신청은 7교시가 끝나는 {ENROLLMENT_OPEN_TIME}부터 받습니다.
+          </p>
+        </div>
       </FormSection>
 
       <FormActions>

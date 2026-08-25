@@ -14,14 +14,7 @@ const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
 });
 import useAuthStore from "@/stores/authStore";
 import { useGetNotices, useDeleteNotice } from "@/entities/notice";
-
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
+import { formatServerDate } from "@/shared/lib/serverDateTime";
 
 export default function NotificationPage() {
   const { user } = useAuthStore();
@@ -75,7 +68,7 @@ export default function NotificationPage() {
                 >
                   <div className="flex flex-row items-baseline gap-3 md:flex-col md:gap-1.5">
                     <time className="tnum text-sm font-semibold text-gray-900">
-                      {formatDate(notice.createdAt)}
+                      {formatServerDate(notice.createdAt)}
                     </time>
                     <span className="text-xs text-gray-500">
                       {notice.authorName}
@@ -105,7 +98,7 @@ export default function NotificationPage() {
                         </div>
                       )}
                     </div>
-                    <p className="max-w-[74ch] whitespace-pre-wrap break-words text-sm leading-7 text-gray-700">
+                    <p className="whitespace-pre-wrap break-words text-sm leading-7 text-gray-700">
                       {notice.content}
                     </p>
                   </div>
