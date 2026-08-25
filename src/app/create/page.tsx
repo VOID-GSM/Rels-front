@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Arrow from "@/assets/svg/Arrow";
+import PageShell from "@/components/layout/PageShell";
+import PageHeader from "@/components/layout/PageHeader";
+import BackLink from "@/components/layout/BackLink";
 import LectureForm from "@/components/lecture/LectureForm";
 import type { LectureFormData } from "@/components/lecture/LectureForm";
 import { useCreateLecture } from "@/entities/lecture";
@@ -16,20 +17,18 @@ export default function CreateLecturePage() {
   };
 
   return (
-    <main className="max-w-[600px] mx-auto px-6 py-10 flex flex-col gap-6">
-      <Link href="/" className="flex items-center gap-1 text-sm text-gray-500 w-fit">
-        <Arrow />
-        뒤로
-      </Link>
-
-      <div className="border border-main-200 rounded-2xl p-8 flex flex-col gap-6">
-        <h1 className="text-xl font-bold text-gray-900">강연 생성</h1>
-        <LectureForm
-          onSubmit={handleSubmit}
-          isPending={isPending}
-          submitLabel="강연 생성"
-        />
-      </div>
-    </main>
+    <PageShell size="narrow">
+      <BackLink href="/lectures">전체 강연</BackLink>
+      <PageHeader
+        className="mt-5 pb-4"
+        title="강연 개설"
+        description="다른 학생들이 신청할 수 있는 강연을 엽니다. 개설 후에도 마감 전까지 수정할 수 있습니다."
+      />
+      <LectureForm
+        onSubmit={handleSubmit}
+        isPending={isPending}
+        submitLabel="강연 개설"
+      />
+    </PageShell>
   );
 }

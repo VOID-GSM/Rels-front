@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
 import {
@@ -9,39 +8,63 @@ import {
   useDeleteLecture,
   useGetMyLectureEnrollments,
 } from "@/entities/lecture";
+import { formatLectureDate } from "@/shared/lib/formatLectureSchedule";
 import dynamic from "next/dynamic";
 import CouncilBadge from "@/components/common/CouncilBadge";
+import PageShell from "@/components/layout/PageShell";
+import BackLink from "@/components/layout/BackLink";
 
 const ConfirmModal = dynamic(() => import("@/components/common/ConfirmModal"), {
   ssr: false,
 });
-import Arrow from "@/assets/svg/Arrow";
-import Person from "@/assets/svg/Person";
 import HashTag from "@/assets/svg/HashTag";
 import Mail from "@/assets/svg/Mail";
 import Logout from "@/assets/svg/Logout";
-import InfoField from "@/components/mypage/InfoField";
 import LectureList from "@/components/mypage/LectureList";
 import type { MyPageLectureItem } from "@/components/mypage/LectureItem";
 import { ENROLLMENT_STATUS_LABEL } from "@/constants/lecture";
 
+function ProfileFact({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="text-xs font-medium text-gray-500">{label}</span>
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="shrink-0 text-gray-500">{icon}</span>
+        <span className="truncate text-sm font-semibold text-gray-900">
+          {value}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function MyPage() {
   const { user, clearAuth } = useAuthStore();
   const router = useRouter();
-  const { data: myLectureEnrollments, isLoading } = useGetMyLectureEnrollments();
+  const { data: myLectureEnrollments, isLoading } =
+    useGetMyLectureEnrollments();
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
-  const { mutate: cancelEnrollment, isPending: isCancelling } = useCancelEnrollmentById();
+  const { mutate: cancelEnrollment, isPending: isCancelling } =
+    useCancelEnrollmentById();
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
 
   const handleLogout = () => {
     clearAuth();
-    router.replace("/");
+    router.replace("/login");
   };
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-400 text-sm">로그인이 필요합니다.</p>
+      <div className="flex min-h-[calc(100vh-70px)] items-center justify-center">
+        <p className="text-sm text-gray-500">로그인이 필요합니다.</p>
       </div>
     );
   }
@@ -50,7 +73,9 @@ export default function MyPage() {
     myLectureEnrollments?.createdLectures ?? []
   ).map((lecture) => ({
     ...lecture,
-    meta: [lecture.lectureLocation, lecture.lectureDate].filter(Boolean).join(" · "),
+    meta: [lecture.lectureLocation, formatLectureDate(lecture.lectureDate)]
+      .filter(Boolean)
+      .join(" · "),
   }));
 
   const myEnrolledLectures: MyPageLectureItem[] = (
@@ -61,7 +86,9 @@ export default function MyPage() {
       lecture.creatorStudentNumber
         ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
         : lecture.creatorName,
-      ENROLLMENT_STATUS_LABEL[lecture.enrollmentStatus as keyof typeof ENROLLMENT_STATUS_LABEL] ?? lecture.enrollmentStatus,
+      ENROLLMENT_STATUS_LABEL[
+        lecture.enrollmentStatus as keyof typeof ENROLLMENT_STATUS_LABEL
+      ] ?? lecture.enrollmentStatus,
     ]
       .filter(Boolean)
       .join(" · "),
@@ -77,39 +104,40 @@ export default function MyPage() {
 
   return (
     <>
-      <main className="max-w-[800px] mx-auto px-6 py-10 flex flex-col gap-6">
-        <Link href="/" className="flex items-center gap-1 text-sm text-gray-500 w-fit">
-          <Arrow />
-          뒤로
-        </Link>
+      <PageShell>
+        <BackLink href="/">이번 주 강연</BackLink>
 
-        <div className="border border-main-200 rounded-2xl p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-3">
-            <Person width={20} height={20} />
-            <span className="font-semibold text-xl">내 정보</span>
+        {/* 프로필은 세로로 쌓지 않고 가로 띠 하나로 펼칩니다. */}
+        <section className="mt-6 flex flex-wrap items-center gap-x-12 gap-y-6 rounded-2xl bg-surface px-6 py-6 shadow-e2 md:px-8">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
             {user.role === "ADMIN" && <CouncilBadge />}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <InfoField icon={<Person />} label="이름" value={user.name} />
-            <InfoField icon={<HashTag />} label="학번" value={user.studentNumber} />
-            <InfoField icon={<Mail />} label="이메일" value={user.email} />
+          <div className="flex flex-wrap items-center gap-x-12 gap-y-5">
+            <ProfileFact
+              icon={<HashTag />}
+              label="학번"
+              value={user.studentNumber}
+            />
+            <ProfileFact icon={<Mail />} label="이메일" value={user.email} />
           </div>
 
           <button
+            type="button"
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 border border-error text-error rounded-xl py-3 text-sm font-medium hover:bg-error/5 transition-colors"
+            className="focusable ml-auto flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-error-soft hover:text-error"
           >
             <Logout />
             로그아웃
           </button>
-        </div>
+        </section>
 
-        <div className="flex flex-col md:flex-row md:items-start gap-4">
+        <div className="mt-10 grid items-start gap-4 lg:grid-cols-2">
           <LectureList
             title="내가 개설한 강연"
             lectures={myCreatedLectures}
-            emptyMessage="생성한 강연이 없습니다."
+            emptyMessage="아직 개설한 강연이 없습니다."
             isLoading={isLoading}
             onAction={setDeleteTargetId}
             actionLabel="삭제"
@@ -117,21 +145,21 @@ export default function MyPage() {
           <LectureList
             title="내가 신청한 강연"
             lectures={myEnrolledLectures}
-            emptyMessage="신청한 강연이 없습니다."
+            emptyMessage="아직 신청한 강연이 없습니다."
             isLoading={isLoading}
             onAction={cancelEnrollment}
             actionLabel="취소"
             disabled={isCancelling}
           />
         </div>
-      </main>
+      </PageShell>
 
       {deleteTargetId !== null && (
         <ConfirmModal
           title="강연 삭제"
           message="강연을 삭제하면 복구할 수 없습니다. 정말 삭제하시겠습니까?"
           confirmLabel="삭제"
-          confirmClassName="bg-error border-error hover:bg-error/90"
+          confirmVariant="danger"
           onConfirm={handleConfirmDelete}
           onCancel={() => setDeleteTargetId(null)}
           isPending={isDeleting}

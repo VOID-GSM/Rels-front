@@ -19,16 +19,17 @@ export default function LectureList({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex-1 border border-main-200 rounded-2xl p-5 flex flex-col gap-3">
-      <span className="font-semibold text-base">
-        {title} ({lectures.length})
-      </span>
+    <section className="flex flex-1 flex-col gap-3.5 rounded-2xl bg-surface p-5 shadow-e2">
+      <div className="flex items-baseline gap-2">
+        <h2 className="text-sm font-bold text-gray-900">{title}</h2>
+        <span className="tnum text-sm text-gray-500">{lectures.length}</span>
+      </div>
       {isLoading ? (
-        <p className="text-xs text-gray-400 py-4 text-center">불러오는 중...</p>
+        <p className="py-6 text-center text-xs text-gray-500">불러오는 중</p>
       ) : lectures.length === 0 ? (
-        <p className="text-xs text-gray-400 py-4 text-center">{emptyMessage}</p>
+        <p className="py-6 text-center text-xs text-gray-500">{emptyMessage}</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-1.5">
           {lectures.map((lecture) => (
             <LectureItem
               key={lecture.lectureId}
@@ -40,6 +41,6 @@ export default function LectureList({
           ))}
         </ul>
       )}
-    </div>
+    </section>
   );
 }

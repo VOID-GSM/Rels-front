@@ -1,156 +1,332 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import useAuthStore from "@/stores/authStore";
-import { getDisplayLectureStatus, useGetLectures } from "@/entities/lecture";
-import type { LectureType, LectureStatusType } from "@/entities/lecture";
-import LectureCard from "@/components/lecture/LectureCard";
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import Arrow from "@/assets/svg/Arrow";
+import Badge from "@/components/common/Badge";
+import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
+import SeatMeter from "@/components/lecture/SeatMeter";
+import DeadlineCountdown from "@/components/lecture/DeadlineCountdown";
+import PageShell from "@/components/layout/PageShell";
 import CreateLectureButton from "@/components/lecture/CreateLectureButton";
-import { LECTURE_STATUS_TO_BADGE, LECTURE_STATUS_SORT_ORDER } from "@/constants/lecture";
+import useAuthStore from "@/stores/authStore";
+import {
+  getDisplayLectureStatus,
+  useGetLectures,
+  useEnrollLecture,
+  useCancelEnrollment,
+  useGetEnrollments,
+} from "@/entities/lecture";
+import type { LectureType } from "@/entities/lecture";
+import { LECTURE_STATUS_TO_BADGE } from "@/constants/lecture";
+import {
+  formatLectureDate,
+  formatLectureTime,
+} from "@/shared/lib/formatLectureSchedule";
 
-type LectureCategoryKey = "all" | "open" | "confirmed" | "past";
+const ApplicantList = dynamic(
+  () => import("@/components/lecture/ApplicantList"),
+  {
+    loading: () => (
+      <div className="h-32 w-full animate-pulse rounded-2xl bg-surface shadow-e1" />
+    ),
+  },
+);
 
-const LECTURE_CATEGORIES: {
-  key: LectureCategoryKey;
-  label: string;
-  matches: (status: LectureStatusType) => boolean;
-}[] = [
-  { key: "all", label: "전체", matches: () => true },
-  { key: "open", label: "신청 가능", matches: (s) => s === "OPEN" },
-  { key: "confirmed", label: "개설 확정", matches: (s) => s === "CONFIRMED" },
-  { key: "past", label: "지난 강의", matches: (s) => s === "CLOSED" || s === "UNCONFIRMED" },
-];
+/**
+ * 이번 주에 결정할 강연 하나를 고릅니다.
+ * 아직 신청을 받는 강연 중 마감이 가장 가까운 것을 쓰고, 그런 강연이 없으면
+ * 열려는 있지만 마감만 지난 것 중 가장 가까운 것을 씁니다.
+ */
+function pickFeatured(lectures: LectureType[]) {
+  const live = lectures.filter((l) => {
+    const status = getDisplayLectureStatus(l);
+    return status === "OPEN" || status === "CONFIRMED";
+  });
+  if (live.length === 0) return null;
 
-const sortLectures = (lectures: LectureType[]) =>
-  [...lectures].sort(
-    (a, b) =>
-      LECTURE_STATUS_SORT_ORDER[getDisplayLectureStatus(a)] -
-      LECTURE_STATUS_SORT_ORDER[getDisplayLectureStatus(b)],
+  const key = (l: LectureType) =>
+    new Date(l.applicationDeadline ?? l.lectureDate ?? "9999-12-31").getTime();
+
+  const now = Date.now();
+  const stillTakingApplications = live.filter((l) => key(l) > now);
+  const pool = stillTakingApplications.length ? stillTakingApplications : live;
+
+  return [...pool].sort((a, b) => key(a) - key(b))[0];
+}
+
+export default function ThisWeekPage() {
+  const { user } = useAuthStore();
+
+  const { data: lectures = [], isLoading } = useGetLectures();
+
+  const lecture = useMemo(() => pickFeatured(lectures), [lectures]);
+  const lectureId = lecture?.lectureId ?? 0;
+
+  const { data: enrollments } = useGetEnrollments(lectureId);
+
+  const [enrollResult, setEnrollResult] = useState<
+    "ENROLLED" | "WAITING" | "ERROR" | null
+  >(null);
+
+  const { mutate: enrollLecture, isPending: isEnrolling } = useEnrollLecture(
+    lectureId,
+    {
+      onSuccess: (data) => setEnrollResult(data.enrollmentStatus),
+      onError: () => setEnrollResult("ERROR"),
+    },
   );
+  const { mutate: cancelEnrollment, isPending: isCancelling } =
+    useCancelEnrollment(lectureId, {
+      onSuccess: () => setEnrollResult(null),
+      onError: () => setEnrollResult("ERROR"),
+    });
 
-function LectureGrid({
-  lectures,
-  onCardClick,
-}: {
-  lectures: LectureType[];
-  onCardClick: (id: string) => void;
-}) {
-  if (lectures.length === 0) {
+  const enrollStatus = useMemo<"ENROLLED" | "WAITING" | null>(() => {
+    if (enrollResult === "ENROLLED" || enrollResult === "WAITING")
+      return enrollResult;
+    if (enrollResult === "ERROR") return null;
+    if (!enrollments || !user) return null;
+    if (enrollments.enrolled.some((a) => a.userId === user.userId))
+      return "ENROLLED";
+    if (enrollments.waiting.some((a) => a.userId === user.userId))
+      return "WAITING";
+    return null;
+  }, [enrollResult, enrollments, user]);
+
+  if (isLoading) return <Spinner />;
+
+  if (!lecture) {
     return (
-      <p className="text-sm text-gray-400">해당 카테고리에 등록된 강연이 없습니다.</p>
+      /* 헤더(68px)와 PageShell 상하 여백(32/96px)을 뺀 높이 안에서 가운데를 잡으면
+         화면 기준으로도 가운데에 옵니다. 공지 배너가 떠 있을 때 스크롤이 생기지
+         않도록 여유분을 조금 더 뺐습니다. */
+      <PageShell className="flex min-h-[calc(100dvh-260px)] flex-col items-center justify-center text-center">
+        <h1 className="text-3xl font-bold text-gray-900">
+          이번 주엔 열린 강연이 없습니다
+        </h1>
+        {/* 제목과 설명은 한 덩어리로 읽혀야 해서 붙이고, 행동 유도만 떼어 놓습니다. */}
+        <p className="mt-2.5 max-w-[52ch] text-sm leading-relaxed text-gray-600">
+          학생이 직접 주제를 선정해 발표하는
+          <br />
+          자율 참여형 지식 공유 컨퍼런스를 개최해봐요!
+        </p>
+        <div className="mt-8">
+          <CreateLectureButton />
+        </div>
+        {/* 이번 주가 비어 있어도 지난 강연은 남아 있으므로 목록으로 가는 길을 둡니다. */}
+        <Link
+          href="/lectures"
+          className="focusable mt-4 rounded-lg text-sm font-medium text-gray-500 underline-offset-4 transition-colors hover:text-gray-900 hover:underline"
+        >
+          전체 강연 보기
+        </Link>
+      </PageShell>
     );
   }
 
-  return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
-      {sortLectures(lectures).map((lecture) => (
-        <LectureCard
-          key={lecture.lectureId}
-          id={String(lecture.lectureId)}
-          title={lecture.title}
-          speaker={
-            lecture.creatorStudentNumber
-              ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
-              : lecture.creatorName
-          }
-          status={LECTURE_STATUS_TO_BADGE[getDisplayLectureStatus(lecture)]}
-          currentCount={lecture.enrolledCount}
-          maxCount={
-            lecture.totalCapacity ??
-            (lecture.capacityByGrade?.["1"] ?? 0) +
-              (lecture.capacityByGrade?.["2"] ?? 0) +
-              (lecture.capacityByGrade?.["3"] ?? 0)
-          }
-          waitingCount={lecture.waitingCount}
-          onClick={() => onCardClick(String(lecture.lectureId))}
-        />
-      ))}
-    </div>
-  );
-}
+  const displayStatus = getDisplayLectureStatus(lecture);
+  const totalCapacity =
+    lecture.totalCapacity ??
+    (lecture.capacityByGrade?.["1"] ?? 0) +
+      (lecture.capacityByGrade?.["2"] ?? 0) +
+      (lecture.capacityByGrade?.["3"] ?? 0);
+  const seatsLeft = Math.max(totalCapacity - lecture.enrolledCount, 0);
+  const isFull = lecture.enrolledCount >= totalCapacity;
+  const isCreator = user?.userId === lecture.creatorId;
+  const otherCount = lectures.length - 1;
 
-export default function Home() {
-  const router = useRouter();
-  const { user, isLoggedIn, accessToken, initFromSession } = useAuthStore();
-  const { data: lectures = [], isLoading, isError } = useGetLectures();
-  const [selectedCategory, setSelectedCategory] = useState<LectureCategoryKey>(
-    () => {
-      if (typeof window === "undefined") return "all";
-      return (localStorage.getItem("lectureCategory") as LectureCategoryKey) ?? "all";
-    },
-  );
+  const [deadlineDate, deadlineTime] = (
+    lecture.applicationDeadline ?? ""
+  ).split("T");
+  const deadlineText = [
+    formatLectureDate(deadlineDate),
+    formatLectureTime(deadlineTime),
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-  useEffect(() => {
-    const token = initFromSession();
-    if (!token) router.replace("/login");
-  }, [initFromSession, router]);
-
-  const myLectures = lectures.filter(
-    (l) => isLoggedIn && user && l.creatorId === user.userId,
-  );
-
-  const filteredLectures = useMemo(() => {
-    const cat = LECTURE_CATEGORIES.find((c) => c.key === selectedCategory) ?? LECTURE_CATEGORIES[0];
-    return lectures.filter((l) => cat.matches(getDisplayLectureStatus(l)));
-  }, [lectures, selectedCategory]);
-
-  const handleCategoryChange = (key: LectureCategoryKey) => {
-    setSelectedCategory(key);
-    localStorage.setItem("lectureCategory", key);
-  };
-
-  const handleCardClick = (id: string) => router.push(`/lectures/${id}`);
-
-  if (!accessToken) return <Spinner />;
+  // 상세 페이지와 같은 규칙: 강연자·일정·장소를 라벨 없이 한 줄로 두고
+  // 이름만 진하게 해서 시선이 먼저 걸리게 합니다.
+  const scheduleText = [
+    formatLectureDate(lecture.lectureDate),
+    formatLectureTime(lecture.lectureTime),
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const speakerText = lecture.creatorStudentNumber
+    ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
+    : lecture.creatorName;
+  const metaParts = [
+    { text: speakerText, strong: true },
+    { text: scheduleText, strong: false },
+    { text: lecture.lectureLocation ?? "", strong: false },
+  ].filter((part) => Boolean(part.text));
 
   return (
-    <main className="max-w-[1200px] mx-auto px-6 py-10 flex flex-col gap-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">강연 목록</h1>
-        {isLoggedIn && <CreateLectureButton />}
+    <PageShell size="narrow">
+      <div className="mt-6 md:mt-12">
+        <Badge variant={LECTURE_STATUS_TO_BADGE[displayStatus]} />
       </div>
 
-      {isLoading ? (
-        <Spinner className="py-20" />
-      ) : isError ? (
-        <p className="text-sm text-gray-400 py-20 text-center">
-          강연 목록을 불러올 수 없습니다.
-        </p>
-      ) : (
-        <>
-          {isLoggedIn && myLectures.length > 0 && (
-            <section className="flex flex-col gap-4">
-              <h2 className="text-lg font-semibold text-gray-800">내가 생성한 강연</h2>
-              <LectureGrid lectures={myLectures} onCardClick={handleCardClick} />
-            </section>
-          )}
+      <h1 className="mt-4 text-[40px] font-bold leading-[1.15] tracking-[-0.03em] text-gray-900 md:text-[52px]">
+        {lecture.title}
+      </h1>
 
-          <section className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-              <h2 className="text-lg font-semibold text-gray-800">전체 강연</h2>
-              <div className="flex flex-wrap gap-2">
-                {LECTURE_CATEGORIES.map((category) => (
-                  <button
-                    key={category.key}
-                    type="button"
-                    onClick={() => handleCategoryChange(category.key)}
-                    className={`h-9 rounded-lg border px-4 text-sm font-medium transition-colors ${
-                      selectedCategory === category.key
-                        ? "border-main bg-main text-black"
-                        : "border-main-200 bg-white text-gray-600 hover:bg-main-100"
-                    }`}
-                  >
-                    {category.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <LectureGrid lectures={filteredLectures} onCardClick={handleCardClick} />
-          </section>
-        </>
+      {/* 누가 언제 어디서 하는지가 신청 여부를 가르는 경우가 많아 제목 바로 밑에 둡니다. */}
+      <p className="mt-3.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1 text-[15px]">
+        {metaParts.map((part, index) => (
+          <span
+            key={`${index}-${part.text}`}
+            className={
+              part.strong ? "font-semibold text-gray-900" : "text-gray-600"
+            }
+          >
+            {index > 0 && (
+              <span aria-hidden className="mr-2.5 text-gray-300">
+                ·
+              </span>
+            )}
+            {part.text}
+          </span>
+        ))}
+      </p>
+
+      <div className="mt-10 flex flex-wrap items-start gap-x-16 gap-y-8">
+        {/* 게이지는 정원 이야기입니다. 마감 카운트다운 아래에 폭을 맞춰 깔면
+            마감 진행률로 읽히기 때문에 자리 블록 안에만 둡니다. */}
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-gray-500">남은 자리</span>
+          <div className="flex items-baseline gap-2">
+            <span
+              className={`tnum text-[32px] font-bold leading-[0.95] tracking-[-0.03em] ${
+                seatsLeft === 0 ? "text-gray-300" : "text-gray-900"
+              }`}
+            >
+              {seatsLeft}
+            </span>
+            <span className="tnum text-sm text-gray-500">
+              / {totalCapacity}자리
+            </span>
+          </div>
+        </div>
+
+        {lecture.applicationDeadline && (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-medium text-gray-500">
+              신청 마감까지
+            </span>
+            <DeadlineCountdown
+              deadline={lecture.applicationDeadline}
+              className="text-[32px] leading-[0.95] tracking-[-0.02em]"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 폭이 넓으면 마감 카운트다운의 진행 바로 읽히기 쉬워서, 바로 위에
+          무엇에 대한 게이지인지 라벨을 답니다. */}
+      <div className="mt-9 flex items-baseline justify-between gap-4">
+        <span className="text-xs font-medium text-gray-500">신청 현황</span>
+        <span className="tnum text-xs text-gray-500">
+          {lecture.enrolledCount}명 신청
+          {lecture.waitingCount > 0 ? ` · 대기 ${lecture.waitingCount}명` : ""}
+        </span>
+      </div>
+      <SeatMeter
+        enrolled={lecture.enrolledCount}
+        capacity={totalCapacity}
+        className="mt-2.5 h-2 rounded-full"
+      />
+
+      <div className="mt-8 flex flex-col gap-2">
+        {isCreator ? (
+          <Button variant="waiting" disabled className="w-full py-3">
+            내가 개설한 강연입니다
+          </Button>
+        ) : enrollStatus ? (
+          <>
+            <p className="rounded-xl bg-main-soft py-2.5 text-center text-sm font-bold text-gray-900">
+              {enrollStatus === "ENROLLED" ? "신청했습니다" : "대기 중입니다"}
+            </p>
+            <Button
+              variant="cancel"
+              onClick={() => cancelEnrollment()}
+              disabled={isCancelling}
+              className="w-full py-3"
+            >
+              {isCancelling ? "취소하는 중" : "신청 취소"}
+            </Button>
+          </>
+        ) : (
+          <Button
+            onClick={() => enrollLecture()}
+            disabled={isEnrolling}
+            className="w-full py-3 text-base"
+          >
+            {isEnrolling
+              ? "신청하는 중"
+              : isFull
+                ? "대기로 신청하기"
+                : "신청하기"}
+          </Button>
+        )}
+
+        {enrollResult === "ERROR" && (
+          <p className="text-center text-sm text-error">
+            신청하지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </p>
+        )}
+        {deadlineText && (
+          <p className="tnum text-center text-xs text-gray-500">
+            {deadlineText} 마감
+          </p>
+        )}
+      </div>
+
+      <section className="mt-16">
+        <h2 className="text-2xl font-bold tracking-[-0.02em] text-gray-900">
+          강연 소개
+        </h2>
+        <p className="mt-5 whitespace-pre-wrap break-words text-[19px] leading-9 text-gray-800">
+          {lecture.description}
+        </p>
+      </section>
+
+      <div className="mt-16 grid gap-4 sm:grid-cols-2">
+        <ApplicantList
+          type="applicant"
+          currentCount={lecture.enrolledCount}
+          maxCount={totalCapacity}
+          applicants={enrollments?.enrolled ?? []}
+        />
+        <ApplicantList
+          type="waiting"
+          waitingCount={lecture.waitingCount}
+          applicants={enrollments?.waiting ?? []}
+        />
+      </div>
+
+      {otherCount > 0 && (
+        <Link
+          href="/lectures"
+          className="focusable lift mt-16 flex items-center justify-between gap-4 rounded-2xl bg-surface px-6 py-5 shadow-e2 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-e3"
+        >
+          <span className="flex flex-col gap-1">
+            <span className="text-sm font-bold text-gray-900">
+              전체 강연 보기
+            </span>
+            <span className="tnum text-xs text-gray-500">
+              지난 강연까지 {otherCount}개가 더 있습니다
+            </span>
+          </span>
+          <span className="shrink-0 rotate-180 text-gray-400">
+            <Arrow />
+          </span>
+        </Link>
       )}
-    </main>
+    </PageShell>
   );
 }

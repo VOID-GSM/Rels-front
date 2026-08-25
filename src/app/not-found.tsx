@@ -2,19 +2,21 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-70px)] gap-4">
-      <h1 className="text-6xl font-bold text-main-300">404</h1>
-      <p className="text-xl font-medium text-gray-600">
-        페이지를 찾을 수 없습니다.
+    <div className="flex min-h-[calc(100vh-70px)] flex-col items-center justify-center gap-3 px-6 text-center">
+      <p className="tnum text-sm font-bold tracking-widest text-gray-400">
+        404
       </p>
-      <p className="text-sm text-gray-400">
-        요청하신 페이지가 존재하지 않거나 이동되었습니다.
+      <h1 className="text-2xl font-bold text-gray-900">
+        페이지를 찾을 수 없습니다
+      </h1>
+      <p className="text-sm text-gray-600">
+        주소가 바뀌었거나 삭제된 페이지입니다.
       </p>
       <Link
         href="/"
-        className="mt-4 px-6 py-2 bg-main-300 text-white rounded-md font-medium"
+        className="focusable mt-4 rounded-xl bg-main px-5 py-2.5 text-sm font-semibold text-gray-900 shadow-e2 transition-[box-shadow,transform] duration-200 hover:-translate-y-px hover:shadow-e3"
       >
-        홈으로 돌아가기
+        홈으로
       </Link>
     </div>
   );

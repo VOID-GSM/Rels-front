@@ -29,40 +29,47 @@ export default function ApplicantList({
   const isApplicant = type === "applicant";
 
   return (
-    <div className="border border-main-200 rounded-2xl p-5 flex flex-col gap-4 w-full">
-      <div className="flex items-center gap-2 font-semibold text-sm">
-        {isApplicant ? <People isActive /> : <Clock isActive />}
-        <span>
-          {isApplicant
-            ? `신청 현황 (${currentCount}/${maxCount})`
-            : `대기 현황 (${waitingCount})`}
+    <section className="flex w-full flex-col gap-4 rounded-2xl bg-surface p-5 shadow-e2">
+      <div className="flex items-center gap-2">
+        <span className="text-main">
+          {isApplicant ? <People /> : <Clock />}
+        </span>
+        <h2 className="text-sm font-bold text-gray-900">
+          {isApplicant ? "신청자" : "대기자"}
+        </h2>
+        <span className="tnum text-sm text-gray-500">
+          {isApplicant ? `${currentCount}/${maxCount}` : waitingCount}
         </span>
       </div>
 
       {applicants.length === 0 ? (
-        <p className="text-xs text-gray-400 text-center py-4">
-          {type === "waiting" ? "정원 미달시 비활성화" : "신청자가 없습니다."}
+        <p className="py-6 text-center text-xs text-gray-500">
+          {isApplicant
+            ? "아직 신청자가 없습니다."
+            : "정원이 차면 대기자가 표시됩니다."}
         </p>
       ) : (
-        <div className="flex flex-col gap-2 overflow-y-auto max-h-[320px] scrollbar-hide">
+        <ul className="scrollbar-hide flex max-h-[320px] flex-col gap-1.5 overflow-y-auto">
           {applicants.map((applicant, index) => (
-            <div
+            <li
               key={applicant.userId}
-              className="flex items-center gap-4 bg-main-100 px-4 py-2 rounded-[4px]"
+              className="flex items-center gap-3 rounded-xl bg-gray-50 px-3.5 py-2.5"
             >
-              <span className="text-sm text-gray-500 w-4">{index + 1}</span>
-              <div className="flex flex-col">
-                <span className="text-xs font-semibold text-gray-900">
+              <span className="tnum w-4 shrink-0 text-xs font-semibold text-gray-500">
+                {index + 1}
+              </span>
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm font-semibold text-gray-900">
                   {applicant.name}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="tnum text-xs text-gray-600">
                   {applicant.studentNumber}
                 </span>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </section>
   );
 }

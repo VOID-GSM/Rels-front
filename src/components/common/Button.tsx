@@ -1,4 +1,4 @@
-type ButtonVariant = "primary" | "cancel" | "waiting";
+export type ButtonVariant = "primary" | "danger" | "cancel" | "waiting";
 
 interface ButtonProps {
   variant?: ButtonVariant;
@@ -18,12 +18,16 @@ export default function Button({
   type = "button",
 }: ButtonProps) {
   const baseStyle =
-    "w-full rounded-xl font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center";
+    "focusable flex cursor-pointer items-center justify-center rounded-xl font-semibold transition-[box-shadow,transform,background-color] duration-200 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:hover:translate-y-0";
 
   const variantStyle: Record<ButtonVariant, string> = {
-    primary: "bg-main text-white",
-    cancel: "border border-error text-error bg-white",
-    waiting: "border border-main-300 text-main-300 bg-white",
+    primary:
+      "bg-main text-gray-900 shadow-e2 hover:-translate-y-px hover:shadow-e3",
+    danger:
+      "bg-error text-white shadow-e2 hover:-translate-y-px hover:shadow-e3",
+    cancel:
+      "bg-surface text-error shadow-e1 hover:-translate-y-px hover:bg-error-soft hover:shadow-e2",
+    waiting: "bg-gray-100 text-gray-600",
   };
 
   return (

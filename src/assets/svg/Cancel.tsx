@@ -9,12 +9,12 @@ export default function Cancel() {
     >
       <path
         d="M0.696289 0.5L10.5002 10.5"
-        stroke="var(--color-gray-500)"
+        stroke="currentColor"
         strokeLinecap="round"
       />
       <path
         d="M10.304 0.5L0.500033 10.5"
-        stroke="var(--color-gray-500)"
+        stroke="currentColor"
         strokeLinecap="round"
       />
     </svg>

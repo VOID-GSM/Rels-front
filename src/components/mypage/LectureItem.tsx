@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { MyCreatedLecture, MyEnrolledLecture } from "@/entities/lecture";
 import { LECTURE_STATUS_LABEL } from "@/constants/lecture";
 
-export type MyPageLectureItem = (MyCreatedLecture | MyEnrolledLecture) & { meta?: string };
+export type MyPageLectureItem = (MyCreatedLecture | MyEnrolledLecture) & {
+  meta?: string;
+};
 
 export default function LectureItem({
   lecture,
@@ -15,31 +17,27 @@ export default function LectureItem({
   actionLabel: string;
   disabled?: boolean;
 }) {
-  const statusLabel = LECTURE_STATUS_LABEL[lecture.lectureStatus] ?? lecture.lectureStatus;
+  const statusLabel =
+    LECTURE_STATUS_LABEL[lecture.lectureStatus] ?? lecture.lectureStatus;
 
   return (
-    <li className="flex items-center justify-between bg-background rounded-xl px-4 py-3 gap-3">
+    <li className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100">
       <Link
         href={`/lectures/${lecture.lectureId}`}
-        className="flex flex-col gap-1.5 flex-1 min-w-0"
+        className="focusable flex min-w-0 flex-1 flex-col gap-1 rounded-lg"
       >
-        <span className="text-sm font-medium text-gray-800 line-clamp-1">
+        <span className="line-clamp-1 text-sm font-semibold text-gray-900">
           {lecture.title}
         </span>
-        <div className="flex items-center gap-2 min-w-0">
-          {lecture.meta && (
-            <>
-              <span className="text-xs text-gray-500 line-clamp-1">{lecture.meta}</span>
-              <span className="text-gray-500">|</span>
-            </>
-          )}
-          <span className="text-xs text-gray-500 shrink-0">{statusLabel}</span>
-        </div>
+        <span className="line-clamp-1 text-xs text-gray-600">
+          {lecture.meta ? `${lecture.meta} · ${statusLabel}` : statusLabel}
+        </span>
       </Link>
       <button
+        type="button"
         onClick={() => onAction(lecture.lectureId)}
         disabled={disabled}
-        className="shrink-0 text-xs text-error hover:underline disabled:text-gray-300 disabled:hover:no-underline"
+        className="focusable shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-error transition-colors hover:bg-error-soft disabled:text-gray-300 disabled:hover:bg-transparent"
       >
         {actionLabel}
       </button>
