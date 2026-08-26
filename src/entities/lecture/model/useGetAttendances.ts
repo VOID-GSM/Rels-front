@@ -4,21 +4,13 @@ import { get } from "@/shared/api";
 import { lectureUrl } from "@/shared/api/apiUrls";
 import type { LectureAttendance } from "./types";
 
-// 출석을 부르는 순서와 맞도록 학번 오름차순으로 세웁니다. 학번이 같으면 이름순.
-const sortByStudentNumber = (attendances: LectureAttendance[]) => {
-  return [...attendances].sort(
-    (a, b) =>
-      a.studentNumber.localeCompare(b.studentNumber, "ko") ||
-      a.name.localeCompare(b.name, "ko"),
-  );
-};
-
 const getAttendances = async (id: number): Promise<LectureAttendance[]> => {
   const attendances = await get<LectureAttendance[]>(
     lectureUrl.getAttendances(id),
   );
 
-  return sortByStudentNumber(attendances ?? []);
+  // 순서는 화면에서 신청 명단에 맞춰 세웁니다(orderByAllocation). 여기서는 건드리지 않습니다.
+  return attendances ?? [];
 };
 
 interface UseGetAttendancesOptions {

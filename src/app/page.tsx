@@ -34,6 +34,17 @@ import {
   formatEnrollmentOpenAt,
   isBeforeOpen,
 } from "@/shared/lib/enrollmentWindow";
+import {
+  getUserGrade,
+  isGradeCapacityBlocked as checkGradeCapacityBlocked,
+  usesGradeCapacity,
+} from "@/shared/lib/gradeCapacity";
+import {
+  allocateEnrollments,
+  getEnrollmentStatus,
+  isMyGradeFull as checkMyGradeFull,
+  orderByAllocation,
+} from "@/shared/lib/enrollmentAllocation";
 
 const ApplicantList = dynamic(
   () => import("@/components/lecture/ApplicantList"),
@@ -124,17 +135,26 @@ export default function ThisWeekPage() {
       onError: () => setEnrollResult("ERROR"),
     });
 
+  // 자리 배분은 서버 분류를 그대로 쓰지 않고 신청 순서·학년 정원으로 다시 셉니다.
+  const allocation = useMemo(
+    () =>
+      allocateEnrollments({
+        enrolled: enrollments?.enrolled,
+        waiting: enrollments?.waiting,
+        totalCapacity: lecture?.totalCapacity,
+        capacityByGrade: lecture?.capacityByGrade,
+      }),
+    [enrollments, lecture],
+  );
+
   const enrollStatus = useMemo<"ENROLLED" | "WAITING" | null>(() => {
+    // 명단이 곧 진실입니다. 방금 누른 결과는 명단이 새로 오기 전까지만 씁니다.
+    const fromRoster = getEnrollmentStatus(allocation, user?.userId);
+    if (fromRoster) return fromRoster;
     if (enrollResult === "ENROLLED" || enrollResult === "WAITING")
       return enrollResult;
-    if (enrollResult === "ERROR") return null;
-    if (!enrollments || !user) return null;
-    if (enrollments.enrolled.some((a) => a.userId === user.userId))
-      return "ENROLLED";
-    if (enrollments.waiting.some((a) => a.userId === user.userId))
-      return "WAITING";
     return null;
-  }, [enrollResult, enrollments, user]);
+  }, [allocation, enrollResult, user]);
 
   if (isLoading) return <Spinner />;
 
@@ -173,8 +193,35 @@ export default function ThisWeekPage() {
     (lecture.capacityByGrade?.["1"] ?? 0) +
       (lecture.capacityByGrade?.["2"] ?? 0) +
       (lecture.capacityByGrade?.["3"] ?? 0);
-  const seatsLeft = Math.max(totalCapacity - lecture.enrolledCount, 0);
-  const isFull = lecture.enrolledCount >= totalCapacity;
+  const showsGradeCapacity = usesGradeCapacity(
+    lecture.totalCapacity,
+    lecture.capacityByGrade,
+  );
+  // 상세 화면과 같은 규칙으로 내 학년에 배정된 자리가 있는지 봅니다.
+  const isGradeCapacityBlocked = checkGradeCapacityBlocked({
+    totalCapacity: lecture.totalCapacity,
+    capacityByGrade: lecture.capacityByGrade,
+    studentNumber: user?.studentNumber,
+  });
+  // 인원수도 배분 결과를 따릅니다. 명단이 아직 없으면 서버가 준 수를 씁니다.
+  const enrolledCount = enrollments
+    ? allocation.enrolled.length
+    : lecture.enrolledCount;
+  const waitingCount = enrollments
+    ? allocation.waiting.length
+    : lecture.waitingCount;
+  const seatsLeft = Math.max(totalCapacity - enrolledCount, 0);
+  const isFull = enrolledCount >= totalCapacity;
+  // 전체 정원이 아직 남았는데 내 학년 자리만 찬 경우입니다. 대기는 받지 않습니다.
+  const isMyGradeTaken =
+    !isFull &&
+    checkMyGradeFull({
+      allocation,
+      totalCapacity: lecture.totalCapacity,
+      capacityByGrade: lecture.capacityByGrade,
+      studentNumber: user?.studentNumber,
+    });
+  const myGrade = getUserGrade(user?.studentNumber);
   const isCreator = user?.userId === lecture.creatorId;
   const otherCount = lectures.length - 1;
 
@@ -301,20 +348,37 @@ export default function ThisWeekPage() {
       <div className="mt-9 flex items-baseline justify-between gap-4">
         <span className="text-xs font-medium text-gray-500">신청 현황</span>
         <span className="tnum text-xs text-gray-500">
-          {lecture.enrolledCount}명 신청
-          {lecture.waitingCount > 0 ? ` · 대기 ${lecture.waitingCount}명` : ""}
+          {enrolledCount}명 신청
+          {waitingCount > 0 ? ` · 대기 ${waitingCount}명` : ""}
         </span>
       </div>
       <SeatMeter
-        enrolled={lecture.enrolledCount}
+        enrolled={enrolledCount}
         capacity={totalCapacity}
         className="mt-2.5 h-2 rounded-full"
       />
+      {/* 학년별로 자리를 나눈 강연은 총 정원만으로는 내가 낄 자리가 있는지
+          알 수 없어서, 상세 화면과 같은 자리에 학년별 정원을 적어 둡니다. */}
+      {showsGradeCapacity && (
+        <p className="tnum mt-2 text-right text-xs text-gray-500">
+          {(["1", "2", "3"] as const)
+            .map((g) => `${g}학년 ${lecture.capacityByGrade![g] ?? 0}`)
+            .join(" · ")}
+        </p>
+      )}
 
       <div className="mt-8 flex flex-col gap-2">
         {isCreator ? (
           <Button variant="waiting" disabled className="w-full py-3">
             내가 개설한 강연입니다
+          </Button>
+        ) : isGradeCapacityBlocked ? (
+          <Button variant="waiting" disabled className="w-full py-3">
+            다른 학년만 신청할 수 있습니다
+          </Button>
+        ) : isMyGradeTaken && !enrollStatus ? (
+          <Button variant="waiting" disabled className="w-full py-3">
+            {myGrade}학년 자리가 모두 찼습니다
           </Button>
         ) : isBeforeEnrollmentOpen && enrollmentOpenAt ? (
           <Button variant="waiting" disabled className="w-full py-3">
@@ -348,6 +412,12 @@ export default function ThisWeekPage() {
           </Button>
         )}
 
+        {/* 왜 못 누르는지 버튼만으로는 알기 어려워서 다음 수를 함께 적어 둡니다. */}
+        {isMyGradeTaken && !enrollStatus && (
+          <p className="text-center text-xs text-gray-500">
+            신청자가 모두 차면 대기로 신청할 수 있습니다.
+          </p>
+        )}
         {enrollResult === "ERROR" && (
           <p className="text-center text-sm text-error">
             신청하지 못했습니다. 잠시 후 다시 시도해 주세요.
@@ -375,7 +445,7 @@ export default function ThisWeekPage() {
           <AttendanceList
             currentCount={lecture.enrolledCount}
             maxCount={totalCapacity}
-            attendances={attendances ?? []}
+            attendances={orderByAllocation(attendances ?? [], allocation)}
             isLoading={isLoadingAttendances}
             isError={isAttendancesError}
             isSaving={isSavingAttendances}
@@ -384,15 +454,15 @@ export default function ThisWeekPage() {
         ) : (
           <ApplicantList
             type="applicant"
-            currentCount={lecture.enrolledCount}
+            currentCount={enrolledCount}
             maxCount={totalCapacity}
-            applicants={enrollments?.enrolled ?? []}
+            applicants={allocation.enrolled}
           />
         )}
         <ApplicantList
           type="waiting"
-          waitingCount={lecture.waitingCount}
-          applicants={enrollments?.waiting ?? []}
+          waitingCount={waitingCount}
+          applicants={allocation.waiting}
           copyable={isAdmin}
         />
       </div>
