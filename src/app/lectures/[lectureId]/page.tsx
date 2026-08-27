@@ -285,18 +285,25 @@ export default function LectureDetailPage() {
       <p className="rounded-xl bg-main-soft py-2.5 text-center text-sm font-bold text-gray-900">
         {enrollStatus === "ENROLLED" ? "신청했습니다" : "대기 중입니다"}
       </p>
-      <Button
-        variant="cancel"
-        onClick={() => cancelEnrollment()}
-        disabled={isCancelling}
-        className="w-full py-3"
-      >
-        {isCancelling
-          ? "취소하는 중"
-          : enrollStatus === "ENROLLED"
-            ? "신청 취소"
-            : "대기 취소"}
-      </Button>
+      {/* 마감 뒤에는 명단이 확정됩니다. 서버도 취소를 받지 않습니다. */}
+      {isEnrollmentClosed ? (
+        <p className="text-center text-xs text-gray-500">
+          마감되어 취소할 수 없습니다.
+        </p>
+      ) : (
+        <Button
+          variant="cancel"
+          onClick={() => cancelEnrollment()}
+          disabled={isCancelling}
+          className="w-full py-3"
+        >
+          {isCancelling
+            ? "취소하는 중"
+            : enrollStatus === "ENROLLED"
+              ? "신청 취소"
+              : "대기 취소"}
+        </Button>
+      )}
     </>
   ) : isEnrollmentClosed ? (
     <Button variant="waiting" disabled className="w-full py-3">
