@@ -24,3 +24,16 @@ export function formatLectureTime(time?: string | null) {
 
   return `${hour}:${minute}`;
 }
+
+/**
+ * "2026-08-28T18:00:00" → "8월 28일 (금) 18:00"
+ * 마감 일시는 사용자가 입력한 로컬 시각이라 문자열을 그대로 쪼갭니다.
+ */
+export function formatLectureDeadline(deadline?: string | null) {
+  if (!deadline) return "";
+
+  const [date, time] = deadline.split("T");
+  return [formatLectureDate(date), formatLectureTime(time)]
+    .filter(Boolean)
+    .join(" ");
+}

@@ -3,6 +3,8 @@
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import CharCountTextArea from "@/components/common/CharCountTextArea";
+import TimeField from "@/components/common/TimeField";
+import DateTimeField from "@/components/common/DateTimeField";
 import FormSection, { FormActions } from "@/components/layout/FormSection";
 import { useLectureForm } from "./useLectureForm";
 import { ENROLLMENT_OPEN_TIME } from "@/shared/lib/enrollmentWindow";
@@ -213,7 +215,8 @@ export default function LectureForm({
           error={errors.lectureLocation}
         />
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        {/* 시각 칸이 오전/오후 버튼까지 안고 있어서 날짜보다 넓게 씁니다. */}
+        <div className="grid gap-3 sm:grid-cols-[190px_minmax(0,1fr)]">
           <Input
             label="날짜"
             type="date"
@@ -224,12 +227,11 @@ export default function LectureForm({
             }}
             error={errors.lectureDate}
           />
-          <Input
+          <TimeField
             label="시간"
-            type="time"
             value={lectureTime}
-            onChange={(e) => {
-              setLectureTime(e.target.value);
+            onChange={(value) => {
+              setLectureTime(value);
               clearError("lectureTime");
             }}
             error={errors.lectureTime}
@@ -237,12 +239,11 @@ export default function LectureForm({
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <Input
+          <DateTimeField
             label="신청 마감일"
-            type="datetime-local"
             value={applicationDeadline}
-            onChange={(e) => {
-              setApplicationDeadline(e.target.value);
+            onChange={(value) => {
+              setApplicationDeadline(value);
               clearError("applicationDeadline");
             }}
             error={errors.applicationDeadline}

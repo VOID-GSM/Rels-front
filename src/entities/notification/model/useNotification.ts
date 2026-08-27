@@ -40,12 +40,43 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return output;
 }
 
-function readVapidKey(): string {
+/**
+ * 경고를 한 번만 띄우기 위한 모듈 스코프 플래그입니다.
+ * `getVapidKey`는 구독을 시도할 때마다 불리는데, 키 미설정은 빌드 타임 설정
+ * 문제라 상태가 도중에 바뀌지 않습니다. 매번 찍으면 콘솔만 더럽혀집니다.
+ */
+let hasWarnedMissingVapidKey = false;
+
+/**
+ * 설정된 VAPID 키를 돌려주고, 없거나 형식이 어긋나면 `null`을 돌려줍니다.
+ *
+ * 던지지 않는 이유: 키 미설정은 "지금은 구독할 수 없는 상태"일 뿐이라
+ * 조용히 넘어가야 하는 호출부(`subscribe`)와 사용자에게 알려야 하는
+ * 호출부(`enable`)가 각자 판단할 수 있어야 합니다.
+ * 경고만은 설정 누락을 개발자가 알아채도록 최초 1회 남깁니다.
+ */
+function getVapidKey(): string | null {
   const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
   if (!vapidKey || !isValidVapidKey(vapidKey)) {
-    console.warn(
-      "NEXT_PUBLIC_VAPID_PUBLIC_KEY is missing or not a base64url encoded VAPID key.",
-    );
+    if (!hasWarnedMissingVapidKey) {
+      hasWarnedMissingVapidKey = true;
+      console.warn(
+        "NEXT_PUBLIC_VAPID_PUBLIC_KEY is missing or not a base64url encoded VAPID key.",
+      );
+    }
+    return null;
+  }
+  return vapidKey;
+}
+
+/**
+ * 키가 반드시 있어야 하는 자리에서 쓰는 래퍼입니다.
+ * 없으면 `PushSetupError`로 감싸 던져, `enable`이 사용자에게 보여 줄 문구로
+ * 그대로 이어지게 합니다.
+ */
+function readVapidKey(): string {
+  const vapidKey = getVapidKey();
+  if (!vapidKey) {
     throw new PushSetupError(PUSH_ERROR.vapid);
   }
   return vapidKey;
@@ -135,6 +166,9 @@ export function usePushSubscription() {
   const subscribe = useCallback(async () => {
     if (!isPushSupported()) return;
     if (Notification.permission !== "granted") return;
+    // 키 미설정은 빌드 타임 설정 문제라 사용자가 할 수 있는 일이 없습니다.
+    // 지원 여부·권한과 같은 부류의 "지금은 구독할 수 없는 상태"로 보고 조용히 빠집니다.
+    if (!getVapidKey()) return;
 
     try {
       mutateRef.current(await createSubscriptionPayload());
