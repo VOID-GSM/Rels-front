@@ -192,7 +192,7 @@ export default function LectureDetailPage() {
     lecture.totalCapacity,
     lecture.capacityByGrade,
   );
-  // 내 학년에 애초에 배정된 자리가 있는지. 대기는 전체 정원이 찼을 때만 받습니다.
+  // 내 학년에 애초에 배정된 자리가 있는지. 자리가 0이면 대기도 받지 않습니다.
   const isGradeCapacityBlocked = checkGradeCapacityBlocked({
     totalCapacity: lecture.totalCapacity,
     capacityByGrade: lecture.capacityByGrade,
@@ -207,7 +207,9 @@ export default function LectureDetailPage() {
     : lecture.waitingCount;
   const isFull = enrolledCount >= totalCapacity;
   const seatsLeft = Math.max(totalCapacity - enrolledCount, 0);
-  // 전체 정원은 남았는데 내 학년 자리만 찬 경우입니다. 대기는 받지 않습니다.
+  // 전체 정원은 남았는데 내 학년 자리만 찬 경우입니다. 이때 들어온 신청은 배분에서
+  // 그 학년 대기로 서고, 앞사람이 취소하면 곧바로 신청자로 올라옵니다. 그래서
+  // 신청 자체를 막지 않고, 대기로 들어간다는 것만 버튼에 적습니다.
   const isMyGradeTaken =
     !isFull &&
     checkMyGradeFull({
@@ -216,6 +218,8 @@ export default function LectureDetailPage() {
       capacityByGrade: lecture.capacityByGrade,
       studentNumber: user?.studentNumber,
     });
+  // 지금 누르면 신청자가 아니라 대기자로 들어가는 상태.
+  const isWaitlistOnly = isFull || isMyGradeTaken;
   const myGrade = getUserGrade(user?.studentNumber);
   const isPast = displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED";
 
@@ -269,10 +273,6 @@ export default function LectureDetailPage() {
     <Button variant="waiting" disabled className="w-full py-3">
       다른 학년만 신청할 수 있습니다
     </Button>
-  ) : isMyGradeTaken && !enrollStatus ? (
-    <Button variant="waiting" disabled className="w-full py-3">
-      {myGrade}학년 자리가 모두 찼습니다
-    </Button>
   ) : isPast ? (
     <Button variant="waiting" disabled className="w-full py-3">
       {displayStatus === "UNCONFIRMED" ? "개설 불확정" : "강연 종료"}
@@ -306,7 +306,11 @@ export default function LectureDetailPage() {
       disabled={isEnrolling}
       className="w-full py-3 text-base"
     >
-      {isEnrolling ? "신청하는 중" : isFull ? "대기로 신청하기" : "신청하기"}
+      {isEnrolling
+        ? "신청하는 중"
+        : isWaitlistOnly
+          ? "대기로 신청하기"
+          : "신청하기"}
     </Button>
   );
 
@@ -482,10 +486,10 @@ export default function LectureDetailPage() {
 
           <div className="mt-8 flex flex-col gap-2">
             {enrollAction}
-            {/* 왜 못 누르는지 버튼만으로는 알기 어려워서 다음 수를 함께 적어 둡니다. */}
+            {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
             {isMyGradeTaken && !enrollStatus && (
               <p className="text-center text-xs text-gray-500">
-                신청자가 모두 차면 대기로 신청할 수 있습니다.
+                {myGrade}학년 자리가 모두 차서 대기자로 등록됩니다.
               </p>
             )}
             {enrollResult === "ERROR" && (

@@ -34,7 +34,7 @@ interface GradeCapacityBlockParams {
  * 내 학년에는 애초에 자리를 배정하지 않은 강연인지.
  *
  * 자리가 배정돼 있는데 같은 학년이 다 채운 경우는 여기서 막지 않습니다.
- * 대기는 강연 전체 정원이 찼을 때만 받습니다.
+ * 그때는 그 학년 대기로 신청할 수 있습니다.
  */
 export const isGradeCapacityBlocked = ({
   totalCapacity,
