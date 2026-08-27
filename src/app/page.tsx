@@ -33,6 +33,7 @@ import {
   getEnrollmentOpenAt,
   formatEnrollmentOpenAt,
   isBeforeOpen,
+  isAfterDeadline,
 } from "@/shared/lib/enrollmentWindow";
 import {
   getUserGrade,
@@ -117,6 +118,9 @@ export default function ThisWeekPage() {
 
   // 카운트다운이 0에 닿는 순간 이 값이 켜지면서 신청 버튼이 풀립니다.
   const [hasEnrollmentOpened, setHasEnrollmentOpened] = useState(false);
+  // 화면을 열어 둔 채 마감을 넘기면 버튼이 살아 있는 상태로 남아 서버가 거절합니다.
+  // 마감 카운트다운이 0에 닿는 순간 이 값이 켜지면서 버튼이 닫힙니다.
+  const [hasDeadlinePassed, setHasDeadlinePassed] = useState(false);
 
   const [enrollResult, setEnrollResult] = useState<
     "ENROLLED" | "WAITING" | "ERROR" | null
@@ -219,6 +223,9 @@ export default function ThisWeekPage() {
   const enrollmentOpenAt = getEnrollmentOpenAt(lecture.createdAt);
   const isBeforeEnrollmentOpen =
     !hasEnrollmentOpened && isBeforeOpen(enrollmentOpenAt);
+  // 마감이 지나면 서버가 신청을 거절합니다. 상태가 아직 CONFIRMED여도 버튼을 닫습니다.
+  const isEnrollmentClosed =
+    hasDeadlinePassed || isAfterDeadline(lecture.applicationDeadline);
 
   const [deadlineDate, deadlineTime] = (
     lecture.applicationDeadline ?? ""
@@ -326,6 +333,7 @@ export default function ThisWeekPage() {
               </span>
               <DeadlineCountdown
                 deadline={lecture.applicationDeadline}
+                onEnd={() => setHasDeadlinePassed(true)}
                 className="text-[32px] leading-[0.95] tracking-[-0.02em]"
               />
             </div>
@@ -375,15 +383,26 @@ export default function ThisWeekPage() {
             <p className="rounded-xl bg-main-soft py-2.5 text-center text-sm font-bold text-gray-900">
               {enrollStatus === "ENROLLED" ? "신청했습니다" : "대기 중입니다"}
             </p>
-            <Button
-              variant="cancel"
-              onClick={() => cancelEnrollment()}
-              disabled={isCancelling}
-              className="w-full py-3"
-            >
-              {isCancelling ? "취소하는 중" : "신청 취소"}
-            </Button>
+            {/* 마감 뒤에는 명단이 확정됩니다. 서버도 취소를 받지 않습니다. */}
+            {isEnrollmentClosed ? (
+            <p className="text-center text-xs text-gray-500">
+              마감되어 취소할 수 없습니다.
+            </p>
+            ) : (
+              <Button
+                variant="cancel"
+                onClick={() => cancelEnrollment()}
+                disabled={isCancelling}
+                className="w-full py-3"
+              >
+                {isCancelling ? "취소하는 중" : "신청 취소"}
+              </Button>
+            )}
           </>
+        ) : isEnrollmentClosed ? (
+          <Button variant="waiting" disabled className="w-full py-3">
+            신청이 마감되었습니다
+          </Button>
         ) : (
           <Button
             onClick={() => enrollLecture()}
@@ -399,7 +418,7 @@ export default function ThisWeekPage() {
         )}
 
         {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
-        {isMyGradeTaken && !enrollStatus && (
+        {isMyGradeTaken && !enrollStatus && !isEnrollmentClosed && (
           <p className="text-center text-xs text-gray-500">
             {myGrade}학년 자리가 모두 차서 대기자로 등록됩니다.
           </p>

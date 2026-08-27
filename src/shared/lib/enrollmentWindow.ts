@@ -40,6 +40,24 @@ export const getEnrollmentOpenAt = (createdAt?: string | null): Date | null => {
 };
 
 /**
+ * 신청 마감 시각이 지났는지.
+ *
+ * 마감이 지나도 강연 상태는 CONFIRMED로 남아 있을 수 있습니다(신청자가 10명을
+ * 넘긴 경우). 상태만 보고 버튼을 열어 두면 서버가 "신청 마감일이 지났습니다"로
+ * 막아 403이 납니다. 마감 시각은 사용자가 입력한 값이라 로컬 시간 그대로 읽습니다.
+ */
+export const isAfterDeadline = (
+  applicationDeadline?: string | null,
+): boolean => {
+  if (!applicationDeadline) return false;
+
+  const deadline = new Date(applicationDeadline);
+  if (Number.isNaN(deadline.getTime())) return false;
+
+  return Date.now() >= deadline.getTime();
+};
+
+/**
  * 지금이 신청 시작 전인지.
  * 시각 비교를 모듈 안에 두어야 렌더 중에 불러도 되는 함수가 됩니다.
  */

@@ -4,6 +4,7 @@ import {
   LECTURE_APPROVAL_NOTICE,
   LECTURE_STATUS_LABEL,
 } from "@/constants/lecture";
+import { isAfterDeadline } from "@/shared/lib/enrollmentWindow";
 
 export type MyPageLectureItem = (MyCreatedLecture | MyEnrolledLecture) & {
   meta?: string;
@@ -35,6 +36,10 @@ export default function LectureItem({
         : null;
   const rejectionReason =
     isRejected && "rejectionReason" in lecture ? lecture.rejectionReason : null;
+
+  // 신청한 강연은 마감이 지나면 취소가 막힙니다. 개설한 강연의 삭제는 그대로 둡니다.
+  const isCancelClosed =
+    "enrollmentStatus" in lecture && isAfterDeadline(lecture.applicationDeadline);
 
   return (
     <li
@@ -72,14 +77,20 @@ export default function LectureItem({
           </span>
         )}
       </Link>
-      <button
-        type="button"
-        onClick={() => onAction(lecture.lectureId)}
-        disabled={disabled}
-        className="focusable shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-error transition-colors hover:bg-error-soft disabled:text-gray-300 disabled:hover:bg-transparent"
-      >
-        {actionLabel}
-      </button>
+      {isCancelClosed ? (
+        <span className="shrink-0 px-2 py-1 text-xs font-semibold text-gray-400">
+          마감
+        </span>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onAction(lecture.lectureId)}
+          disabled={disabled}
+          className="focusable shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-error transition-colors hover:bg-error-soft disabled:text-gray-300 disabled:hover:bg-transparent"
+        >
+          {actionLabel}
+        </button>
+      )}
     </li>
   );
 }
