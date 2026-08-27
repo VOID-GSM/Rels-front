@@ -56,6 +56,7 @@ import {
   getEnrollmentOpenAt,
   formatEnrollmentOpenAt,
   isBeforeOpen,
+  isAfterDeadline,
 } from "@/shared/lib/enrollmentWindow";
 import {
   getUserGrade,
@@ -98,6 +99,9 @@ export default function LectureDetailPage() {
 
   // 카운트다운이 0에 닿는 순간 이 값이 켜지면서 신청 버튼이 풀립니다.
   const [hasEnrollmentOpened, setHasEnrollmentOpened] = useState(false);
+  // 화면을 열어 둔 채 마감을 넘기면 버튼이 살아 있는 상태로 남아 서버가 거절합니다.
+  // 마감 카운트다운이 0에 닿는 순간 이 값이 켜지면서 버튼이 닫힙니다.
+  const [hasDeadlinePassed, setHasDeadlinePassed] = useState(false);
 
   const [enrollResult, setEnrollResult] = useState<
     "ENROLLED" | "WAITING" | "ERROR" | null
@@ -218,6 +222,10 @@ export default function LectureDetailPage() {
   const enrollmentOpenAt = getEnrollmentOpenAt(lecture.createdAt);
   const isBeforeEnrollmentOpen =
     !hasEnrollmentOpened && isBeforeOpen(enrollmentOpenAt);
+  // 마감이 지나면 서버가 신청을 거절합니다. 신청자가 10명을 넘겨 상태가 CONFIRMED로
+  // 남아 있어도 마찬가지라, 상태가 아닌 마감 시각을 보고 버튼을 닫습니다.
+  const isEnrollmentClosed =
+    hasDeadlinePassed || isAfterDeadline(lecture.applicationDeadline);
 
   const [deadlineDate, deadlineTime] = (
     lecture.applicationDeadline ?? ""
@@ -290,6 +298,10 @@ export default function LectureDetailPage() {
             : "대기 취소"}
       </Button>
     </>
+  ) : isEnrollmentClosed ? (
+    <Button variant="waiting" disabled className="w-full py-3">
+      신청이 마감되었습니다
+    </Button>
   ) : (
     <Button
       onClick={() => enrollLecture()}
@@ -444,6 +456,7 @@ export default function LectureDetailPage() {
                   </span>
                   <DeadlineCountdown
                     deadline={lecture.applicationDeadline}
+                    onEnd={() => setHasDeadlinePassed(true)}
                     className="text-[32px] leading-[0.95] tracking-[-0.02em]"
                   />
                 </div>
@@ -477,7 +490,7 @@ export default function LectureDetailPage() {
           <div className="mt-8 flex flex-col gap-2">
             {enrollAction}
             {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
-            {isMyGradeTaken && !enrollStatus && (
+            {isMyGradeTaken && !enrollStatus && !isEnrollmentClosed && (
               <p className="text-center text-xs text-gray-500">
                 {myGrade}학년 자리가 모두 차서 대기자로 등록됩니다.
               </p>
