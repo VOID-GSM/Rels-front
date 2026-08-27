@@ -40,11 +40,11 @@ import {
   usesGradeCapacity,
 } from "@/shared/lib/gradeCapacity";
 import {
-  allocateEnrollments,
   getEnrollmentStatus,
   isMyGradeFull as checkMyGradeFull,
-  orderByAllocation,
-} from "@/shared/lib/enrollmentAllocation";
+  orderByRoster,
+  toRoster,
+} from "@/shared/lib/enrollmentRoster";
 
 const ApplicantList = dynamic(
   () => import("@/components/lecture/ApplicantList"),
@@ -135,26 +135,17 @@ export default function ThisWeekPage() {
       onError: () => setEnrollResult("ERROR"),
     });
 
-  // 자리 배분은 서버 분류를 그대로 쓰지 않고 신청 순서·학년 정원으로 다시 셉니다.
-  const allocation = useMemo(
-    () =>
-      allocateEnrollments({
-        enrolled: enrollments?.enrolled,
-        waiting: enrollments?.waiting,
-        totalCapacity: lecture?.totalCapacity,
-        capacityByGrade: lecture?.capacityByGrade,
-      }),
-    [enrollments, lecture],
-  );
+  // 신청자/대기자 구분은 서버가 정합니다. 여기서는 순서만 그대로 받습니다.
+  const roster = useMemo(() => toRoster(enrollments), [enrollments]);
 
   const enrollStatus = useMemo<"ENROLLED" | "WAITING" | null>(() => {
     // 명단이 곧 진실입니다. 방금 누른 결과는 명단이 새로 오기 전까지만 씁니다.
-    const fromRoster = getEnrollmentStatus(allocation, user?.userId);
+    const fromRoster = getEnrollmentStatus(roster, user?.userId);
     if (fromRoster) return fromRoster;
     if (enrollResult === "ENROLLED" || enrollResult === "WAITING")
       return enrollResult;
     return null;
-  }, [allocation, enrollResult, user]);
+  }, [roster, enrollResult, user]);
 
   if (isLoading) return <Spinner />;
 
@@ -203,13 +194,9 @@ export default function ThisWeekPage() {
     capacityByGrade: lecture.capacityByGrade,
     studentNumber: user?.studentNumber,
   });
-  // 인원수도 배분 결과를 따릅니다. 명단이 아직 없으면 서버가 준 수를 씁니다.
-  const enrolledCount = enrollments
-    ? allocation.enrolled.length
-    : lecture.enrolledCount;
-  const waitingCount = enrollments
-    ? allocation.waiting.length
-    : lecture.waitingCount;
+  // 인원수는 서버가 센 값을 그대로 씁니다. 대기자를 신청자로 세지 않도록.
+  const enrolledCount = lecture.enrolledCount;
+  const waitingCount = lecture.waitingCount;
   const seatsLeft = Math.max(totalCapacity - enrolledCount, 0);
   const isFull = enrolledCount >= totalCapacity;
   // 전체 정원이 아직 남았는데 내 학년 자리만 찬 경우입니다. 상세 화면과 같게
@@ -217,7 +204,7 @@ export default function ThisWeekPage() {
   const isMyGradeTaken =
     !isFull &&
     checkMyGradeFull({
-      allocation,
+      enrolled: roster.enrolled,
       totalCapacity: lecture.totalCapacity,
       capacityByGrade: lecture.capacityByGrade,
       studentNumber: user?.studentNumber,
@@ -444,7 +431,7 @@ export default function ThisWeekPage() {
           <AttendanceList
             currentCount={lecture.enrolledCount}
             maxCount={totalCapacity}
-            attendances={orderByAllocation(attendances ?? [], allocation)}
+            attendances={orderByRoster(attendances ?? [], roster)}
             isLoading={isLoadingAttendances}
             isError={isAttendancesError}
             isSaving={isSavingAttendances}
@@ -455,13 +442,13 @@ export default function ThisWeekPage() {
             type="applicant"
             currentCount={enrolledCount}
             maxCount={totalCapacity}
-            applicants={allocation.enrolled}
+            applicants={roster.enrolled}
           />
         )}
         <ApplicantList
           type="waiting"
           waitingCount={waitingCount}
-          applicants={allocation.waiting}
+          applicants={roster.waiting}
           copyable={isAdmin}
         />
       </div>
