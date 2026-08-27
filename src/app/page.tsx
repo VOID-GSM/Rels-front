@@ -212,7 +212,8 @@ export default function ThisWeekPage() {
     : lecture.waitingCount;
   const seatsLeft = Math.max(totalCapacity - enrolledCount, 0);
   const isFull = enrolledCount >= totalCapacity;
-  // 전체 정원이 아직 남았는데 내 학년 자리만 찬 경우입니다. 대기는 받지 않습니다.
+  // 전체 정원이 아직 남았는데 내 학년 자리만 찬 경우입니다. 상세 화면과 같게
+  // 신청을 막지 않고 대기로 받습니다.
   const isMyGradeTaken =
     !isFull &&
     checkMyGradeFull({
@@ -221,6 +222,8 @@ export default function ThisWeekPage() {
       capacityByGrade: lecture.capacityByGrade,
       studentNumber: user?.studentNumber,
     });
+  // 지금 누르면 신청자가 아니라 대기자로 들어가는 상태.
+  const isWaitlistOnly = isFull || isMyGradeTaken;
   const myGrade = getUserGrade(user?.studentNumber);
   const isCreator = user?.userId === lecture.creatorId;
   const otherCount = lectures.length - 1;
@@ -376,10 +379,6 @@ export default function ThisWeekPage() {
           <Button variant="waiting" disabled className="w-full py-3">
             다른 학년만 신청할 수 있습니다
           </Button>
-        ) : isMyGradeTaken && !enrollStatus ? (
-          <Button variant="waiting" disabled className="w-full py-3">
-            {myGrade}학년 자리가 모두 찼습니다
-          </Button>
         ) : isBeforeEnrollmentOpen && enrollmentOpenAt ? (
           <Button variant="waiting" disabled className="w-full py-3">
             {formatEnrollmentOpenAt(enrollmentOpenAt)}부터 신청
@@ -406,16 +405,16 @@ export default function ThisWeekPage() {
           >
             {isEnrolling
               ? "신청하는 중"
-              : isFull
+              : isWaitlistOnly
                 ? "대기로 신청하기"
                 : "신청하기"}
           </Button>
         )}
 
-        {/* 왜 못 누르는지 버튼만으로는 알기 어려워서 다음 수를 함께 적어 둡니다. */}
+        {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
         {isMyGradeTaken && !enrollStatus && (
           <p className="text-center text-xs text-gray-500">
-            신청자가 모두 차면 대기로 신청할 수 있습니다.
+            {myGrade}학년 자리가 모두 차서 대기자로 등록됩니다.
           </p>
         )}
         {enrollResult === "ERROR" && (
