@@ -64,11 +64,11 @@ import {
 } from "@/shared/lib/gradeCapacity";
 import { getApiErrorMessage } from "@/shared/lib/getApiErrorMessage";
 import {
-  allocateEnrollments,
   getEnrollmentStatus,
   isMyGradeFull as checkMyGradeFull,
-  orderByAllocation,
-} from "@/shared/lib/enrollmentAllocation";
+  orderByRoster,
+  toRoster,
+} from "@/shared/lib/enrollmentRoster";
 
 export default function LectureDetailPage() {
   const params = useParams();
@@ -145,26 +145,20 @@ export default function LectureDetailPage() {
         ),
     });
 
-  // 자리 배분은 서버 분류를 그대로 쓰지 않고 신청 순서·학년 정원으로 다시 셉니다.
-  const allocation = useMemo(
-    () =>
-      allocateEnrollments({
-        enrolled: enrollments?.enrolled,
-        waiting: enrollments?.waiting,
-        totalCapacity: lecture?.totalCapacity,
-        capacityByGrade: lecture?.capacityByGrade,
-      }),
-    [enrollments, lecture],
-  );
+  // 신청자/대기자 구분은 서버가 정합니다. 여기서는 순서만 그대로 받습니다.
+  const roster = useMemo(() => toRoster(enrollments), [enrollments]);
 
   const enrollStatus = useMemo<"ENROLLED" | "WAITING" | null>(() => {
-    // 명단이 곧 진실입니다. 방금 누른 결과는 명단이 새로 오기 전까지만 씁니다.
-    const fromRoster = getEnrollmentStatus(allocation, user?.userId);
+    // 서버가 내려준 내 신청 상태가 먼저입니다. 그다음이 명단, 마지막이 방금 누른 결과입니다.
+    const mine = lecture?.myEnrollmentStatus;
+    if (mine === "ENROLLED" || mine === "WAITING") return mine;
+
+    const fromRoster = getEnrollmentStatus(roster, user?.userId);
     if (fromRoster) return fromRoster;
     if (enrollResult === "ENROLLED" || enrollResult === "WAITING")
       return enrollResult;
     return null;
-  }, [allocation, enrollResult, user]);
+  }, [lecture, roster, enrollResult, user]);
 
   if (isNaN(lectureId)) return notFound();
   if (!accessToken || isLoading) return <Spinner />;
@@ -198,22 +192,18 @@ export default function LectureDetailPage() {
     capacityByGrade: lecture.capacityByGrade,
     studentNumber: user?.studentNumber,
   });
-  // 인원수도 배분 결과를 따릅니다. 명단이 아직 없으면 서버가 준 수를 씁니다.
-  const enrolledCount = enrollments
-    ? allocation.enrolled.length
-    : lecture.enrolledCount;
-  const waitingCount = enrollments
-    ? allocation.waiting.length
-    : lecture.waitingCount;
+  // 인원수는 서버가 센 값을 그대로 씁니다. 대기자를 신청자로 세지 않도록.
+  const enrolledCount = lecture.enrolledCount;
+  const waitingCount = lecture.waitingCount;
   const isFull = enrolledCount >= totalCapacity;
   const seatsLeft = Math.max(totalCapacity - enrolledCount, 0);
-  // 전체 정원은 남았는데 내 학년 자리만 찬 경우입니다. 이때 들어온 신청은 배분에서
-  // 그 학년 대기로 서고, 앞사람이 취소하면 곧바로 신청자로 올라옵니다. 그래서
-  // 신청 자체를 막지 않고, 대기로 들어간다는 것만 버튼에 적습니다.
+  // 전체 정원은 남았는데 내 학년 자리만 찬 경우입니다. 이때 들어온 신청은 대기로
+  // 서고, 앞사람이 취소하면 서버가 순번대로 신청자로 올려 줍니다. 그래서 신청
+  // 자체를 막지 않고, 대기로 들어간다는 것만 버튼에 적습니다.
   const isMyGradeTaken =
     !isFull &&
     checkMyGradeFull({
-      allocation,
+      enrolled: roster.enrolled,
       totalCapacity: lecture.totalCapacity,
       capacityByGrade: lecture.capacityByGrade,
       studentNumber: user?.studentNumber,
@@ -522,7 +512,7 @@ export default function LectureDetailPage() {
               <AttendanceList
                 currentCount={lecture.enrolledCount}
                 maxCount={totalCapacity}
-                attendances={orderByAllocation(attendances ?? [], allocation)}
+                attendances={orderByRoster(attendances ?? [], roster)}
                 isLoading={isLoadingAttendances}
                 isError={isAttendancesError}
                 isSaving={isSavingAttendances}
@@ -533,13 +523,13 @@ export default function LectureDetailPage() {
                 type="applicant"
                 currentCount={enrolledCount}
                 maxCount={totalCapacity}
-                applicants={allocation.enrolled}
+                applicants={roster.enrolled}
               />
             )}
             <ApplicantList
               type="waiting"
               waitingCount={waitingCount}
-              applicants={allocation.waiting}
+              applicants={roster.waiting}
               copyable={isAdmin}
             />
           </div>

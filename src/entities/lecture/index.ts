@@ -2,6 +2,7 @@ export type {
   LectureType,
   LectureStatusType,
   GradeCapacities,
+  EnrollmentStatusType,
   EnrollmentApplicant,
   LectureEnrollmentsType,
   MyEnrolledLecture,

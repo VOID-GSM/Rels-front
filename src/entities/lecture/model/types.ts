@@ -1,5 +1,8 @@
 export type LectureStatusType = "OPEN" | "CONFIRMED" | "CLOSED" | "UNCONFIRMED";
 
+/** 내 신청 상태. 신청하지 않았으면 서버가 null로 내려줍니다. */
+export type EnrollmentStatusType = "ENROLLED" | "WAITING";
+
 export interface EnrollmentApplicant {
   userId: number;
   name: string;
@@ -94,6 +97,8 @@ export interface LectureType {
   totalCapacity?: number | null;
   enrolledCount: number;
   waitingCount: number;
+  /** 목록 응답에는 없고 상세 응답에만 옵니다. */
+  myEnrollmentStatus?: EnrollmentStatusType | null;
   lectureLocation: string | null;
   lectureDate: string | null;
   lectureTime: string | null;
