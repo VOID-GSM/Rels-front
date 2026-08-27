@@ -32,6 +32,16 @@ export default function DeadlineCountdown({
 }) {
   const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(deadline));
 
+  // 신청 시작 카운트다운이 0에 닿으면 같은 자리에서 마감 카운트다운으로 바뀝니다.
+  // 이때 React가 같은 인스턴스를 이어 쓰기 때문에, 0에 닿았던 상태를 그대로 두면
+  // 다음 초까지 "신청 마감"이 잠깐 떴다가 시간이 다시 흐릅니다. 기한이 바뀌면
+  // 다음 틱을 기다리지 않고 그 자리에서 다시 셉니다.
+  const [countedDeadline, setCountedDeadline] = useState(deadline);
+  if (deadline !== countedDeadline) {
+    setCountedDeadline(deadline);
+    setTimeLeft(getTimeLeft(deadline));
+  }
+
   // 0이 되는 순간을 부모에게 알려야 버튼이 잠긴 채로 남지 않습니다.
   const onEndRef = useRef(onEnd);
   useEffect(() => {
