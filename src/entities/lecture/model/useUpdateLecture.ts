@@ -40,6 +40,10 @@ export const useUpdateLecture = (id: number) => {
     onSuccess: (updatedLecture) => {
       queryClient.setQueryData(lectureQueryKeys.getOne(id), updatedLecture);
       queryClient.invalidateQueries({ queryKey: lectureQueryKeys.getAll() });
+      // 학생회가 승인 화면에서 바로 고칠 수 있어서 대기 목록도 다시 받습니다.
+      queryClient.invalidateQueries({
+        queryKey: lectureQueryKeys.getPending(),
+      });
     },
   });
 };

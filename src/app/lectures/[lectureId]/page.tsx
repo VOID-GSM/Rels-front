@@ -62,6 +62,7 @@ import {
   isGradeCapacityBlocked as checkGradeCapacityBlocked,
   usesGradeCapacity,
 } from "@/shared/lib/gradeCapacity";
+import { getApiErrorMessage } from "@/shared/lib/getApiErrorMessage";
 import {
   allocateEnrollments,
   getEnrollmentStatus,
@@ -101,18 +102,47 @@ export default function LectureDetailPage() {
   const [enrollResult, setEnrollResult] = useState<
     "ENROLLED" | "WAITING" | "ERROR" | null
   >(null);
+  // 서버도 16:20 이전 신청을 막습니다. "잠시 후 다시"로 뭉뚱그리면 언제 되는지
+  // 알 수 없어서, 서버가 내려준 사유를 그대로 보여 줍니다.
+  const [enrollErrorMessage, setEnrollErrorMessage] = useState<string | null>(
+    null,
+  );
+
+  const showEnrollError = (error: unknown, fallback: string) => {
+    setEnrollResult("ERROR");
+    setEnrollErrorMessage(
+      getApiErrorMessage(error, {
+        preferServerMessage: true,
+        statusMessages: { 400: fallback, 409: fallback },
+      }),
+    );
+  };
 
   const { mutate: enrollLecture, isPending: isEnrolling } = useEnrollLecture(
     lectureId,
     {
-      onSuccess: (data) => setEnrollResult(data.enrollmentStatus),
-      onError: () => setEnrollResult("ERROR"),
+      onSuccess: (data) => {
+        setEnrollErrorMessage(null);
+        setEnrollResult(data.enrollmentStatus);
+      },
+      onError: (error) =>
+        showEnrollError(
+          error,
+          "신청하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        ),
     },
   );
   const { mutate: cancelEnrollment, isPending: isCancelling } =
     useCancelEnrollment(lectureId, {
-      onSuccess: () => setEnrollResult(null),
-      onError: () => setEnrollResult("ERROR"),
+      onSuccess: () => {
+        setEnrollErrorMessage(null);
+        setEnrollResult(null);
+      },
+      onError: (error) =>
+        showEnrollError(
+          error,
+          "취소하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        ),
     });
 
   // 자리 배분은 서버 분류를 그대로 쓰지 않고 신청 순서·학년 정원으로 다시 셉니다.
@@ -460,7 +490,8 @@ export default function LectureDetailPage() {
             )}
             {enrollResult === "ERROR" && (
               <p className="text-center text-sm text-error">
-                신청하지 못했습니다. 잠시 후 다시 시도해 주세요.
+                {enrollErrorMessage ??
+                  "신청하지 못했습니다. 잠시 후 다시 시도해 주세요."}
               </p>
             )}
             {lecture.applicationDeadline &&
