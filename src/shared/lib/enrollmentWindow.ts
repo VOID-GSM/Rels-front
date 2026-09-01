@@ -11,33 +11,48 @@ const pad = (value: number) => String(value).padStart(2, "0");
 export const ENROLLMENT_OPEN_TIME = `${pad(OPEN_HOUR)}:${pad(OPEN_MINUTE)}`;
 
 /**
- * 신청이 열리는 시각입니다.
+ * 기준 시각 다음에 오는 16:20입니다.
  *
- * 백엔드에 신청 시작 필드가 없어서 개설 시각으로 계산합니다. 개설한 날 16:20이
- * 기본이고, 개설한 시점이 이미 그 시각을 넘겼으면 다음 날 16:20입니다.
- * 백엔드가 신청 시작 시각을 내려주기 시작하면 이 계산 대신 그 값을 쓰면 됩니다.
+ * 기준이 된 날의 16:20이 기본이고, 기준 시점이 이미 그 시각을 넘겼으면 다음 날
+ * 16:20입니다.
  */
-export const getEnrollmentOpenAt = (createdAt?: string | null): Date | null => {
-  // createdAt은 UTC로 오므로 그대로 읽으면 하루가 밀립니다.
-  const created = parseServerDateTime(createdAt);
-  if (!created) return null;
+export const getEnrollmentOpenAt = (basisAt?: string | null): Date | null => {
+  // 서버가 찍은 시각은 UTC로 오므로 그대로 읽으면 하루가 밀립니다.
+  const basis = parseServerDateTime(basisAt);
+  if (!basis) return null;
 
   const openAt = new Date(
-    created.getFullYear(),
-    created.getMonth(),
-    created.getDate(),
+    basis.getFullYear(),
+    basis.getMonth(),
+    basis.getDate(),
     OPEN_HOUR,
     OPEN_MINUTE,
     0,
     0,
   );
 
-  if (created.getTime() >= openAt.getTime()) {
+  if (basis.getTime() >= openAt.getTime()) {
     openAt.setDate(openAt.getDate() + 1);
   }
 
   return openAt;
 };
+
+/**
+ * 강연의 신청이 열리는 시각입니다.
+ *
+ * 기준은 개설 시각이 아니라 학생회가 수락한 시각입니다. 개설 시각으로 세면 어제
+ * 만들어 둔 강연이 오늘 수락되는 순간 이미 16:20을 지나 있어서 곧바로 신청이
+ * 열려 버립니다. 수락된 당일 16:20부터 받아야 하니 approvedAt으로 셉니다.
+ *
+ * approvedAt이 없는 응답(수락 전이거나 필드가 추가되기 전에 쌓인 강연)은 예전처럼
+ * 개설 시각으로 셉니다.
+ */
+export const getLectureEnrollmentOpenAt = (lecture: {
+  approvedAt?: string | null;
+  createdAt?: string | null;
+}): Date | null =>
+  getEnrollmentOpenAt(lecture.approvedAt ?? lecture.createdAt);
 
 /**
  * 신청 마감 시각이 지났는지.

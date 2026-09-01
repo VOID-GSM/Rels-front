@@ -30,7 +30,7 @@ import {
   formatLectureTime,
 } from "@/shared/lib/formatLectureSchedule";
 import {
-  getEnrollmentOpenAt,
+  getLectureEnrollmentOpenAt,
   formatEnrollmentOpenAt,
   isBeforeOpen,
   isAfterDeadline,
@@ -219,8 +219,8 @@ export default function ThisWeekPage() {
   const isCreator = user?.userId === lecture.creatorId;
   const otherCount = lectures.length - 1;
 
-  // 상세 페이지와 같은 규칙입니다. 신청은 7교시가 끝나는 16:20부터 받습니다.
-  const enrollmentOpenAt = getEnrollmentOpenAt(lecture.createdAt);
+  // 상세 페이지와 같은 규칙입니다. 신청은 수락된 날 16:20부터 받습니다.
+  const enrollmentOpenAt = getLectureEnrollmentOpenAt(lecture);
   const isBeforeEnrollmentOpen =
     !hasEnrollmentOpened && isBeforeOpen(enrollmentOpenAt);
   // 마감이 지나면 서버가 신청을 거절합니다. 상태가 아직 CONFIRMED여도 버튼을 닫습니다.
