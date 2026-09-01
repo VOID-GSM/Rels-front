@@ -106,6 +106,8 @@ export interface LectureType {
   waitingCount: number;
   /** 목록 응답에는 없고 상세 응답에만 옵니다. */
   myEnrollmentStatus?: EnrollmentStatusType | null;
+  /** 학생회가 수락한 시각. 신청이 열리는 시각을 여기서 셉니다. 수락 전에는 null입니다. */
+  approvedAt?: string | null;
   lectureLocation: string | null;
   lectureDate: string | null;
   lectureTime: string | null;
