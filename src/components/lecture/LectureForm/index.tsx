@@ -2,7 +2,7 @@
 
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
-import CharCountTextArea from "@/components/common/CharCountTextArea";
+import MarkdownTextArea from "@/components/common/MarkdownTextArea";
 import TimeField from "@/components/common/TimeField";
 import DateTimeField from "@/components/common/DateTimeField";
 import FormSection, { FormActions } from "@/components/layout/FormSection";
@@ -101,9 +101,9 @@ export default function LectureForm({
           </p>
         </div>
 
-        <CharCountTextArea
+        <MarkdownTextArea
           label="강연 내용"
-          placeholder="다룰 주제, 준비물, 미리 알아두면 좋은 것을 적어 주세요."
+          placeholder="다룰 주제, 준비물, 미리 알아두면 좋은 것을 적어 주세요. 마크다운을 쓸 수 있습니다."
           value={description}
           maxLength={DESCRIPTION_MAX_LENGTH}
           rows={7}

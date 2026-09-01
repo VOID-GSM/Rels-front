@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import Button from "@/components/common/Button";
 import Input from "@/components/common/Input";
+import MarkdownContent from "@/components/common/MarkdownContent";
 import Pencil from "@/assets/svg/Pencil";
 import LectureForm from "@/components/lecture/LectureForm";
 import type { LectureFormData } from "@/components/lecture/LectureForm";
@@ -186,9 +187,7 @@ export default function PendingLectureCard({
               />
             </dl>
 
-            <p className="whitespace-pre-wrap break-words text-sm leading-7 text-gray-700">
-              {lecture.description}
-            </p>
+            <MarkdownContent size="sm">{lecture.description}</MarkdownContent>
 
             {mode === "reject" ? (
               <div className="flex flex-col gap-2.5">
