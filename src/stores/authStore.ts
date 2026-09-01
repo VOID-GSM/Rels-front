@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { UserInfoType } from "@/entities/auth/model/types";
 
 const SESSION_KEY = "accessToken";
+const REFRESH_KEY = "refreshToken";
 
 interface AuthState {
   isLoggedIn: boolean;
@@ -9,7 +10,9 @@ interface AuthState {
   isSessionChecked: boolean;
   user: UserInfoType | null;
   accessToken: string | null;
-  setAuth: (accessToken: string, user: UserInfoType) => void;
+  refreshToken: string | null;
+  /** 로그인·재발급으로 받은 토큰 쌍을 저장합니다. user는 setUser로 따로 채웁니다. */
+  setTokens: (accessToken: string, refreshToken: string) => void;
   setUser: (user: UserInfoType) => void;
   clearAuth: () => void;
   initFromSession: () => string | null;
@@ -20,29 +23,44 @@ const useAuthStore = create<AuthState>((set) => ({
   isSessionChecked: false,
   user: null,
   accessToken: null,
+  refreshToken: null,
 
-  setAuth: (accessToken, user) => {
+  setTokens: (accessToken, refreshToken) => {
     sessionStorage.setItem(SESSION_KEY, accessToken);
-    set({ isLoggedIn: true, isSessionChecked: true, user, accessToken });
+    sessionStorage.setItem(REFRESH_KEY, refreshToken);
+    set({
+      isLoggedIn: true,
+      isSessionChecked: true,
+      accessToken,
+      refreshToken,
+    });
   },
 
   setUser: (user) => set({ user }),
 
   clearAuth: () => {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(REFRESH_KEY);
     set({
       isLoggedIn: false,
       isSessionChecked: true,
       user: null,
       accessToken: null,
+      refreshToken: null,
     });
   },
 
   initFromSession: () => {
     const token = sessionStorage.getItem(SESSION_KEY);
+    const refreshToken = sessionStorage.getItem(REFRESH_KEY);
     set(
       token
-        ? { isLoggedIn: true, isSessionChecked: true, accessToken: token }
+        ? {
+            isLoggedIn: true,
+            isSessionChecked: true,
+            accessToken: token,
+            refreshToken,
+          }
         : { isSessionChecked: true },
     );
     return token;
