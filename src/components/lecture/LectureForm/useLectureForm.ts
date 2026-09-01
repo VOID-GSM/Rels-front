@@ -8,10 +8,7 @@ import {
   LECTURE_MIN_CAPACITY,
   LECTURE_MAX_CAPACITY,
 } from "@/constants/lecture";
-import {
-  getEnrollmentOpenAt,
-  formatEnrollmentOpenAt,
-} from "@/shared/lib/enrollmentWindow";
+import type { UserSummary } from "@/entities/user";
 import type { LectureFormValues, LectureFormData, FormErrors } from "./types";
 
 const DEFAULT_VALUES: LectureFormValues = {
@@ -25,7 +22,7 @@ const DEFAULT_VALUES: LectureFormValues = {
   lectureLocation: "",
   lectureDate: "",
   lectureTime: "",
-  applicationDeadline: "",
+  speakers: [],
 };
 
 const parseLocalDateTime = (value: string) => {
@@ -36,8 +33,6 @@ const parseLocalDateTime = (value: string) => {
 export function useLectureForm(
   initialValues?: Partial<LectureFormValues>,
   forceCapacityMode?: "total" | "grade",
-  /** 수정 화면에서만 넘깁니다. 새로 만들 때는 지금 시각이 개설 시각입니다. */
-  createdAt?: string | null,
 ) {
   const init = { ...DEFAULT_VALUES, ...initialValues };
 
@@ -55,9 +50,7 @@ export function useLectureForm(
   );
   const [lectureDate, setLectureDate] = useState(init.lectureDate ?? "");
   const [lectureTime, setLectureTime] = useState(init.lectureTime ?? "");
-  const [applicationDeadline, setApplicationDeadline] = useState(
-    init.applicationDeadline ?? "",
-  );
+  const [speakers, setSpeakers] = useState<UserSummary[]>(init.speakers ?? []);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const clearError = (key: keyof FormErrors) => {
@@ -160,21 +153,14 @@ export function useLectureForm(
       next.lectureTime = "시간을 입력해 주세요.";
       missingFields.push("시간");
     }
-    if (!applicationDeadline) {
-      next.applicationDeadline = "신청 마감일을 입력해 주세요.";
-      missingFields.push("신청 마감일");
-    }
 
+    // 신청 마감일은 서버가 강연 날짜에서 계산하므로 여기서 검사할 값이 없습니다.
     const lectureDateTime =
       lectureDate && lectureTime
         ? parseLocalDateTime(`${lectureDate}T${lectureTime}`)
         : null;
-    const deadlineDateTime = applicationDeadline
-      ? parseLocalDateTime(applicationDeadline)
-      : null;
     const isDateChanged =
       lectureDate !== init.lectureDate || lectureTime !== init.lectureTime;
-    const isDeadlineChanged = applicationDeadline !== init.applicationDeadline;
 
     if (
       lectureDateTime &&
@@ -185,46 +171,6 @@ export function useLectureForm(
       next.lectureTime = "현재 날짜/시간 이후로 선택해 주세요.";
       dateToastMessage =
         "강연 날짜와 시간은 현재보다 이전으로 설정할 수 없습니다.";
-    }
-
-    if (
-      deadlineDateTime &&
-      isDeadlineChanged &&
-      deadlineDateTime.getTime() < Date.now()
-    ) {
-      next.applicationDeadline = "현재 날짜/시간 이후로 선택해 주세요.";
-      dateToastMessage =
-        dateToastMessage ??
-        "신청 마감일은 현재보다 이전으로 설정할 수 없습니다.";
-    }
-
-    // 신청은 16:20에 열립니다. 그전에 마감하면 아무도 신청할 수 없습니다.
-    const enrollmentOpenAt = getEnrollmentOpenAt(
-      createdAt ?? new Date().toISOString(),
-    );
-
-    if (
-      deadlineDateTime &&
-      isDeadlineChanged &&
-      enrollmentOpenAt &&
-      deadlineDateTime.getTime() <= enrollmentOpenAt.getTime()
-    ) {
-      const openText = formatEnrollmentOpenAt(enrollmentOpenAt);
-      next.applicationDeadline = `${openText} 이후로 선택해 주세요.`;
-      dateToastMessage =
-        dateToastMessage ??
-        `신청은 ${openText}부터 받습니다. 마감은 그 이후로 정해 주세요.`;
-    }
-
-    if (
-      lectureDateTime &&
-      deadlineDateTime &&
-      deadlineDateTime.getTime() > lectureDateTime.getTime()
-    ) {
-      next.applicationDeadline = "신청 마감일은 강연 일시 이전이어야 합니다.";
-      dateToastMessage =
-        dateToastMessage ??
-        "신청 마감일은 강연 일시보다 이후로 설정할 수 없습니다.";
     }
 
     setErrors(next);
@@ -256,7 +202,7 @@ export function useLectureForm(
     lectureLocation: lectureLocation.trim(),
     lectureDate,
     lectureTime,
-    applicationDeadline,
+    speakerIds: speakers.map((speaker) => speaker.userId),
   });
 
   return {
@@ -271,7 +217,7 @@ export function useLectureForm(
       lectureLocation,
       lectureDate,
       lectureTime,
-      applicationDeadline,
+      speakers,
     },
     setters: {
       setTitle,
@@ -283,7 +229,7 @@ export function useLectureForm(
       setLectureLocation,
       setLectureDate,
       setLectureTime,
-      setApplicationDeadline,
+      setSpeakers,
     },
     errors,
     clearError,

@@ -4,10 +4,14 @@ import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
 import MarkdownTextArea from "@/components/common/MarkdownTextArea";
 import TimeField from "@/components/common/TimeField";
-import DateTimeField from "@/components/common/DateTimeField";
+import SpeakerPicker from "@/components/lecture/SpeakerPicker";
 import FormSection, { FormActions } from "@/components/layout/FormSection";
 import { useLectureForm } from "./useLectureForm";
-import { ENROLLMENT_OPEN_TIME } from "@/shared/lib/enrollmentWindow";
+import {
+  ENROLLMENT_OPEN_TIME,
+  getApplicationDeadline,
+  formatDateTimeLabel,
+} from "@/shared/lib/enrollmentWindow";
 import {
   LECTURE_TITLE_MAX_LENGTH as TITLE_MAX_LENGTH,
   LECTURE_DESCRIPTION_MAX_LENGTH as DESCRIPTION_MAX_LENGTH,
@@ -23,8 +27,8 @@ interface LectureFormProps {
   submitLabel: string;
   extraAction?: React.ReactNode;
   forceCapacityMode?: "total" | "grade";
-  /** 수정 화면에서만 넘깁니다. 신청이 열리는 시각을 계산하는 데 씁니다. */
-  createdAt?: string | null;
+  /** 개설자 본인. 이미 연사자라서 연사자 검색 결과에서 걸러 냅니다. */
+  creatorId?: number;
 }
 
 export default function LectureForm({
@@ -34,7 +38,7 @@ export default function LectureForm({
   submitLabel,
   extraAction,
   forceCapacityMode,
-  createdAt,
+  creatorId,
 }: LectureFormProps) {
   const {
     values,
@@ -44,7 +48,7 @@ export default function LectureForm({
     handleModeChange,
     validate,
     buildSubmitData,
-  } = useLectureForm(initialValues, forceCapacityMode, createdAt);
+  } = useLectureForm(initialValues, forceCapacityMode);
 
   const {
     title,
@@ -57,7 +61,7 @@ export default function LectureForm({
     lectureLocation,
     lectureDate,
     lectureTime,
-    applicationDeadline,
+    speakers,
   } = values;
 
   const {
@@ -70,13 +74,16 @@ export default function LectureForm({
     setLectureLocation,
     setLectureDate,
     setLectureTime,
-    setApplicationDeadline,
+    setSpeakers,
   } = setters;
 
   const handleSubmit = () => {
     if (!validate()) return;
     onSubmit(buildSubmitData());
   };
+
+  // 마감일은 입력받지 않고 강연 날짜에서 정해집니다. 언제 닫히는지는 알려 줘야 합니다.
+  const applicationDeadline = getApplicationDeadline(lectureDate);
 
   return (
     <div className="flex flex-col">
@@ -112,6 +119,12 @@ export default function LectureForm({
             clearError("description");
           }}
           error={errors.description}
+        />
+
+        <SpeakerPicker
+          speakers={speakers}
+          onChange={setSpeakers}
+          excludeUserId={creatorId}
         />
       </FormSection>
 
@@ -238,19 +251,26 @@ export default function LectureForm({
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <DateTimeField
-            label="신청 마감일"
-            value={applicationDeadline}
-            onChange={(value) => {
-              setApplicationDeadline(value);
-              clearError("applicationDeadline");
-            }}
-            error={errors.applicationDeadline}
-          />
-          {/* 신청 시작은 입력받지 않고 개설 시각에서 자동으로 정해집니다. */}
+        {/* 신청 시작도 마감도 입력받지 않고 날짜에서 자동으로 정해집니다. */}
+        <div className="flex flex-col gap-1 rounded-xl bg-gray-50 px-4 py-3.5">
+          <p className="text-xs font-semibold text-gray-600">신청 기간</p>
+          <p className="text-sm leading-relaxed text-gray-700">
+            신청은 7교시가 끝나는 {ENROLLMENT_OPEN_TIME}부터 받습니다.{" "}
+            {applicationDeadline ? (
+              <>
+                이번 강연은{" "}
+                <span className="font-semibold text-gray-900">
+                  {formatDateTimeLabel(applicationDeadline)}
+                </span>
+                에 마감됩니다.
+              </>
+            ) : (
+              "마감일은 강연 날짜를 고르면 강연 전 주 목요일로 정해집니다."
+            )}
+          </p>
           <p className="text-xs text-gray-500">
-            신청은 7교시가 끝나는 {ENROLLMENT_OPEN_TIME}부터 받습니다.
+            마감 뒤에 들어온 신청은 대기자로 서고, 개설자나 학생회가 수락해야
+            확정됩니다.
           </p>
         </div>
       </FormSection>

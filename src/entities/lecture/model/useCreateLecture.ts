@@ -12,7 +12,8 @@ interface CreateLectureReqType {
   lectureLocation?: string | null;
   lectureDate?: string | null;
   lectureTime?: string | null;
-  applicationDeadline?: string | null;
+  /** 개설자 외 연사자들의 userId. 신청 마감일은 서버가 강연 날짜에서 계산합니다. */
+  speakerIds?: number[];
 }
 
 const createLecture = (data: CreateLectureReqType): Promise<LectureType> => {
