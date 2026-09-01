@@ -1,6 +1,7 @@
 export type {
   LectureType,
   LectureStatusType,
+  RawLectureStatusType,
   GradeCapacities,
   EnrollmentStatusType,
   EnrollmentApplicant,
@@ -29,4 +30,7 @@ export { useGetPendingLectures } from "./model/useGetPendingLectures";
 export { useUpdateLectureApproval } from "./model/useUpdateLectureApproval";
 export { useGetAttendances } from "./model/useGetAttendances";
 export { useUpdateAttendances } from "./model/useUpdateAttendances";
-export { getDisplayLectureStatus } from "./model/status";
+export {
+  getDisplayLectureStatus,
+  normalizeLectureStatus,
+} from "./model/status";
