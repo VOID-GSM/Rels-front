@@ -16,10 +16,16 @@ export const lectureUrl = {
   enroll: (id: number) => `/api/lectures/${id}/enrollments`,
   cancelEnrollment: (id: number) => `/api/lectures/${id}/enrollments`,
   getEnrollments: (id: number) => `/api/lectures/${id}/enrollments`,
+  decideEnrollment: (id: number, userId: number) =>
+    `/api/lectures/${id}/enrollments/${userId}/decision`,
   updateApproval: (id: number) => `/api/lectures/${id}/approval`,
   getAttendances: (id: number) => `/api/lectures/${id}/attendances`,
   updateAttendances: (id: number) => `/api/lectures/${id}/attendances`,
   getMyEnrollments: () => "/api/lectures/enrollments/me",
+} as const;
+
+export const userUrl = {
+  search: () => "/api/users",
 } as const;
 
 export const noticeUrl = {
