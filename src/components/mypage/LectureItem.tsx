@@ -4,6 +4,7 @@ import {
   LECTURE_APPROVAL_NOTICE,
   LECTURE_STATUS_LABEL,
 } from "@/constants/lecture";
+import { isAfterDeadline } from "@/shared/lib/enrollmentWindow";
 
 export type MyPageLectureItem = (MyCreatedLecture | MyEnrolledLecture) & {
   meta?: string;
@@ -39,6 +40,11 @@ export default function LectureItem({
   // 거절된 신청은 되돌릴 것이 없어서 취소 버튼 대신 결과만 보여 줍니다.
   const isEnrollmentRejected =
     "enrollmentStatus" in lecture && lecture.enrollmentStatus === "REJECTED";
+  // 마감 뒤에는 확정된 신청을 취소할 수 없습니다. 대기는 그대로 뺄 수 있습니다.
+  const isCancelClosed =
+    "enrollmentStatus" in lecture &&
+    lecture.enrollmentStatus === "ENROLLED" &&
+    isAfterDeadline(lecture.applicationDeadline);
   // 연사자로 참여하는 강연도 이 목록에 섞여 옵니다. 삭제는 개설자만 할 수 있습니다.
   const isSpeakerOnly = "creator" in lecture && lecture.creator === false;
 
@@ -78,9 +84,9 @@ export default function LectureItem({
           </span>
         )}
       </Link>
-      {isEnrollmentRejected || isSpeakerOnly ? (
+      {isEnrollmentRejected || isSpeakerOnly || isCancelClosed ? (
         <span className="shrink-0 px-2 py-1 text-xs font-semibold text-gray-400">
-          {isSpeakerOnly ? "연사자" : "거절됨"}
+          {isSpeakerOnly ? "연사자" : isEnrollmentRejected ? "거절됨" : "마감"}
         </span>
       ) : (
         <button
