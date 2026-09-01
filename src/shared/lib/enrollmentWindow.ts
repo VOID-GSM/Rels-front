@@ -38,6 +38,21 @@ export const getEnrollmentOpenAt = (basisAt?: string | null): Date | null => {
   return openAt;
 };
 
+/** 오늘 16:20. 수락 시각을 모르는 강연의 신청을 여기까지 잠가 둡니다. */
+const getTodayOpenAt = (): Date => {
+  const now = new Date();
+
+  return new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    OPEN_HOUR,
+    OPEN_MINUTE,
+    0,
+    0,
+  );
+};
+
 /**
  * 강연의 신청이 열리는 시각입니다.
  *
@@ -45,14 +60,24 @@ export const getEnrollmentOpenAt = (basisAt?: string | null): Date | null => {
  * 만들어 둔 강연이 오늘 수락되는 순간 이미 16:20을 지나 있어서 곧바로 신청이
  * 열려 버립니다. 수락된 당일 16:20부터 받아야 하니 approvedAt으로 셉니다.
  *
- * approvedAt이 없는 응답(수락 전이거나 필드가 추가되기 전에 쌓인 강연)은 예전처럼
- * 개설 시각으로 셉니다.
+ * approvedAt은 백엔드에 컬럼이 생기기 전에 수락된 강연에는 없습니다. 그런 강연을
+ * 개설 시각으로 세면 계산된 시각이 이미 지나 있어서 아침부터 신청이 열려 버립니다.
+ * 언제 수락됐는지 알 수 없으니 적어도 오늘 16:20까지는 잠가 둡니다.
  */
 export const getLectureEnrollmentOpenAt = (lecture: {
   approvedAt?: string | null;
   createdAt?: string | null;
-}): Date | null =>
-  getEnrollmentOpenAt(lecture.approvedAt ?? lecture.createdAt);
+}): Date | null => {
+  if (lecture.approvedAt) return getEnrollmentOpenAt(lecture.approvedAt);
+
+  const todayOpenAt = getTodayOpenAt();
+  const createdOpenAt = getEnrollmentOpenAt(lecture.createdAt);
+
+  // 오늘 개설된 강연은 개설 시각 계산이 더 늦습니다(16:20 뒤 개설 → 내일 16:20).
+  return createdOpenAt && createdOpenAt.getTime() > todayOpenAt.getTime()
+    ? createdOpenAt
+    : todayOpenAt;
+};
 
 /**
  * 신청 마감 시각이 지났는지.
