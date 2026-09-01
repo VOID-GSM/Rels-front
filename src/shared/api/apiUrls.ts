@@ -2,6 +2,8 @@
 export const authUrl = {
   // 변경 시 shared/lib/axios.ts의 AUTH_VERIFY_PATH도 함께 수정해야 합니다.
   getUserInfo: () => "/api/auth/me",
+  // 변경 시 shared/lib/axios.ts의 REFRESH_PATH도 함께 수정해야 합니다.
+  refresh: () => "/api/auth/refresh",
 } as const;
 
 export const lectureUrl = {
