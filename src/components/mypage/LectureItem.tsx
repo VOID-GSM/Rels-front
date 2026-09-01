@@ -1,5 +1,9 @@
 import Link from "next/link";
-import type { MyCreatedLecture, MyEnrolledLecture } from "@/entities/lecture";
+import {
+  normalizeLectureStatus,
+  type MyCreatedLecture,
+  type MyEnrolledLecture,
+} from "@/entities/lecture";
 import {
   LECTURE_APPROVAL_NOTICE,
   LECTURE_STATUS_LABEL,
@@ -21,8 +25,10 @@ export default function LectureItem({
   actionLabel: string;
   disabled?: boolean;
 }) {
-  const statusLabel =
-    LECTURE_STATUS_LABEL[lecture.lectureStatus] ?? lecture.lectureStatus;
+  // 서버 원본값(CLOSE 등)을 그대로 키로 쓰면 라벨이 비어 영문 상태가 그대로 노출됩니다.
+  const statusLabel = LECTURE_STATUS_LABEL[
+    normalizeLectureStatus(lecture.lectureStatus)
+  ];
 
   // 개설한 강연에만 붙습니다. 승인 전에는 강연 상태보다 이게 먼저 알 일입니다.
   const approvalStatus =

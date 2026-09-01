@@ -50,7 +50,13 @@ const BADGE_CONFIG: Record<
 };
 
 export default function Badge({ variant }: BadgeProps) {
-  const { label, dot, text } = BADGE_CONFIG[variant];
+  // 서버가 프론트가 모르는 상태를 내려주면 여기서 undefined를 펼치다 화면 전체가
+  // 죽습니다. 배지 하나 때문에 페이지를 통째로 잃지 않도록 아무 것도 그리지 않고
+  // 물러납니다.
+  const config = BADGE_CONFIG[variant];
+  if (!config) return null;
+
+  const { label, dot, text } = config;
 
   return (
     <span
