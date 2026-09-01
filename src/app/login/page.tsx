@@ -31,7 +31,7 @@ const SLIDE_INTERVAL = 5000;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { initFromSession, clearAuth, setAuth } = useAuthStore();
+  const { initFromSession, clearAuth, setUser } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
   const [slideIndex, setSlideIndex] = useState(0);
 
@@ -51,7 +51,9 @@ export default function LoginPage() {
 
       try {
         const user = await get<UserInfoType>(authUrl.getUserInfo());
-        setAuth(token, user);
+        // 이 요청 도중 토큰이 재발급됐을 수 있으므로 token을 다시 쓰지 않습니다.
+        // 저장은 인터셉터가 이미 끝냈고, 여기서는 유저 정보만 채웁니다.
+        setUser(user);
         router.replace("/");
       } catch {
         clearAuth();
@@ -64,7 +66,7 @@ export default function LoginPage() {
     return () => {
       isMounted = false;
     };
-  }, [initFromSession, clearAuth, setAuth, router]);
+  }, [initFromSession, clearAuth, setUser, router]);
 
   // 자동 전환은 장식일 뿐이라 모션을 줄인 사용자에게는 돌리지 않습니다.
   useEffect(() => {
