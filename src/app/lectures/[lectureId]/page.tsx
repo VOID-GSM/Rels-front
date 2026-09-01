@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import Badge from "@/components/common/Badge";
 import Button from "@/components/common/Button";
 import Spinner from "@/components/common/Spinner";
+import MarkdownContent from "@/components/common/MarkdownContent";
 import SeatMeter from "@/components/lecture/SeatMeter";
 import PageShell from "@/components/layout/PageShell";
 import BackLink from "@/components/layout/BackLink";
@@ -521,9 +522,9 @@ export default function LectureDetailPage() {
             <h2 className="text-2xl font-bold tracking-[-0.02em] text-gray-900">
               강연 소개
             </h2>
-            <p className="mt-5 whitespace-pre-wrap break-words text-[19px] leading-9 text-gray-800">
+            <MarkdownContent className="mt-5" size="base">
               {lecture.description}
-            </p>
+            </MarkdownContent>
           </section>
 
           <div className="mt-16 grid gap-4 sm:grid-cols-2">
