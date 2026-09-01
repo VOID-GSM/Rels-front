@@ -73,7 +73,9 @@ export default function PendingLectureCard({
     lecture.lectureId,
   );
 
-  const enrollmentOpenAt = getEnrollmentOpenAt(lecture.createdAt);
+  // 신청이 열리는 시각은 개설 시각이 아니라 수락 시각에서 셉니다. 아직 수락 전인
+  // 카드라 "지금 수락하면 언제부터 열리는지"를 보여 줍니다.
+  const enrollmentOpenAt = getEnrollmentOpenAt(new Date().toISOString());
   const scheduleText = [
     formatLectureDate(lecture.lectureDate),
     formatLectureTime(lecture.lectureTime),
@@ -177,7 +179,7 @@ export default function PendingLectureCard({
                 value={formatLectureDeadline(lecture.applicationDeadline)}
               />
               <DetailRow
-                label="신청 시작 (자동)"
+                label="지금 수락하면 신청 시작"
                 value={
                   enrollmentOpenAt
                     ? formatEnrollmentOpenAt(enrollmentOpenAt)
