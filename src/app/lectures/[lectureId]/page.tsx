@@ -53,7 +53,7 @@ import {
   formatLectureTime,
 } from "@/shared/lib/formatLectureSchedule";
 import {
-  getEnrollmentOpenAt,
+  getLectureEnrollmentOpenAt,
   formatEnrollmentOpenAt,
   isBeforeOpen,
   isAfterDeadline,
@@ -217,9 +217,9 @@ export default function LectureDetailPage() {
   const myGrade = getUserGrade(user?.studentNumber);
   const isPast = displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED";
 
-  // 신청은 7교시가 끝나는 16:20부터 받습니다. 백엔드에 신청 시작 필드가 없어서
-  // 개설 시각에서 계산합니다.
-  const enrollmentOpenAt = getEnrollmentOpenAt(lecture.createdAt);
+  // 신청은 7교시가 끝나는 16:20부터 받습니다. 개설한 날이 아니라 학생회가
+  // 수락한 날이 기준입니다.
+  const enrollmentOpenAt = getLectureEnrollmentOpenAt(lecture);
   const isBeforeEnrollmentOpen =
     !hasEnrollmentOpened && isBeforeOpen(enrollmentOpenAt);
   // 마감이 지나면 서버가 신청을 거절합니다. 신청자가 10명을 넘겨 상태가 CONFIRMED로
