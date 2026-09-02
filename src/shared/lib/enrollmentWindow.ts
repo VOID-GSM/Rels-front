@@ -104,6 +104,25 @@ export const isAfterDeadline = (
 export const isBeforeOpen = (openAt: Date | null): boolean =>
   openAt != null && Date.now() < openAt.getTime();
 
+/**
+ * 신청 시작 안내를 띄워도 되는 상태인지.
+ *
+ * 신청 시작 시각은 수락 시각에서 계산한 값이고, 수락 시각이 없는 강연에서는 오늘
+ * 16:20으로 잡아 둡니다. 그런데 그 강연이 이미 신청을 받아 자리가 찼거나 마감까지
+ * 지났다면 계산이 틀린 것이 분명한데도, 화면은 매일 "오늘 16:20부터 신청"으로
+ * 덮어 버립니다. 계산이 틀렸다는 증거가 있는 두 경우 — 이미 마감됐거나 신청한
+ * 사람이 있는 경우 — 에는 안내를 접고 실제 상태를 보여 줍니다.
+ */
+export const isBeforeEnrollmentOpen = ({
+  openAt,
+  isClosed,
+  hasEnrollments,
+}: {
+  openAt: Date | null;
+  isClosed: boolean;
+  hasEnrollments: boolean;
+}): boolean => !isClosed && !hasEnrollments && isBeforeOpen(openAt);
+
 /** "8월 27일 (목) 16:20" */
 export const formatEnrollmentOpenAt = (openAt: Date): string => {
   const date = `${openAt.getFullYear()}-${pad(openAt.getMonth() + 1)}-${pad(
