@@ -32,7 +32,7 @@ import {
 import {
   getLectureEnrollmentOpenAt,
   formatEnrollmentOpenAt,
-  isBeforeOpen,
+  isBeforeEnrollmentOpen as checkBeforeEnrollmentOpen,
   isAfterDeadline,
 } from "@/shared/lib/enrollmentWindow";
 import {
@@ -221,11 +221,17 @@ export default function ThisWeekPage() {
 
   // 상세 페이지와 같은 규칙입니다. 신청은 수락된 날 16:20부터 받습니다.
   const enrollmentOpenAt = getLectureEnrollmentOpenAt(lecture);
-  const isBeforeEnrollmentOpen =
-    !hasEnrollmentOpened && isBeforeOpen(enrollmentOpenAt);
   // 마감이 지나면 서버가 신청을 거절합니다. 상태가 아직 CONFIRMED여도 버튼을 닫습니다.
   const isEnrollmentClosed =
     hasDeadlinePassed || isAfterDeadline(lecture.applicationDeadline);
+  // 마감됐거나 이미 신청자가 있으면 신청 시작 시각 계산이 틀린 것이므로 믿지 않습니다.
+  const isBeforeEnrollmentOpen =
+    !hasEnrollmentOpened &&
+    checkBeforeEnrollmentOpen({
+      openAt: enrollmentOpenAt,
+      isClosed: isEnrollmentClosed,
+      hasEnrollments: enrolledCount + waitingCount > 0,
+    });
 
   const [deadlineDate, deadlineTime] = (
     lecture.applicationDeadline ?? ""
