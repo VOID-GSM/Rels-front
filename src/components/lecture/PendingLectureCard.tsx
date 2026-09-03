@@ -126,6 +126,7 @@ export default function PendingLectureCard({
               lectureLocation: lecture.lectureLocation ?? "",
               lectureDate: lecture.lectureDate ?? "",
               lectureTime: lecture.lectureTime ?? "",
+              applicationDeadline: lecture.applicationDeadline ?? "",
               // 서버가 내려주는 speakers에는 개설자도 들어 있어서 빼고 넘깁니다.
               speakers: (lecture.speakers ?? []).filter(
                 (speaker) => speaker.userId !== lecture.creatorId,
@@ -135,6 +136,7 @@ export default function PendingLectureCard({
             isPending={isSaving}
             submitLabel="저장"
             creatorId={lecture.creatorId}
+            enrollmentBasisAt={lecture.approvedAt ?? lecture.createdAt}
             extraAction={
               <Button
                 variant="cancel"

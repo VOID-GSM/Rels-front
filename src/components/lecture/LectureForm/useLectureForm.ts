@@ -8,6 +8,10 @@ import {
   LECTURE_MIN_CAPACITY,
   LECTURE_MAX_CAPACITY,
 } from "@/constants/lecture";
+import {
+  getEnrollmentOpenAt,
+  formatEnrollmentOpenAt,
+} from "@/shared/lib/enrollmentWindow";
 import type { UserSummary } from "@/entities/user";
 import type { LectureFormValues, LectureFormData, FormErrors } from "./types";
 
@@ -22,6 +26,7 @@ const DEFAULT_VALUES: LectureFormValues = {
   lectureLocation: "",
   lectureDate: "",
   lectureTime: "",
+  applicationDeadline: "",
   speakers: [],
 };
 
@@ -33,6 +38,11 @@ const parseLocalDateTime = (value: string) => {
 export function useLectureForm(
   initialValues?: Partial<LectureFormValues>,
   forceCapacityMode?: "total" | "grade",
+  /**
+   * 신청 오픈 16:20을 세는 기준 시각입니다. 학생회 승인 시각이고, 승인 전이면
+   * 개설 시각입니다. 새로 만들 때는 넘기지 않으면 지금 시각으로 봅니다.
+   */
+  enrollmentBasisAt?: string | null,
 ) {
   const init = { ...DEFAULT_VALUES, ...initialValues };
 
@@ -50,6 +60,9 @@ export function useLectureForm(
   );
   const [lectureDate, setLectureDate] = useState(init.lectureDate ?? "");
   const [lectureTime, setLectureTime] = useState(init.lectureTime ?? "");
+  const [applicationDeadline, setApplicationDeadline] = useState(
+    init.applicationDeadline ?? "",
+  );
   const [speakers, setSpeakers] = useState<UserSummary[]>(init.speakers ?? []);
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -153,14 +166,21 @@ export function useLectureForm(
       next.lectureTime = "시간을 입력해 주세요.";
       missingFields.push("시간");
     }
+    if (!applicationDeadline) {
+      next.applicationDeadline = "신청 마감일을 입력해 주세요.";
+      missingFields.push("신청 마감일");
+    }
 
-    // 신청 마감일은 서버가 강연 날짜에서 계산하므로 여기서 검사할 값이 없습니다.
     const lectureDateTime =
       lectureDate && lectureTime
         ? parseLocalDateTime(`${lectureDate}T${lectureTime}`)
         : null;
+    const deadlineDateTime = applicationDeadline
+      ? parseLocalDateTime(applicationDeadline)
+      : null;
     const isDateChanged =
       lectureDate !== init.lectureDate || lectureTime !== init.lectureTime;
+    const isDeadlineChanged = applicationDeadline !== init.applicationDeadline;
 
     if (
       lectureDateTime &&
@@ -171,6 +191,47 @@ export function useLectureForm(
       next.lectureTime = "현재 날짜/시간 이후로 선택해 주세요.";
       dateToastMessage =
         "강연 날짜와 시간은 현재보다 이전으로 설정할 수 없습니다.";
+    }
+
+    if (
+      deadlineDateTime &&
+      isDeadlineChanged &&
+      deadlineDateTime.getTime() < Date.now()
+    ) {
+      next.applicationDeadline = "현재 날짜/시간 이후로 선택해 주세요.";
+      dateToastMessage =
+        dateToastMessage ??
+        "신청 마감일은 현재보다 이전으로 설정할 수 없습니다.";
+    }
+
+    // 신청은 16:20에 열립니다. 그전에 마감하면 아무도 신청할 수 없습니다.
+    const enrollmentOpenAt = getEnrollmentOpenAt(
+      enrollmentBasisAt ?? new Date().toISOString(),
+    );
+
+    if (
+      deadlineDateTime &&
+      isDeadlineChanged &&
+      enrollmentOpenAt &&
+      deadlineDateTime.getTime() <= enrollmentOpenAt.getTime()
+    ) {
+      const openText = formatEnrollmentOpenAt(enrollmentOpenAt);
+      next.applicationDeadline = `${openText} 이후로 선택해 주세요.`;
+      dateToastMessage =
+        dateToastMessage ??
+        `신청은 ${openText}부터 받습니다. 마감은 그 이후로 정해 주세요.`;
+    }
+
+    if (
+      lectureDateTime &&
+      deadlineDateTime &&
+      // 백엔드는 "마감 < 강연 시작"만 통과시킵니다. 같은 시각이면 거절이라 >= 입니다.
+      deadlineDateTime.getTime() >= lectureDateTime.getTime()
+    ) {
+      next.applicationDeadline = "신청 마감일은 강연 일시 이전이어야 합니다.";
+      dateToastMessage =
+        dateToastMessage ??
+        "신청 마감일은 강연 일시보다 이후로 설정할 수 없습니다.";
     }
 
     setErrors(next);
@@ -202,6 +263,7 @@ export function useLectureForm(
     lectureLocation: lectureLocation.trim(),
     lectureDate,
     lectureTime,
+    applicationDeadline,
     speakerIds: speakers.map((speaker) => speaker.userId),
   });
 
@@ -217,6 +279,7 @@ export function useLectureForm(
       lectureLocation,
       lectureDate,
       lectureTime,
+      applicationDeadline,
       speakers,
     },
     setters: {
@@ -229,6 +292,7 @@ export function useLectureForm(
       setLectureLocation,
       setLectureDate,
       setLectureTime,
+      setApplicationDeadline,
       setSpeakers,
     },
     errors,
