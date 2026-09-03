@@ -38,12 +38,14 @@ import Pencil from "@/assets/svg/Pencil";
 import Delete from "@/assets/svg/Delete";
 import DeadlineCountdown from "@/components/lecture/DeadlineCountdown";
 import useAuthStore from "@/stores/authStore";
+import type { EnrollmentStatusType } from "@/entities/lecture";
 import {
   getDisplayLectureStatus,
   useGetLecture,
   useEnrollLecture,
   useCancelEnrollment,
   useGetEnrollments,
+  useDecideEnrollment,
   useGetAttendances,
   useUpdateAttendances,
   useDeleteLecture,
@@ -65,6 +67,7 @@ import {
   usesGradeCapacity,
 } from "@/shared/lib/gradeCapacity";
 import { getApiErrorMessage } from "@/shared/lib/getApiErrorMessage";
+import { formatSpeakers } from "@/shared/lib/formatSpeakers";
 import {
   getEnrollmentStatus,
   isMyGradeFull as checkMyGradeFull,
@@ -98,6 +101,36 @@ export default function LectureDetailPage() {
   const { mutate: deleteLecture, isPending: isDeleting } = useDeleteLecture();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // 지금 처리 중인 대기자. 그 줄의 버튼만 잠가서 명단 전체가 멈추지 않게 합니다.
+  const [decidingUserId, setDecidingUserId] = useState<number | null>(null);
+  const { mutate: decideEnrollment } = useDecideEnrollment(lectureId, {
+    onSuccess: (_, variables) => {
+      setDecidingUserId(null);
+      toast.success(
+        variables.approved
+          ? "대기자를 수락했습니다."
+          : "대기 신청을 거절했습니다.",
+      );
+    },
+    onError: (error) => {
+      setDecidingUserId(null);
+      toast.error(
+        getApiErrorMessage(error, {
+          preferServerMessage: true,
+          statusMessages: {
+            400: "이미 처리된 신청입니다.",
+            403: "개설자와 학생회만 처리할 수 있습니다.",
+          },
+        }),
+      );
+    },
+  });
+
+  const handleDecide = (userId: number, approved: boolean) => {
+    setDecidingUserId(userId);
+    decideEnrollment({ userId, approved });
+  };
+
   // 카운트다운이 0에 닿는 순간 이 값이 켜지면서 신청 버튼이 풀립니다.
   const [hasEnrollmentOpened, setHasEnrollmentOpened] = useState(false);
   // 화면을 열어 둔 채 마감을 넘기면 버튼이 살아 있는 상태로 남아 서버가 거절합니다.
@@ -105,7 +138,7 @@ export default function LectureDetailPage() {
   const [hasDeadlinePassed, setHasDeadlinePassed] = useState(false);
 
   const [enrollResult, setEnrollResult] = useState<
-    "ENROLLED" | "WAITING" | "ERROR" | null
+    EnrollmentStatusType | "ERROR" | null
   >(null);
   // 서버도 16:20 이전 신청을 막습니다. "잠시 후 다시"로 뭉뚱그리면 언제 되는지
   // 알 수 없어서, 서버가 내려준 사유를 그대로 보여 줍니다.
@@ -153,15 +186,15 @@ export default function LectureDetailPage() {
   // 신청자/대기자 구분은 서버가 정합니다. 여기서는 순서만 그대로 받습니다.
   const roster = useMemo(() => toRoster(enrollments), [enrollments]);
 
-  const enrollStatus = useMemo<"ENROLLED" | "WAITING" | null>(() => {
+  const enrollStatus = useMemo<EnrollmentStatusType | null>(() => {
     // 서버가 내려준 내 신청 상태가 먼저입니다. 그다음이 명단, 마지막이 방금 누른 결과입니다.
     const mine = lecture?.myEnrollmentStatus;
-    if (mine === "ENROLLED" || mine === "WAITING") return mine;
+    if (mine) return mine;
 
+    // 거절된 신청은 명단에 없습니다. 명단으로는 ENROLLED/WAITING만 알 수 있습니다.
     const fromRoster = getEnrollmentStatus(roster, user?.userId);
     if (fromRoster) return fromRoster;
-    if (enrollResult === "ENROLLED" || enrollResult === "WAITING")
-      return enrollResult;
+    if (enrollResult && enrollResult !== "ERROR") return enrollResult;
     return null;
   }, [lecture, roster, enrollResult, user]);
 
@@ -170,6 +203,11 @@ export default function LectureDetailPage() {
   if (!lecture) return notFound();
 
   const isCreator = user?.userId === lecture.creatorId;
+  // 연사자는 자기 강연에 신청할 수 없습니다. 서버도 403으로 막습니다.
+  const isSpeaker =
+    lecture.speakers?.some((speaker) => speaker.userId === user?.userId) ??
+    false;
+  const canDecide = isCreator || isAdmin;
   const displayStatus = getDisplayLectureStatus(lecture);
 
   // 학생회 승인 전후. 아직 공개되지 않은 강연은 신청도 마감도 의미가 없어서,
@@ -214,6 +252,7 @@ export default function LectureDetailPage() {
       studentNumber: user?.studentNumber,
     });
   // 지금 누르면 신청자가 아니라 대기자로 들어가는 상태.
+  // 마감이 지나도 신청은 받습니다. 다만 무조건 대기로 서고 담당자가 수락해야 확정됩니다.
   const isWaitlistOnly = isFull || isMyGradeTaken;
   const myGrade = getUserGrade(user?.studentNumber);
   const isPast = displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED";
@@ -223,9 +262,9 @@ export default function LectureDetailPage() {
   const enrollmentOpenAt = getEnrollmentOpenAt(lecture.createdAt);
   const isBeforeEnrollmentOpen =
     !hasEnrollmentOpened && isBeforeOpen(enrollmentOpenAt);
-  // 마감이 지나면 서버가 신청을 거절합니다. 신청자가 10명을 넘겨 상태가 CONFIRMED로
-  // 남아 있어도 마찬가지라, 상태가 아닌 마감 시각을 보고 버튼을 닫습니다.
-  const isEnrollmentClosed =
+  // 마감이 지나도 신청은 막히지 않고 대기로만 들어갑니다. 상태가 CONFIRMED로 남아
+  // 있어도 마찬가지라, 상태가 아닌 마감 시각을 보고 문구를 바꿉니다.
+  const isAfterEnrollmentDeadline =
     hasDeadlinePassed || isAfterDeadline(lecture.applicationDeadline);
 
   const [deadlineDate, deadlineTime] = (
@@ -246,9 +285,7 @@ export default function LectureDetailPage() {
   ]
     .filter(Boolean)
     .join(" ");
-  const speakerText = lecture.creatorStudentNumber
-    ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
-    : lecture.creatorName;
+  const speakerText = formatSpeakers(lecture);
   // 강연자·일정·장소를 한 줄에 두되, 이름만 진하게 해서 시선이 먼저 걸리게 합니다.
   const metaParts = [
     { text: speakerText, strong: true },
@@ -264,9 +301,9 @@ export default function LectureDetailPage() {
     <Button variant="waiting" disabled className="w-full py-3">
       학생회 확인을 기다리는 중입니다
     </Button>
-  ) : isCreator ? (
+  ) : isCreator || isSpeaker ? (
     <Button variant="waiting" disabled className="w-full py-3">
-      내가 개설한 강연입니다
+      {isCreator ? "내가 개설한 강연입니다" : "내가 진행하는 강연입니다"}
     </Button>
   ) : isGradeCapacityBlocked ? (
     <Button variant="waiting" disabled className="w-full py-3">
@@ -280,14 +317,20 @@ export default function LectureDetailPage() {
     <Button variant="waiting" disabled className="w-full py-3">
       {formatEnrollmentOpenAt(enrollmentOpenAt)}부터 신청
     </Button>
+  ) : enrollStatus === "REJECTED" ? (
+    // 거절된 신청은 되돌릴 수 없습니다. 다시 신청해도 서버가 막습니다.
+    <Button variant="waiting" disabled className="w-full py-3">
+      신청이 거절되었습니다
+    </Button>
   ) : enrollStatus === "ENROLLED" || enrollStatus === "WAITING" ? (
     <>
       {/* 이미 신청한 사람에게는 버튼보다 지금 상태가 먼저 보여야 합니다. */}
       <p className="rounded-xl bg-main-soft py-2.5 text-center text-sm font-bold text-gray-900">
         {enrollStatus === "ENROLLED" ? "신청했습니다" : "대기 중입니다"}
       </p>
-      {/* 마감 뒤에는 명단이 확정됩니다. 서버도 취소를 받지 않습니다. */}
-      {isEnrollmentClosed ? (
+      {/* 마감 뒤에는 확정된 명단이 흔들리면 안 되므로 신청 취소만 막습니다.
+        아직 확정되지 않은 대기는 마감 뒤에도 스스로 뺄 수 있어야 합니다. */}
+      {enrollStatus === "ENROLLED" && isAfterEnrollmentDeadline ? (
         <p className="text-center text-xs text-gray-500">
           마감되어 취소할 수 없습니다.
         </p>
@@ -305,11 +348,12 @@ export default function LectureDetailPage() {
               : "대기 취소"}
         </Button>
       )}
+      {enrollStatus === "WAITING" && (
+        <p className="text-center text-xs text-gray-500">
+          개설자나 학생회가 수락하면 신청이 확정됩니다.
+        </p>
+      )}
     </>
-  ) : isEnrollmentClosed ? (
-    <Button variant="waiting" disabled className="w-full py-3">
-      신청이 마감되었습니다
-    </Button>
   ) : (
     <Button
       onClick={() => enrollLecture()}
@@ -318,7 +362,7 @@ export default function LectureDetailPage() {
     >
       {isEnrolling
         ? "신청하는 중"
-        : isWaitlistOnly
+        : isWaitlistOnly || isAfterEnrollmentDeadline
           ? "대기로 신청하기"
           : "신청하기"}
     </Button>
@@ -498,10 +542,18 @@ export default function LectureDetailPage() {
           <div className="mt-8 flex flex-col gap-2">
             {enrollAction}
             {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
-            {isMyGradeTaken && !enrollStatus && !isEnrollmentClosed && (
+            {!enrollStatus && isAfterEnrollmentDeadline ? (
               <p className="text-center text-xs text-gray-500">
-                {myGrade}학년 자리가 모두 차서 대기자로 등록됩니다.
+                마감 뒤 신청은 대기자로 등록되고, 개설자나 학생회가 수락해야
+                확정됩니다.
               </p>
+            ) : (
+              isMyGradeTaken &&
+              !enrollStatus && (
+                <p className="text-center text-xs text-gray-500">
+                  {myGrade}학년 자리가 모두 차서 대기자로 등록됩니다.
+                </p>
+              )
             )}
             {enrollResult === "ERROR" && (
               <p className="text-center text-sm text-error">
@@ -552,7 +604,14 @@ export default function LectureDetailPage() {
               waitingCount={waitingCount}
               applicants={roster.waiting}
               copyable={isAdmin}
+              // 대기자를 신청자로 올릴지는 개설자와 학생회가 정합니다.
+              onDecide={canDecide ? handleDecide : undefined}
+              decidingUserId={decidingUserId}
             />
+            {/* 거절 명단은 서버가 개설자·학생회에게만 내려줍니다. */}
+            {roster.rejected.length > 0 && (
+              <ApplicantList type="rejected" applicants={roster.rejected} />
+            )}
           </div>
         </div>
       </PageShell>

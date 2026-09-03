@@ -13,6 +13,7 @@ export const LECTURE_STATUS_LABEL = {
 export const ENROLLMENT_STATUS_LABEL = {
   ENROLLED: "신청 완료",
   WAITING: "대기 중",
+  REJECTED: "거절됨",
 } as const;
 
 export const LECTURE_APPROVAL_LABEL = {

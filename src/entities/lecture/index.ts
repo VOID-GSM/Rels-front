@@ -4,6 +4,8 @@ export type {
   GradeCapacities,
   EnrollmentStatusType,
   EnrollmentApplicant,
+  EnrollmentDecisionRequest,
+  LectureSpeaker,
   LectureEnrollmentsType,
   MyEnrolledLecture,
   MyCreatedLecture,
@@ -25,6 +27,7 @@ export { useEnrollLecture } from "./model/useEnrollLecture";
 export { useCancelEnrollment } from "./model/useCancelEnrollment";
 export { useCancelEnrollmentById } from "./model/useCancelEnrollmentById";
 export { useGetEnrollments } from "./model/useGetEnrollments";
+export { useDecideEnrollment } from "./model/useDecideEnrollment";
 export { useGetPendingLectures } from "./model/useGetPendingLectures";
 export { useUpdateLectureApproval } from "./model/useUpdateLectureApproval";
 export { useGetAttendances } from "./model/useGetAttendances";

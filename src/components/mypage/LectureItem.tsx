@@ -37,9 +37,16 @@ export default function LectureItem({
   const rejectionReason =
     isRejected && "rejectionReason" in lecture ? lecture.rejectionReason : null;
 
-  // 신청한 강연은 마감이 지나면 취소가 막힙니다. 개설한 강연의 삭제는 그대로 둡니다.
+  // 거절된 신청은 되돌릴 것이 없어서 취소 버튼 대신 결과만 보여 줍니다.
+  const isEnrollmentRejected =
+    "enrollmentStatus" in lecture && lecture.enrollmentStatus === "REJECTED";
+  // 마감 뒤에는 확정된 신청을 취소할 수 없습니다. 대기는 그대로 뺄 수 있습니다.
   const isCancelClosed =
-    "enrollmentStatus" in lecture && isAfterDeadline(lecture.applicationDeadline);
+    "enrollmentStatus" in lecture &&
+    lecture.enrollmentStatus === "ENROLLED" &&
+    isAfterDeadline(lecture.applicationDeadline);
+  // 연사자로 참여하는 강연도 이 목록에 섞여 옵니다. 삭제는 개설자만 할 수 있습니다.
+  const isSpeakerOnly = "creator" in lecture && lecture.creator === false;
 
   return (
     <li
@@ -77,9 +84,9 @@ export default function LectureItem({
           </span>
         )}
       </Link>
-      {isCancelClosed ? (
+      {isEnrollmentRejected || isSpeakerOnly || isCancelClosed ? (
         <span className="shrink-0 px-2 py-1 text-xs font-semibold text-gray-400">
-          마감
+          {isSpeakerOnly ? "연사자" : isEnrollmentRejected ? "거절됨" : "마감"}
         </span>
       ) : (
         <button

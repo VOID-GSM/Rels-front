@@ -65,12 +65,38 @@ export const isBeforeOpen = (openAt: Date | null): boolean =>
   openAt != null && Date.now() < openAt.getTime();
 
 /** "8월 27일 (목) 16:20" */
-export const formatEnrollmentOpenAt = (openAt: Date): string => {
-  const date = `${openAt.getFullYear()}-${pad(openAt.getMonth() + 1)}-${pad(
-    openAt.getDate(),
+export const formatDateTimeLabel = (value: Date): string => {
+  const date = `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(
+    value.getDate(),
   )}`;
 
-  return `${formatLectureDate(date)} ${pad(openAt.getHours())}:${pad(
-    openAt.getMinutes(),
+  return `${formatLectureDate(date)} ${pad(value.getHours())}:${pad(
+    value.getMinutes(),
   )}`;
+};
+
+export const formatEnrollmentOpenAt = formatDateTimeLabel;
+
+/**
+ * 신청 마감 시각. 서버가 강연 날짜에서 계산하는 규칙을 그대로 옮긴 것입니다.
+ * 강연이 있는 주의 월요일에서 나흘 전, 곧 그 전 주 목요일 23:59:59입니다.
+ *
+ * 개설 화면에서 마감일을 입력받지 않기 때문에, 날짜를 고르면 언제 마감되는지
+ * 미리 보여 주려고 씁니다. 판단은 서버가 내려준 applicationDeadline으로 합니다.
+ */
+export const getApplicationDeadline = (
+  lectureDate?: string | null,
+): Date | null => {
+  if (!lectureDate) return null;
+
+  const [year, month, day] = lectureDate.split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return null;
+
+  // getDay()는 일요일이 0이라 월요일 기준으로 며칠 지났는지로 바꿉니다.
+  const daysFromMonday = (date.getDay() + 6) % 7;
+
+  return new Date(year, month - 1, day - daysFromMonday - 4, 23, 59, 59);
 };

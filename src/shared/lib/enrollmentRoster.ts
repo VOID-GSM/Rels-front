@@ -21,14 +21,17 @@ type GradeCapacityMap =
 export interface EnrollmentRoster<T> {
   enrolled: T[];
   waiting: T[];
+  /** 거절된 신청. 개설자와 학생회에게만 오고, 그 외에는 비어 있습니다. */
+  rejected: T[];
 }
 
 /** 아직 명단을 못 받았을 때도 화면이 빈 배열로 돌아가도록 감싸 줍니다. */
 export const toRoster = <T>(
-  enrollments: { enrolled: T[]; waiting: T[] } | undefined,
+  enrollments: { enrolled: T[]; waiting: T[]; rejected?: T[] } | undefined,
 ): EnrollmentRoster<T> => ({
   enrolled: enrollments?.enrolled ?? [],
   waiting: enrollments?.waiting ?? [],
+  rejected: enrollments?.rejected ?? [],
 });
 
 export const getEnrollmentStatus = <T extends { userId: number }>(
