@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import useAuthStore from "@/stores/authStore";
+import { isTokenStorageEvent } from "@/shared/lib/tokenStorage";
 
 /** 로그인 없이 열 수 있는 유일한 경로입니다. 나머지는 전부 막습니다. */
 const PUBLIC_PATHS = ["/login", "/callback"];
@@ -22,11 +23,15 @@ export function isPublicPath(pathname: string | null) {
  *
  * 서버 렌더와 첫 클라이언트 렌더 모두 isSessionChecked가 false여서
  * 하이드레이션이 어긋나지 않습니다.
+ *
+ * 토큰은 탭끼리 공유되므로 다른 탭에서 로그아웃하거나 토큰이 재발급되면
+ * storage 이벤트를 받아 이 탭의 상태도 함께 맞춥니다.
  */
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const initFromSession = useAuthStore((s) => s.initFromSession);
+  const syncFromStorage = useAuthStore((s) => s.syncFromStorage);
   const isSessionChecked = useAuthStore((s) => s.isSessionChecked);
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
@@ -35,6 +40,18 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     initFromSession();
   }, [initFromSession]);
+
+  // storage 이벤트는 같은 오리진의 다른 탭에서만 날아옵니다.
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (!isTokenStorageEvent(event)) return;
+      syncFromStorage();
+    };
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [syncFromStorage]);
 
   useEffect(() => {
     if (isPublic || !isSessionChecked || isLoggedIn) return;
