@@ -1,8 +1,11 @@
 import { create } from "zustand";
 import type { UserInfoType } from "@/entities/auth/model/types";
-
-const SESSION_KEY = "accessToken";
-const REFRESH_KEY = "refreshToken";
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  saveTokens,
+} from "@/shared/lib/tokenStorage";
 
 interface AuthState {
   isLoggedIn: boolean;
@@ -16,6 +19,7 @@ interface AuthState {
   setUser: (user: UserInfoType) => void;
   clearAuth: () => void;
   initFromSession: () => string | null;
+  syncFromStorage: () => void;
 }
 
 const useAuthStore = create<AuthState>((set) => ({
@@ -26,8 +30,7 @@ const useAuthStore = create<AuthState>((set) => ({
   refreshToken: null,
 
   setTokens: (accessToken, refreshToken) => {
-    sessionStorage.setItem(SESSION_KEY, accessToken);
-    sessionStorage.setItem(REFRESH_KEY, refreshToken);
+    saveTokens(accessToken, refreshToken);
     set({
       isLoggedIn: true,
       isSessionChecked: true,
@@ -39,8 +42,7 @@ const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
 
   clearAuth: () => {
-    sessionStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(REFRESH_KEY);
+    clearTokens();
     set({
       isLoggedIn: false,
       isSessionChecked: true,
@@ -51,19 +53,43 @@ const useAuthStore = create<AuthState>((set) => ({
   },
 
   initFromSession: () => {
-    const token = sessionStorage.getItem(SESSION_KEY);
-    const refreshToken = sessionStorage.getItem(REFRESH_KEY);
+    const token = getAccessToken();
     set(
       token
         ? {
             isLoggedIn: true,
             isSessionChecked: true,
             accessToken: token,
-            refreshToken,
+            refreshToken: getRefreshToken(),
           }
         : { isSessionChecked: true },
     );
     return token;
+  },
+
+  /**
+   * 다른 탭에서 로그인·로그아웃·재발급이 일어났을 때 이 탭을 맞춥니다.
+   * 토큰이 사라졌으면 여기서도 로그아웃 상태로 내려야 AuthGuard가 화면을 접습니다.
+   * 저장소를 이미 반영한 결과를 읽는 것이라 clearAuth 대신 상태만 바꿉니다.
+   */
+  syncFromStorage: () => {
+    const token = getAccessToken();
+    set(
+      token
+        ? {
+            isLoggedIn: true,
+            isSessionChecked: true,
+            accessToken: token,
+            refreshToken: getRefreshToken(),
+          }
+        : {
+            isLoggedIn: false,
+            isSessionChecked: true,
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+          },
+    );
   },
 }));
 

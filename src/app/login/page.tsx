@@ -38,7 +38,7 @@ export default function LoginPage() {
   useEffect(() => {
     let isMounted = true;
 
-    // sessionStorage에 토큰이 남아 있어도 만료됐을 수 있습니다.
+    // 저장소에 토큰이 남아 있어도 만료됐을 수 있습니다.
     // 검증 없이 홈으로 보내면 만료 토큰일 때 홈과 로그인 사이에 갇히므로
     // /api/auth/me로 확인한 뒤에만 이동합니다.
     const verifySession = async () => {
