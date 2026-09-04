@@ -1,5 +1,6 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import useAuthStore from "@/stores/authStore";
+import { getAccessToken, getRefreshToken } from "@/shared/lib/tokenStorage";
 import type { OAuthSignInType } from "@/entities/auth/model/types";
 
 // 토큰 유효성 자체를 확인하는 경로. 이 경로의 403만 세션 만료로 취급합니다.
@@ -22,9 +23,9 @@ const axiosInstance = axios.create({
   },
 });
 
-// 요청마다 sessionStorage의 accessToken을 Authorization 헤더에 자동 주입
+// 요청마다 저장된 accessToken을 Authorization 헤더에 자동 주입
 axiosInstance.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem("accessToken");
+  const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -47,7 +48,7 @@ const refreshClient = axios.create({
 let refreshPromise: Promise<string> | null = null;
 
 const requestNewToken = async () => {
-  const refreshToken = sessionStorage.getItem("refreshToken");
+  const refreshToken = getRefreshToken();
   if (!refreshToken) {
     throw new Error("refreshToken이 없습니다.");
   }
@@ -82,13 +83,13 @@ axiosInstance.interceptors.response.use(
       status === 401 ||
       (status === 403 && requestUrl.startsWith(AUTH_VERIFY_PATH));
 
-    if (!isSessionExpired || !sessionStorage.getItem("accessToken")) {
+    if (!isSessionExpired || !getAccessToken()) {
       return Promise.reject(error);
     }
 
     // 만료된 accessToken은 refreshToken으로 되살릴 수 있습니다.
     // 재발급에 성공하면 원래 요청을 새 토큰으로 한 번 더 보냅니다.
-    if (config && !config._retried && sessionStorage.getItem("refreshToken")) {
+    if (config && !config._retried && getRefreshToken()) {
       config._retried = true;
 
       try {
