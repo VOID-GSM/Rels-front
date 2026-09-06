@@ -63,7 +63,7 @@ import {
 } from "@/shared/lib/enrollmentWindow";
 import {
   getUserGrade,
-  isGradeCapacityBlocked as checkGradeCapacityBlocked,
+  hasNoGradeSeat as checkNoGradeSeat,
   usesGradeCapacity,
 } from "@/shared/lib/gradeCapacity";
 import { getApiErrorMessage } from "@/shared/lib/getApiErrorMessage";
@@ -230,8 +230,8 @@ export default function LectureDetailPage() {
     lecture.totalCapacity,
     lecture.capacityByGrade,
   );
-  // 내 학년에 애초에 배정된 자리가 있는지. 자리가 0이면 대기도 받지 않습니다.
-  const isGradeCapacityBlocked = checkGradeCapacityBlocked({
+  // 내 학년에 배정된 자리가 아예 없는 강연인지. 신청을 막지는 않고 대기로 받습니다.
+  const hasNoGradeSeat = checkNoGradeSeat({
     totalCapacity: lecture.totalCapacity,
     capacityByGrade: lecture.capacityByGrade,
     studentNumber: user?.studentNumber,
@@ -254,7 +254,7 @@ export default function LectureDetailPage() {
     });
   // 지금 누르면 신청자가 아니라 대기자로 들어가는 상태.
   // 마감이 지나도 신청은 받습니다. 다만 무조건 대기로 서고 담당자가 수락해야 확정됩니다.
-  const isWaitlistOnly = isFull || isMyGradeTaken;
+  const isWaitlistOnly = isFull || isMyGradeTaken || hasNoGradeSeat;
   const myGrade = getUserGrade(user?.studentNumber);
   // 신청을 닫는 것은 끝난 강연뿐입니다. 정원이 덜 찬 채로 마감된 강연(개설
   // 불확정)도 대기 신청은 계속 받습니다.
@@ -315,10 +315,6 @@ export default function LectureDetailPage() {
   ) : isCreator || isSpeaker ? (
     <Button variant="waiting" disabled className="w-full py-3">
       {isCreator ? "내가 개설한 강연입니다" : "내가 진행하는 강연입니다"}
-    </Button>
-  ) : isGradeCapacityBlocked ? (
-    <Button variant="waiting" disabled className="w-full py-3">
-      다른 학년만 신청할 수 있습니다
     </Button>
   ) : isLectureEnded ? (
     <Button variant="waiting" disabled className="w-full py-3">
@@ -556,6 +552,10 @@ export default function LectureDetailPage() {
             {!enrollStatus && isAfterEnrollmentDeadline ? (
               <p className="text-center text-xs text-gray-500">
                 마감 뒤 신청은 대기자로 등록되고, 학생회가 수락해야 확정됩니다.
+              </p>
+            ) : !enrollStatus && hasNoGradeSeat ? (
+              <p className="text-center text-xs text-gray-500">
+                {myGrade}학년에 배정된 자리가 없어 대기자로 등록됩니다.
               </p>
             ) : (
               isMyGradeTaken &&

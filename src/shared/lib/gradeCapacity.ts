@@ -33,10 +33,11 @@ interface GradeCapacityBlockParams {
 /**
  * 내 학년에는 애초에 자리를 배정하지 않은 강연인지.
  *
- * 자리가 배정돼 있는데 같은 학년이 다 채운 경우는 여기서 막지 않습니다.
- * 그때는 그 학년 대기로 신청할 수 있습니다.
+ * 자리가 없다고 신청을 막지는 않습니다. 서버도 대기로 받아 두고, 마감 뒤에
+ * 학생회가 수락하면 그때 신청자가 됩니다. 자동 승급 대상만 아닐 뿐입니다.
+ * 자리가 배정돼 있는데 같은 학년이 다 채운 경우는 isMyGradeFull이 봅니다.
  */
-export const isGradeCapacityBlocked = ({
+export const hasNoGradeSeat = ({
   totalCapacity,
   capacityByGrade,
   studentNumber,
