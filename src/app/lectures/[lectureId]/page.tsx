@@ -56,9 +56,9 @@ import {
   formatLectureTime,
 } from "@/shared/lib/formatLectureSchedule";
 import {
-  getEnrollmentOpenAt,
+  getLectureEnrollmentOpenAt,
   formatEnrollmentOpenAt,
-  isBeforeOpen,
+  isBeforeEnrollmentOpen as checkBeforeEnrollmentOpen,
   isAfterDeadline,
 } from "@/shared/lib/enrollmentWindow";
 import {
@@ -257,15 +257,21 @@ export default function LectureDetailPage() {
   const myGrade = getUserGrade(user?.studentNumber);
   const isPast = displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED";
 
-  // 신청은 7교시가 끝나는 16:20부터 받습니다. 백엔드에 신청 시작 필드가 없어서
-  // 개설 시각에서 계산합니다.
-  const enrollmentOpenAt = getEnrollmentOpenAt(lecture.createdAt);
-  const isBeforeEnrollmentOpen =
-    !hasEnrollmentOpened && isBeforeOpen(enrollmentOpenAt);
+  // 신청은 7교시가 끝나는 16:20부터 받습니다. 개설한 날이 아니라 학생회가
+  // 수락한 날이 기준입니다.
+  const enrollmentOpenAt = getLectureEnrollmentOpenAt(lecture);
   // 마감이 지나도 신청은 막히지 않고 대기로만 들어갑니다. 상태가 CONFIRMED로 남아
   // 있어도 마찬가지라, 상태가 아닌 마감 시각을 보고 문구를 바꿉니다.
   const isAfterEnrollmentDeadline =
     hasDeadlinePassed || isAfterDeadline(lecture.applicationDeadline);
+  // 마감됐거나 이미 신청자가 있으면 신청 시작 시각 계산이 틀린 것이므로 믿지 않습니다.
+  const isBeforeEnrollmentOpen =
+    !hasEnrollmentOpened &&
+    checkBeforeEnrollmentOpen({
+      openAt: enrollmentOpenAt,
+      isClosed: isAfterEnrollmentDeadline,
+      hasEnrollments: enrolledCount + waitingCount > 0,
+    });
 
   const [deadlineDate, deadlineTime] = (
     lecture.applicationDeadline ?? ""

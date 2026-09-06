@@ -1,6 +1,13 @@
 export type LectureStatusType = "OPEN" | "CONFIRMED" | "CLOSED" | "UNCONFIRMED";
 
 /**
+ * 서버가 실제로 내려주는 상태값입니다. 백엔드 enum은 CLOSED가 아니라 CLOSE라서,
+ * 화면에 쓰기 전에 normalizeLectureStatus로 LectureStatusType에 맞춰 옮깁니다.
+ * 원본을 그대로 상태 맵의 키로 쓰면 값이 없어 화면이 통째로 죽습니다.
+ */
+export type RawLectureStatusType = LectureStatusType | "CLOSE";
+
+/**
  * 내 신청 상태. 신청하지 않았으면 서버가 null로 내려줍니다.
  * REJECTED는 대기자였다가 개설자나 학생회가 거절한 경우입니다.
  */
@@ -61,7 +68,7 @@ export interface LectureEnrollmentsType {
 export interface MyEnrolledLecture {
   lectureId: number;
   title: string;
-  lectureStatus: LectureStatusType;
+  lectureStatus: RawLectureStatusType;
   enrollmentStatus: "ENROLLED" | "WAITING" | string;
   creatorName: string;
   creatorStudentNumber?: string;
@@ -77,7 +84,7 @@ export interface MyCreatedLecture {
   title: string;
   /** 내가 개설자인지. false면 연사자로 참여하는 강연입니다. */
   creator?: boolean;
-  lectureStatus: LectureStatusType;
+  lectureStatus: RawLectureStatusType;
   /** 백엔드 응답에 아직 없습니다. 내려오기 시작하면 화면이 저절로 켜집니다. */
   approvalStatus?: LectureApprovalStatusType;
   /** 거절된 강연에만 옵니다. 이것도 아직 응답에 없습니다. */
@@ -109,7 +116,7 @@ export interface LectureType {
   creatorStudentNumber?: string;
   /** 개설자를 포함한 연사자 목록입니다. */
   speakers?: LectureSpeaker[];
-  lectureStatus: LectureStatusType;
+  lectureStatus: RawLectureStatusType;
   /** 백엔드 응답에 아직 없습니다. 내려오기 시작하면 화면이 저절로 켜집니다. */
   approvalStatus?: LectureApprovalStatusType;
   /** 거절된 강연에만 옵니다. 이것도 아직 응답에 없습니다. */
@@ -120,11 +127,11 @@ export interface LectureType {
   waitingCount: number;
   /** 목록 응답에는 없고 상세 응답에만 옵니다. */
   myEnrollmentStatus?: EnrollmentStatusType | null;
+  /** 학생회가 수락한 시각. 신청이 열리는 시각을 여기서 셉니다. 수락 전에는 null입니다. */
+  approvedAt?: string | null;
   lectureLocation: string | null;
   lectureDate: string | null;
   lectureTime: string | null;
   applicationDeadline?: string | null;
   createdAt: string;
-  /** 학생회가 승인한 시각. 승인 전이면 비어 있습니다. */
-  approvedAt?: string | null;
 }

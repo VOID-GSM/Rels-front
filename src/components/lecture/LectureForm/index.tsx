@@ -263,9 +263,10 @@ export default function LectureForm({
             }}
             error={errors.applicationDeadline}
           />
-          {/* 신청 시작은 입력받지 않고 승인 시각에서 자동으로 정해집니다. */}
+          {/* 신청 시작은 입력받지 않고 학생회가 수락한 시각에서 자동으로 정해집니다. */}
           <p className="text-xs text-gray-500">
-            신청은 7교시가 끝나는 {ENROLLMENT_OPEN_TIME}부터 받습니다.
+            신청은 학생회가 수락한 날, 7교시가 끝나는 {ENROLLMENT_OPEN_TIME}부터
+            받습니다.
           </p>
           <p className="text-xs text-gray-500">
             마감 뒤에 들어온 신청은 대기자로 서고, 개설자나 학생회가 수락해야
