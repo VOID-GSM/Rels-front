@@ -255,7 +255,8 @@ export default function ThisWeekPage() {
   const isSpeaker =
     lecture.speakers?.some((speaker) => speaker.userId === user?.userId) ??
     false;
-  const canDecide = isCreator || isAdmin;
+  // 상세 화면과 같습니다. 수락·거절은 학생회만 할 수 있습니다.
+  const canDecide = isAdmin;
   const otherCount = lectures.length - 1;
 
   // 상세 페이지와 같은 규칙입니다. 신청은 개설한 날이 아니라 학생회가 수락한 날
@@ -454,7 +455,7 @@ export default function ThisWeekPage() {
             )}
             {enrollStatus === "WAITING" && (
               <p className="text-center text-xs text-gray-500">
-                개설자나 학생회가 수락하면 신청이 확정됩니다.
+                학생회가 수락하면 신청이 확정됩니다.
               </p>
             )}
           </>
@@ -475,8 +476,7 @@ export default function ThisWeekPage() {
         {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
         {!enrollStatus && isAfterEnrollmentDeadline ? (
           <p className="text-center text-xs text-gray-500">
-            마감 뒤 신청은 대기자로 등록되고, 개설자나 학생회가 수락해야
-            확정됩니다.
+            마감 뒤 신청은 대기자로 등록되고, 학생회가 수락해야 확정됩니다.
           </p>
         ) : (
           isMyGradeTaken &&
