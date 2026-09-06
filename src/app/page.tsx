@@ -415,6 +415,12 @@ export default function ThisWeekPage() {
           <Button variant="waiting" disabled className="w-full py-3">
             {isCreator ? "내가 개설한 강연입니다" : "내가 진행하는 강연입니다"}
           </Button>
+        ) : displayStatus === "CLOSED" ? (
+          // 화면을 열어 둔 채 강연 시각을 넘기면 고른 강연은 그대로 남습니다.
+          // 서버는 종료된 강연의 신청을 받지 않으므로 여기서도 닫습니다.
+          <Button variant="waiting" disabled className="w-full py-3">
+            강연 종료
+          </Button>
         ) : isBeforeEnrollmentOpen && enrollmentOpenAt ? (
           <Button variant="waiting" disabled className="w-full py-3">
             {formatEnrollmentOpenAt(enrollmentOpenAt)}부터 신청
