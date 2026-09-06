@@ -14,6 +14,7 @@ import {
   LECTURE_STATUS_TO_BADGE,
   LECTURE_STATUS_SORT_ORDER,
 } from "@/constants/lecture";
+import { formatSpeakers } from "@/shared/lib/formatSpeakers";
 
 type LectureCategoryKey = "all" | "open" | "confirmed" | "past";
 
@@ -61,11 +62,7 @@ function LectureGrid({ lectures }: { lectures: LectureType[] }) {
           key={lecture.lectureId}
           id={String(lecture.lectureId)}
           title={lecture.title}
-          speaker={
-            lecture.creatorStudentNumber
-              ? `${lecture.creatorStudentNumber} ${lecture.creatorName}`
-              : lecture.creatorName
-          }
+          speaker={formatSpeakers(lecture)}
           status={LECTURE_STATUS_TO_BADGE[getDisplayLectureStatus(lecture)]}
           currentCount={lecture.enrolledCount}
           maxCount={getTotalCapacity(lecture)}

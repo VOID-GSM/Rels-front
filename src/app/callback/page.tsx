@@ -15,7 +15,7 @@ const OAUTH_EXCHANGE_TIMEOUT_MS = 60000;
 function CallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setAuth, clearAuth } = useAuthStore();
+  const { setTokens, setUser, clearAuth } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
   const called = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -34,17 +34,18 @@ function CallbackContent() {
           throw new Error("code 또는 state가 없습니다.");
         }
 
-        const { accessToken } = await get<OAuthSignInType>(
+        const { accessToken, refreshToken } = await get<OAuthSignInType>(
           authUrls.dgCallback(code, state),
           { timeout: OAUTH_EXCHANGE_TIMEOUT_MS },
         );
 
-        // 토큰을 sessionStorage에 먼저 저장 (axios 인터셉터가 읽을 수 있게)
-        sessionStorage.setItem("accessToken", accessToken);
+        // 토큰을 먼저 저장합니다. 바로 아래 요청부터 axios 인터셉터가 읽어 가고,
+        // accessToken이 만료됐을 때 refreshToken으로 재발급할 수 있게 됩니다.
+        setTokens(accessToken, refreshToken);
 
         const user = await get<UserInfoType>(authUrl.getUserInfo());
 
-        setAuth(accessToken, user);
+        setUser(user);
 
         router.replace("/");
       } catch (err) {
@@ -81,7 +82,7 @@ function CallbackContent() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [searchParams, setAuth, clearAuth, router]);
+  }, [searchParams, setTokens, setUser, clearAuth, router]);
 
   if (error) {
     return (

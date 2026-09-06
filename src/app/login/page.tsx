@@ -31,14 +31,14 @@ const SLIDE_INTERVAL = 5000;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { initFromSession, clearAuth, setAuth } = useAuthStore();
+  const { initFromSession, clearAuth, setUser } = useAuthStore();
   const [isChecking, setIsChecking] = useState(true);
   const [slideIndex, setSlideIndex] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
 
-    // sessionStorage에 토큰이 남아 있어도 만료됐을 수 있습니다.
+    // 저장소에 토큰이 남아 있어도 만료됐을 수 있습니다.
     // 검증 없이 홈으로 보내면 만료 토큰일 때 홈과 로그인 사이에 갇히므로
     // /api/auth/me로 확인한 뒤에만 이동합니다.
     const verifySession = async () => {
@@ -51,7 +51,9 @@ export default function LoginPage() {
 
       try {
         const user = await get<UserInfoType>(authUrl.getUserInfo());
-        setAuth(token, user);
+        // 이 요청 도중 토큰이 재발급됐을 수 있으므로 token을 다시 쓰지 않습니다.
+        // 저장은 인터셉터가 이미 끝냈고, 여기서는 유저 정보만 채웁니다.
+        setUser(user);
         router.replace("/");
       } catch {
         clearAuth();
@@ -64,7 +66,7 @@ export default function LoginPage() {
     return () => {
       isMounted = false;
     };
-  }, [initFromSession, clearAuth, setAuth, router]);
+  }, [initFromSession, clearAuth, setUser, router]);
 
   // 자동 전환은 장식일 뿐이라 모션을 줄인 사용자에게는 돌리지 않습니다.
   useEffect(() => {

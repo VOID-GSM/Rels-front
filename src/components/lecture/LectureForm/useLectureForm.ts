@@ -12,6 +12,7 @@ import {
   getEnrollmentOpenAt,
   formatEnrollmentOpenAt,
 } from "@/shared/lib/enrollmentWindow";
+import type { UserSummary } from "@/entities/user";
 import type { LectureFormValues, LectureFormData, FormErrors } from "./types";
 
 const DEFAULT_VALUES: LectureFormValues = {
@@ -26,6 +27,7 @@ const DEFAULT_VALUES: LectureFormValues = {
   lectureDate: "",
   lectureTime: "",
   applicationDeadline: "",
+  speakers: [],
 };
 
 const parseLocalDateTime = (value: string) => {
@@ -36,8 +38,11 @@ const parseLocalDateTime = (value: string) => {
 export function useLectureForm(
   initialValues?: Partial<LectureFormValues>,
   forceCapacityMode?: "total" | "grade",
-  /** 수정 화면에서만 넘깁니다. 새로 만들 때는 지금 시각이 개설 시각입니다. */
-  createdAt?: string | null,
+  /**
+   * 신청 오픈 16:20을 세는 기준 시각입니다. 학생회 승인 시각이고, 승인 전이면
+   * 개설 시각입니다. 새로 만들 때는 넘기지 않으면 지금 시각으로 봅니다.
+   */
+  enrollmentBasisAt?: string | null,
 ) {
   const init = { ...DEFAULT_VALUES, ...initialValues };
 
@@ -58,6 +63,7 @@ export function useLectureForm(
   const [applicationDeadline, setApplicationDeadline] = useState(
     init.applicationDeadline ?? "",
   );
+  const [speakers, setSpeakers] = useState<UserSummary[]>(init.speakers ?? []);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const clearError = (key: keyof FormErrors) => {
@@ -200,7 +206,7 @@ export function useLectureForm(
 
     // 신청은 16:20에 열립니다. 그전에 마감하면 아무도 신청할 수 없습니다.
     const enrollmentOpenAt = getEnrollmentOpenAt(
-      createdAt ?? new Date().toISOString(),
+      enrollmentBasisAt ?? new Date().toISOString(),
     );
 
     if (
@@ -219,7 +225,8 @@ export function useLectureForm(
     if (
       lectureDateTime &&
       deadlineDateTime &&
-      deadlineDateTime.getTime() > lectureDateTime.getTime()
+      // 백엔드는 "마감 < 강연 시작"만 통과시킵니다. 같은 시각이면 거절이라 >= 입니다.
+      deadlineDateTime.getTime() >= lectureDateTime.getTime()
     ) {
       next.applicationDeadline = "신청 마감일은 강연 일시 이전이어야 합니다.";
       dateToastMessage =
@@ -257,6 +264,7 @@ export function useLectureForm(
     lectureDate,
     lectureTime,
     applicationDeadline,
+    speakerIds: speakers.map((speaker) => speaker.userId),
   });
 
   return {
@@ -272,6 +280,7 @@ export function useLectureForm(
       lectureDate,
       lectureTime,
       applicationDeadline,
+      speakers,
     },
     setters: {
       setTitle,
@@ -284,6 +293,7 @@ export function useLectureForm(
       setLectureDate,
       setLectureTime,
       setApplicationDeadline,
+      setSpeakers,
     },
     errors,
     clearError,

@@ -5,9 +5,11 @@ export interface OAuthSignInReqType {
   codeVerifier: string;
 }
 
-// 토큰 교환 성공 응답 타입
+// 토큰 교환 / 재발급 성공 응답 타입
+// 재발급은 refreshToken도 새로 발급(회전)해 내려주므로 응답 형태가 같습니다.
 export interface OAuthSignInType {
   accessToken: string;
+  refreshToken: string;
 }
 
 // 계정 역할 타입 (관리자 / 일반 유저)

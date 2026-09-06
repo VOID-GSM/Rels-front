@@ -7,9 +7,11 @@ import BackLink from "@/components/layout/BackLink";
 import LectureForm from "@/components/lecture/LectureForm";
 import type { LectureFormData } from "@/components/lecture/LectureForm";
 import { useCreateLecture } from "@/entities/lecture";
+import useAuthStore from "@/stores/authStore";
 
 export default function CreateLecturePage() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const { mutate: createLecture, isPending } = useCreateLecture();
 
   const handleSubmit = (data: LectureFormData) => {
@@ -37,6 +39,7 @@ export default function CreateLecturePage() {
         onSubmit={handleSubmit}
         isPending={isPending}
         submitLabel="강연 개설"
+        creatorId={user?.userId}
       />
     </PageShell>
   );

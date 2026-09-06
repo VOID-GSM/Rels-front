@@ -33,6 +33,8 @@ const getEnrollments = async (id: number): Promise<LectureEnrollmentsType> => {
     ...enrollments,
     enrolled: sortByRequestedAt(enrollments.enrolled),
     waiting: sortByRequestedAt(enrollments.waiting),
+    // 거절 명단은 개설자·학생회에게만 오고, 그 외에는 비어 있습니다.
+    rejected: sortByRequestedAt(enrollments.rejected ?? []),
   };
 };
 

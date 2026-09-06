@@ -2,9 +2,10 @@
 
 import Input from "@/components/common/Input";
 import Button from "@/components/common/Button";
-import CharCountTextArea from "@/components/common/CharCountTextArea";
+import MarkdownTextArea from "@/components/common/MarkdownTextArea";
 import TimeField from "@/components/common/TimeField";
 import DateTimeField from "@/components/common/DateTimeField";
+import SpeakerPicker from "@/components/lecture/SpeakerPicker";
 import FormSection, { FormActions } from "@/components/layout/FormSection";
 import { useLectureForm } from "./useLectureForm";
 import { ENROLLMENT_OPEN_TIME } from "@/shared/lib/enrollmentWindow";
@@ -23,8 +24,13 @@ interface LectureFormProps {
   submitLabel: string;
   extraAction?: React.ReactNode;
   forceCapacityMode?: "total" | "grade";
-  /** 수정 화면에서만 넘깁니다. 신청이 열리는 시각을 계산하는 데 씁니다. */
-  createdAt?: string | null;
+  /** 개설자 본인. 이미 연사자라서 연사자 검색 결과에서 걸러 냅니다. */
+  creatorId?: number;
+  /**
+   * 신청 오픈 16:20을 세는 기준 시각입니다. 학생회 승인 시각이고, 승인 전이면
+   * 개설 시각입니다. 새로 만들 때는 넘기지 않으면 지금 시각으로 봅니다.
+   */
+  enrollmentBasisAt?: string | null;
 }
 
 export default function LectureForm({
@@ -34,7 +40,8 @@ export default function LectureForm({
   submitLabel,
   extraAction,
   forceCapacityMode,
-  createdAt,
+  creatorId,
+  enrollmentBasisAt,
 }: LectureFormProps) {
   const {
     values,
@@ -44,7 +51,7 @@ export default function LectureForm({
     handleModeChange,
     validate,
     buildSubmitData,
-  } = useLectureForm(initialValues, forceCapacityMode, createdAt);
+  } = useLectureForm(initialValues, forceCapacityMode, enrollmentBasisAt);
 
   const {
     title,
@@ -58,6 +65,7 @@ export default function LectureForm({
     lectureDate,
     lectureTime,
     applicationDeadline,
+    speakers,
   } = values;
 
   const {
@@ -71,6 +79,7 @@ export default function LectureForm({
     setLectureDate,
     setLectureTime,
     setApplicationDeadline,
+    setSpeakers,
   } = setters;
 
   const handleSubmit = () => {
@@ -101,9 +110,9 @@ export default function LectureForm({
           </p>
         </div>
 
-        <CharCountTextArea
+        <MarkdownTextArea
           label="강연 내용"
-          placeholder="다룰 주제, 준비물, 미리 알아두면 좋은 것을 적어 주세요."
+          placeholder="다룰 주제, 준비물, 미리 알아두면 좋은 것을 적어 주세요. 마크다운을 쓸 수 있습니다."
           value={description}
           maxLength={DESCRIPTION_MAX_LENGTH}
           rows={7}
@@ -112,6 +121,12 @@ export default function LectureForm({
             clearError("description");
           }}
           error={errors.description}
+        />
+
+        <SpeakerPicker
+          speakers={speakers}
+          onChange={setSpeakers}
+          excludeUserId={creatorId}
         />
       </FormSection>
 
@@ -252,6 +267,10 @@ export default function LectureForm({
           <p className="text-xs text-gray-500">
             신청은 학생회가 수락한 날, 7교시가 끝나는 {ENROLLMENT_OPEN_TIME}부터
             받습니다.
+          </p>
+          <p className="text-xs text-gray-500">
+            마감 뒤에 들어온 신청은 대기자로 서고, 개설자나 학생회가 수락해야
+            확정됩니다.
           </p>
         </div>
       </FormSection>

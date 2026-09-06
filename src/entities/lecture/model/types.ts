@@ -7,8 +7,23 @@ export type LectureStatusType = "OPEN" | "CONFIRMED" | "CLOSED" | "UNCONFIRMED";
  */
 export type RawLectureStatusType = LectureStatusType | "CLOSE";
 
-/** 내 신청 상태. 신청하지 않았으면 서버가 null로 내려줍니다. */
-export type EnrollmentStatusType = "ENROLLED" | "WAITING";
+/**
+ * 내 신청 상태. 신청하지 않았으면 서버가 null로 내려줍니다.
+ * REJECTED는 대기자였다가 개설자나 학생회가 거절한 경우입니다.
+ */
+export type EnrollmentStatusType = "ENROLLED" | "WAITING" | "REJECTED";
+
+/** 함께 강연하는 사람들. 서버가 개설자까지 포함해서 내려줍니다. */
+export interface LectureSpeaker {
+  userId: number;
+  name: string;
+  studentNumber: string;
+}
+
+/** 대기자 한 명에 대한 수락/거절. */
+export interface EnrollmentDecisionRequest {
+  approved: boolean;
+}
 
 export interface EnrollmentApplicant {
   userId: number;
@@ -46,6 +61,8 @@ export interface LectureEnrollmentsType {
   lectureId: number;
   enrolled: EnrollmentApplicant[];
   waiting: EnrollmentApplicant[];
+  /** 거절된 신청. 개설자와 학생회에게만 내려오고, 그 외에는 빈 배열입니다. */
+  rejected: EnrollmentApplicant[];
 }
 
 export interface MyEnrolledLecture {
@@ -65,6 +82,8 @@ export interface MyEnrolledLecture {
 export interface MyCreatedLecture {
   lectureId: number;
   title: string;
+  /** 내가 개설자인지. false면 연사자로 참여하는 강연입니다. */
+  creator?: boolean;
   lectureStatus: RawLectureStatusType;
   /** 백엔드 응답에 아직 없습니다. 내려오기 시작하면 화면이 저절로 켜집니다. */
   approvalStatus?: LectureApprovalStatusType;
@@ -95,6 +114,8 @@ export interface LectureType {
   creatorId: number;
   creatorName: string;
   creatorStudentNumber?: string;
+  /** 개설자를 포함한 연사자 목록입니다. */
+  speakers?: LectureSpeaker[];
   lectureStatus: RawLectureStatusType;
   /** 백엔드 응답에 아직 없습니다. 내려오기 시작하면 화면이 저절로 켜집니다. */
   approvalStatus?: LectureApprovalStatusType;

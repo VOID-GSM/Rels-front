@@ -14,6 +14,11 @@ export const lectureQueryKeys = {
   getMyEnrollments: () => [...lectureQueryKeys.all, "enrollments", "me"] as const,
 };
 
+export const userQueryKeys = {
+  all: ["users"] as const,
+  search: (keyword: string) => [...userQueryKeys.all, "search", keyword] as const,
+};
+
 export const notificationQueryKeys = {
   all: ["notification"] as const,
 };
