@@ -12,6 +12,7 @@ import MarkdownContent from "@/components/common/MarkdownContent";
 import { toast } from "sonner";
 import SeatMeter from "@/components/lecture/SeatMeter";
 import DeadlineCountdown from "@/components/lecture/DeadlineCountdown";
+import LectureSwitcher from "@/components/lecture/LectureSwitcher";
 import PageShell from "@/components/layout/PageShell";
 import CreateLectureButton from "@/components/lecture/CreateLectureButton";
 import useAuthStore from "@/stores/authStore";
@@ -70,11 +71,14 @@ const AttendanceList = dynamic(
 );
 
 /**
- * 이번 주에 결정할 강연 하나를 고릅니다.
- * 아직 신청을 받는 강연 중 마감이 가장 가까운 것을 쓰고, 그런 강연이 없으면
- * 열려는 있지만 마감만 지난 것 중 가장 가까운 것을 씁니다.
+ * 이번 주에 결정할 강연들을 보여 줄 순서대로 골라 냅니다.
+ * 아직 신청을 받는 강연이 앞에 서고, 열려는 있지만 마감만 지난 강연이 뒤에 붙습니다.
+ * 각 묶음 안에서는 마감이 가까운 순입니다.
+ * 첫 번째가 스포트라이트에 서고 나머지는 전환 칩으로 남습니다. 예전에는 마감 전
+ * 강연이 하나라도 있으면 나머지를 버렸지만, 같은 주에 강연이 여러 개 열리면
+ * 버려진 쪽이 첫 화면에서 아예 사라지기 때문에 뒤로 붙여만 둡니다.
  */
-function pickFeatured(lectures: LectureType[]) {
+function getLiveLectures(lectures: LectureType[]) {
   const live = lectures.filter((l) => {
     // 승인 전이거나 거절된 강연이 목록에 섞여 오면(개설자·학생회 시점) 첫 화면
     // 전체를 차지해 버립니다. 이번 주 강연은 공개된 것 중에서만 고릅니다.
@@ -84,16 +88,34 @@ function pickFeatured(lectures: LectureType[]) {
     const status = getDisplayLectureStatus(l);
     return status === "OPEN" || status === "CONFIRMED";
   });
-  if (live.length === 0) return null;
 
-  const key = (l: LectureType) =>
-    new Date(l.applicationDeadline ?? l.lectureDate ?? "9999-12-31").getTime();
+  // 날짜가 비어 있거나("" 는 ?? 가 거르지 못합니다) 깨져 오면 getTime()이 NaN이라
+  // 비교가 전부 false가 됩니다. 그대로 두면 어느 묶음에도 못 들어가 목록에서
+  // 통째로 빠지고, 그 강연 하나뿐이면 첫 화면이 비어 버립니다.
+  const key = (l: LectureType) => {
+    const time = new Date(
+      l.applicationDeadline ?? l.lectureDate ?? "9999-12-31",
+    ).getTime();
+    return Number.isNaN(time) ? Infinity : time;
+  };
+  // Infinity끼리 빼면 NaN이라 정렬이 흔들립니다. 크기만 비교합니다.
+  const byDeadline = (a: LectureType, b: LectureType) => {
+    const [ka, kb] = [key(a), key(b)];
+    if (ka === kb) return 0;
+    return ka < kb ? -1 : 1;
+  };
 
   const now = Date.now();
-  const stillTakingApplications = live.filter((l) => key(l) > now);
-  const pool = stillTakingApplications.length ? stillTakingApplications : live;
+  // 마감을 알 수 없는 강연은 마감 전으로 치지 않습니다. 스포트라이트는 마감이
+  // 분명한 강연에 양보하고 맨 뒤에 세웁니다.
+  const isStillTaking = (l: LectureType) => {
+    const time = key(l);
+    return Number.isFinite(time) && time > now;
+  };
+  const stillTakingApplications = live.filter(isStillTaking).sort(byDeadline);
+  const alreadyClosed = live.filter((l) => !isStillTaking(l)).sort(byDeadline);
 
-  return [...pool].sort((a, b) => key(a) - key(b))[0];
+  return [...stillTakingApplications, ...alreadyClosed];
 }
 
 export default function ThisWeekPage() {
@@ -102,10 +124,21 @@ export default function ThisWeekPage() {
 
   const { data: lectures = [], isLoading } = useGetLectures();
 
-  const lecture = useMemo(() => pickFeatured(lectures), [lectures]);
+  const liveLectures = useMemo(() => getLiveLectures(lectures), [lectures]);
+  // 고른 강연은 id로만 들고, 실제로 세울 강연은 매 렌더 목록에서 다시 찾습니다.
+  // 이렇게 두면 refetch로 고른 강연이 목록에서 빠져도 useEffect로 상태를
+  // 되돌릴 필요 없이 저절로 첫 번째 강연으로 돌아옵니다.
+  const [selectedLectureId, setSelectedLectureId] = useState<number | null>(
+    null,
+  );
+  const lecture =
+    liveLectures.find((l) => l.lectureId === selectedLectureId) ??
+    liveLectures[0] ??
+    null;
   const lectureId = lecture?.lectureId ?? 0;
 
-  const { data: enrollments } = useGetEnrollments(lectureId);
+  const { data: enrollments, isLoading: isLoadingEnrollments } =
+    useGetEnrollments(lectureId);
 
   // 상세 페이지와 같은 규칙입니다. 출석부는 학생회만 보고, 그 외에는 요청하지 않습니다.
   const {
@@ -160,6 +193,16 @@ export default function ThisWeekPage() {
     decideEnrollment({ userId, approved });
   };
 
+  const handleSelectLecture = (id: number) => {
+    setSelectedLectureId(id);
+    // 앞 강연에서 켜진 마감 지남·신청 열림·신청 실패 상태가 그대로 남으면
+    // 다음 강연 버튼이 그 강연과 무관한 문구와 잠금으로 뜹니다.
+    setHasEnrollmentOpened(false);
+    setHasDeadlinePassed(false);
+    setEnrollResult(null);
+    setDecidingUserId(null);
+  };
+
   const { mutate: enrollLecture, isPending: isEnrolling } = useEnrollLecture(
     lectureId,
     {
@@ -177,13 +220,24 @@ export default function ThisWeekPage() {
   const roster = useMemo(() => toRoster(enrollments), [enrollments]);
 
   const enrollStatus = useMemo<EnrollmentStatusType | null>(() => {
-    // 목록 응답에는 내 신청 상태가 없어서 명단이 곧 진실입니다.
-    // 방금 누른 결과는 명단이 새로 오기 전까지만 씁니다.
+    // 상세 페이지와 같은 우선순위입니다. 서버가 내려준 내 신청 상태가 먼저고,
+    // 그다음이 명단, 마지막이 방금 누른 결과입니다. 목록 응답에 내 상태가 없으면
+    // (optional) 예전처럼 명단이 곧 진실입니다.
+    const mine = lecture?.myEnrollmentStatus;
+    if (mine) return mine;
+
+    // 거절된 신청은 명단에 없습니다. 명단으로는 ENROLLED/WAITING만 알 수 있습니다.
     const fromRoster = getEnrollmentStatus(roster, user?.userId);
     if (fromRoster) return fromRoster;
     if (enrollResult && enrollResult !== "ERROR") return enrollResult;
     return null;
-  }, [roster, enrollResult, user]);
+  }, [lecture, roster, enrollResult, user]);
+
+  // 강연을 바꾸면 명단을 새로 받아야 내 신청 여부를 알 수 있습니다. 그 사이에
+  // "신청하기"를 열어 두면 이미 신청한 강연인데도 버튼이 잠깐 떠서 중복 신청을
+  // 누르게 됩니다. 서버가 내 상태를 함께 내려준 강연은 기다릴 필요가 없습니다.
+  const isEnrollStatusPending =
+    isLoadingEnrollments && !lecture?.myEnrollmentStatus;
 
   if (isLoading) return <Spinner />;
 
@@ -257,7 +311,11 @@ export default function ThisWeekPage() {
     false;
   // 상세 화면과 같습니다. 수락·거절은 학생회만 할 수 있습니다.
   const canDecide = isAdmin;
-  const otherCount = lectures.length - 1;
+  // 칩으로 이미 꺼내 놓은 강연은 "더 있습니다"에서 빼야 합니다. 안 그러면
+  // 바로 위에서 고를 수 있는 강연이 아래에서 또 세어집니다.
+  const otherCount = lectures.length - liveLectures.length;
+  // 칩 줄이 뜨는 화면에서는 칩이 상단 여백을 대신 맡습니다.
+  const hasMultipleLive = liveLectures.length > 1;
 
   // 상세 페이지와 같은 규칙입니다. 신청은 개설한 날이 아니라 학생회가 수락한 날
   // 16:20부터 받습니다.
@@ -301,7 +359,20 @@ export default function ThisWeekPage() {
 
   return (
     <PageShell size="narrow">
-      <div className="mt-6 flex flex-wrap items-center gap-4 md:mt-12">
+      {/* 같은 주에 강연이 여러 개 열리면 하나만 보여 주고 나머지를 감출 수 없어서,
+          스포트라이트 위에 전환 칩을 답니다. 열린 강연이 하나면 스스로 사라집니다. */}
+      <LectureSwitcher
+        items={liveLectures.map((l) => ({ id: l.lectureId, title: l.title }))}
+        selectedId={lecture.lectureId}
+        onSelect={handleSelectLecture}
+        className="mt-6 md:mt-12"
+      />
+
+      <div
+        className={`flex flex-wrap items-center gap-4 ${
+          hasMultipleLive ? "mt-4" : "mt-6 md:mt-12"
+        }`}
+      >
         <Badge variant={LECTURE_STATUS_TO_BADGE[displayStatus]} />
         {(isCreator || isAdmin) && (
           <Link
@@ -464,14 +535,16 @@ export default function ThisWeekPage() {
         ) : (
           <Button
             onClick={() => enrollLecture()}
-            disabled={isEnrolling}
+            disabled={isEnrolling || isEnrollStatusPending}
             className="w-full py-3 text-base"
           >
-            {isEnrolling
-              ? "신청하는 중"
-              : isWaitlistOnly || isAfterEnrollmentDeadline
-                ? "대기로 신청하기"
-                : "신청하기"}
+            {isEnrollStatusPending
+              ? "불러오는 중"
+              : isEnrolling
+                ? "신청하는 중"
+                : isWaitlistOnly || isAfterEnrollmentDeadline
+                  ? "대기로 신청하기"
+                  : "신청하기"}
           </Button>
         )}
 
@@ -513,7 +586,10 @@ export default function ThisWeekPage() {
         </MarkdownContent>
       </section>
 
-      <div className="mt-16 grid gap-4 sm:grid-cols-2">
+      {/* 칩으로 강연을 바꿔도 같은 자리의 같은 컴포넌트라 React가 재조정만 해서,
+          저장하지 않은 출석 체크가 다음 강연 명단에 그대로 옮겨 붙습니다.
+          강연 id를 key로 걸어 강연이 바뀌면 명단을 통째로 새로 마운트합니다. */}
+      <div key={lecture.lectureId} className="mt-16 grid gap-4 sm:grid-cols-2">
         {/* 학생회는 이번 주 강연 화면에서 바로 출석을 찍고 명단을 복사합니다. */}
         {isAdmin ? (
           <AttendanceList
