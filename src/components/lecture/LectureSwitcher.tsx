@@ -1,7 +1,18 @@
 "use client";
 
+import Badge from "@/components/common/Badge";
+import type { BadgeVariant } from "@/components/common/Badge";
+
+export interface LectureSwitcherItem {
+  id: number;
+  title: string;
+  status: BadgeVariant;
+  /** "김OO · 9월 12일" 처럼 페이지에서 이미 조립해 넘기는 한 줄. 없을 수 있다. */
+  meta?: string;
+}
+
 export interface LectureSwitcherProps {
-  items: { id: number; title: string }[];
+  items: LectureSwitcherItem[];
   selectedId: number;
   onSelect: (id: number) => void;
   className?: string;
@@ -13,7 +24,7 @@ export default function LectureSwitcher({
   onSelect,
   className = "",
 }: LectureSwitcherProps) {
-  // 고를 것이 없는데 칩 줄만 떠 있으면 강연이 더 있는 것처럼 읽힙니다.
+  // 고를 것이 없는데 전환 줄만 떠 있으면 강연이 더 있는 것처럼 읽힙니다.
   // 열린 강연이 하나뿐인 첫 화면은 지금 모습 그대로 두어야 합니다.
   if (items.length <= 1) return null;
 
@@ -27,8 +38,8 @@ export default function LectureSwitcher({
         열린 강연 {items.length}개
       </span>
 
-      <div className="flex flex-wrap gap-2">
-        {items.map(({ id, title }) => {
+      <div className="flex flex-wrap gap-2.5">
+        {items.map(({ id, title, status, meta }) => {
           const isSelected = id === selectedId;
 
           return (
@@ -36,19 +47,40 @@ export default function LectureSwitcher({
               key={id}
               type="button"
               aria-pressed={isSelected}
-              // 말줄임으로 잘린 제목은 마우스를 올려야만 끝까지 볼 수 있습니다.
+              // 두 줄까지 흘리고 남는 제목은 마우스를 올려야만 끝까지 볼 수 있습니다.
               title={title}
               onClick={() => onSelect(id)}
-              // 칩은 캔버스 위에 바로 놓이므로 테두리 대신 그림자로 띄웁니다.
-              // 제목이 길면 한 칩이 줄을 통째로 먹어 나머지가 접히기 때문에
-              // 폭을 잘라 두고 넘치는 부분만 말줄임합니다.
-              className={`focusable max-w-[220px] cursor-pointer truncate rounded-xl px-3.5 py-2 text-sm font-semibold transition-[background-color,box-shadow,color] ${
+              // 제목만 든 알약은 "그냥 버튼"으로 읽혀서, 목록의 LectureCard와
+              // 같은 순서(배지 → 제목 → 한 줄 정보)를 크기만 줄여 그대로 씁니다.
+              // 폭을 고정해야 카드들이 나란히 서고, 좁아지면 알아서 접힙니다.
+              className={`focusable flex w-52 cursor-pointer flex-col gap-1.5 rounded-2xl px-4 py-3 text-left transition-[background-color,box-shadow] ${
                 isSelected
-                  ? "bg-main text-gray-900 shadow-e2"
-                  : "bg-surface text-gray-600 shadow-e1 hover:text-gray-900 hover:shadow-e2"
+                  ? // bg-main으로 꽉 채우면 배지의 amber 점이 배경에 묻혀 상태가
+                    // 사라집니다. 점이 살아남는 옅은 면으로 채워 띄웁니다.
+                    "bg-main-soft shadow-e2"
+                  : "bg-surface shadow-e1 hover:shadow-e2"
               }`}
             >
-              {title}
+              <span className="flex items-center justify-between gap-2">
+                <Badge variant={status} />
+                {/* 고른 카드가 지금 아래 스포트라이트에 서 있다는 연결을 만들어 줍니다. */}
+                {isSelected ? (
+                  <span className="shrink-0 text-[11px] font-semibold text-gray-500">
+                    보는 중
+                  </span>
+                ) : null}
+              </span>
+
+              <span className="line-clamp-2 break-words text-sm font-bold leading-snug text-gray-900">
+                {title}
+              </span>
+
+              {/* meta가 없을 때 빈 줄이 남으면 카드 높이만 들쭉날쭉해집니다. */}
+              {meta ? (
+                <span className="tnum truncate text-xs text-gray-500">
+                  {meta}
+                </span>
+              ) : null}
             </button>
           );
         })}

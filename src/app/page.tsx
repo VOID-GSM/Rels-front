@@ -314,8 +314,18 @@ export default function ThisWeekPage() {
   // 칩으로 이미 꺼내 놓은 강연은 "더 있습니다"에서 빼야 합니다. 안 그러면
   // 바로 위에서 고를 수 있는 강연이 아래에서 또 세어집니다.
   const otherCount = lectures.length - liveLectures.length;
-  // 칩 줄이 뜨는 화면에서는 칩이 상단 여백을 대신 맡습니다.
+  // 전환 줄이 뜨는 화면에서는 그 줄이 상단 여백을 대신 맡습니다.
   const hasMultipleLive = liveLectures.length > 1;
+  // 제목만 있으면 그냥 버튼으로 읽혀서, 목록 카드와 같은 정보(상태·제목·강연자·날짜)를
+  // 담아 넘깁니다. 강연자도 날짜도 비어 있으면 빈 문자열이라 그 줄은 그려지지 않습니다.
+  const switcherItems = liveLectures.map((l) => ({
+    id: l.lectureId,
+    title: l.title,
+    status: LECTURE_STATUS_TO_BADGE[getDisplayLectureStatus(l)],
+    meta: [formatSpeakers(l), formatLectureDate(l.lectureDate)]
+      .filter(Boolean)
+      .join(" · "),
+  }));
 
   // 상세 페이지와 같은 규칙입니다. 신청은 개설한 날이 아니라 학생회가 수락한 날
   // 16:20부터 받습니다.
@@ -360,9 +370,9 @@ export default function ThisWeekPage() {
   return (
     <PageShell size="narrow">
       {/* 같은 주에 강연이 여러 개 열리면 하나만 보여 주고 나머지를 감출 수 없어서,
-          스포트라이트 위에 전환 칩을 답니다. 열린 강연이 하나면 스스로 사라집니다. */}
+          스포트라이트 위에 전환 줄을 답니다. 열린 강연이 하나면 스스로 사라집니다. */}
       <LectureSwitcher
-        items={liveLectures.map((l) => ({ id: l.lectureId, title: l.title }))}
+        items={switcherItems}
         selectedId={lecture.lectureId}
         onSelect={handleSelectLecture}
         className="mt-6 md:mt-12"
