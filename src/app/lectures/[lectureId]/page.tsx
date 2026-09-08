@@ -63,7 +63,7 @@ import {
 } from "@/shared/lib/enrollmentWindow";
 import {
   getUserGrade,
-  isGradeCapacityBlocked as checkGradeCapacityBlocked,
+  hasNoGradeSeat as checkNoGradeSeat,
   usesGradeCapacity,
 } from "@/shared/lib/gradeCapacity";
 import { getApiErrorMessage } from "@/shared/lib/getApiErrorMessage";
@@ -207,7 +207,8 @@ export default function LectureDetailPage() {
   const isSpeaker =
     lecture.speakers?.some((speaker) => speaker.userId === user?.userId) ??
     false;
-  const canDecide = isCreator || isAdmin;
+  // 대기자를 신청자로 올리는 판단은 학생회 몫입니다. 개설자가 누르면 서버가 403입니다.
+  const canDecide = isAdmin;
   const displayStatus = getDisplayLectureStatus(lecture);
 
   // 학생회 승인 전후. 아직 공개되지 않은 강연은 신청도 마감도 의미가 없어서,
@@ -229,8 +230,8 @@ export default function LectureDetailPage() {
     lecture.totalCapacity,
     lecture.capacityByGrade,
   );
-  // 내 학년에 애초에 배정된 자리가 있는지. 자리가 0이면 대기도 받지 않습니다.
-  const isGradeCapacityBlocked = checkGradeCapacityBlocked({
+  // 내 학년에 배정된 자리가 아예 없는 강연인지. 신청을 막지는 않고 대기로 받습니다.
+  const hasNoGradeSeat = checkNoGradeSeat({
     totalCapacity: lecture.totalCapacity,
     capacityByGrade: lecture.capacityByGrade,
     studentNumber: user?.studentNumber,
@@ -253,9 +254,13 @@ export default function LectureDetailPage() {
     });
   // 지금 누르면 신청자가 아니라 대기자로 들어가는 상태.
   // 마감이 지나도 신청은 받습니다. 다만 무조건 대기로 서고 담당자가 수락해야 확정됩니다.
-  const isWaitlistOnly = isFull || isMyGradeTaken;
+  const isWaitlistOnly = isFull || isMyGradeTaken || hasNoGradeSeat;
   const myGrade = getUserGrade(user?.studentNumber);
-  const isPast = displayStatus === "CLOSED" || displayStatus === "UNCONFIRMED";
+  // 신청을 닫는 것은 끝난 강연뿐입니다. 정원이 덜 찬 채로 마감된 강연(개설
+  // 불확정)도 대기 신청은 계속 받습니다.
+  const isLectureEnded = displayStatus === "CLOSED";
+  // 지난 강연처럼 조용히 보여야 하는 자리(게이지·카운트다운)는 개설 불확정도 함께 묶습니다.
+  const isPast = isLectureEnded || displayStatus === "UNCONFIRMED";
 
   // 신청은 7교시가 끝나는 16:20부터 받습니다. 개설한 날이 아니라 학생회가
   // 수락한 날이 기준입니다.
@@ -311,13 +316,9 @@ export default function LectureDetailPage() {
     <Button variant="waiting" disabled className="w-full py-3">
       {isCreator ? "내가 개설한 강연입니다" : "내가 진행하는 강연입니다"}
     </Button>
-  ) : isGradeCapacityBlocked ? (
+  ) : isLectureEnded ? (
     <Button variant="waiting" disabled className="w-full py-3">
-      다른 학년만 신청할 수 있습니다
-    </Button>
-  ) : isPast ? (
-    <Button variant="waiting" disabled className="w-full py-3">
-      {displayStatus === "UNCONFIRMED" ? "개설 불확정" : "강연 종료"}
+      강연 종료
     </Button>
   ) : isBeforeEnrollmentOpen && enrollmentOpenAt ? (
     <Button variant="waiting" disabled className="w-full py-3">
@@ -356,7 +357,7 @@ export default function LectureDetailPage() {
       )}
       {enrollStatus === "WAITING" && (
         <p className="text-center text-xs text-gray-500">
-          개설자나 학생회가 수락하면 신청이 확정됩니다.
+          학생회가 수락하면 신청이 확정됩니다.
         </p>
       )}
     </>
@@ -550,8 +551,11 @@ export default function LectureDetailPage() {
             {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
             {!enrollStatus && isAfterEnrollmentDeadline ? (
               <p className="text-center text-xs text-gray-500">
-                마감 뒤 신청은 대기자로 등록되고, 개설자나 학생회가 수락해야
-                확정됩니다.
+                마감 뒤 신청은 대기자로 등록되고, 학생회가 수락해야 확정됩니다.
+              </p>
+            ) : !enrollStatus && hasNoGradeSeat ? (
+              <p className="text-center text-xs text-gray-500">
+                {myGrade}학년에 배정된 자리가 없어 대기자로 등록됩니다.
               </p>
             ) : (
               isMyGradeTaken &&
