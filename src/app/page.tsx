@@ -369,289 +369,295 @@ export default function ThisWeekPage() {
 
   return (
     <PageShell size="narrow">
-      {/* 같은 주에 강연이 여러 개 열리면 하나만 보여 주고 나머지를 감출 수 없어서,
-          스포트라이트 위에 전환 줄을 답니다. 열린 강연이 하나면 스스로 사라집니다. */}
-      <LectureSwitcher
-        items={switcherItems}
-        selectedId={lecture.lectureId}
-        onSelect={handleSelectLecture}
-        className="mt-6 md:mt-12"
-      />
-
-      <div
-        className={`flex flex-wrap items-center gap-4 ${
-          hasMultipleLive ? "mt-4" : "mt-6 md:mt-12"
-        }`}
-      >
-        <Badge variant={LECTURE_STATUS_TO_BADGE[displayStatus]} />
-        {(isCreator || isAdmin) && (
-          <Link
-            href={`/lectures/${lecture.lectureId}/edit`}
-            className="focusable inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold text-gray-600 transition-colors hover:text-gray-900"
-          >
-            <Pencil />
-            수정
-          </Link>
-        )}
-      </div>
-
-      <h1 className="mt-4 text-[40px] font-bold leading-[1.15] tracking-[-0.03em] text-gray-900 md:text-[52px]">
-        {lecture.title}
-      </h1>
-
-      {/* 누가 언제 어디서 하는지가 신청 여부를 가르는 경우가 많아 제목 바로 밑에 둡니다. */}
-      <p className="mt-3.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1 text-[15px]">
-        {metaParts.map((part, index) => (
-          <span
-            key={`${index}-${part.text}`}
-            className={
-              part.strong ? "font-semibold text-gray-900" : "text-gray-600"
-            }
-          >
-            {index > 0 && (
-              <span aria-hidden className="mr-2.5 text-gray-300">
-                ·
-              </span>
-            )}
-            {part.text}
-          </span>
-        ))}
-      </p>
-
-      <div className="mt-10 flex flex-wrap items-start gap-x-16 gap-y-8">
-        {/* 게이지는 정원 이야기입니다. 마감 카운트다운 아래에 폭을 맞춰 깔면
-            마감 진행률로 읽히기 때문에 자리 블록 안에만 둡니다. */}
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-gray-500">남은 자리</span>
-          <div className="flex items-baseline gap-2">
-            <span
-              className={`tnum text-[32px] font-bold leading-[0.95] tracking-[-0.03em] ${
-                seatsLeft === 0 ? "text-gray-300" : "text-gray-900"
-              }`}
-            >
-              {seatsLeft}
-            </span>
-            <span className="tnum text-sm text-gray-500">
-              / {totalCapacity}자리
-            </span>
-          </div>
-        </div>
-
-        {/* 아직 신청이 안 열렸으면 마감이 아니라 시작까지를 셉니다. */}
-        {isBeforeEnrollmentOpen && enrollmentOpenAt ? (
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-gray-500">
-              신청 시작까지
-            </span>
-            <DeadlineCountdown
-              deadline={enrollmentOpenAt.toISOString()}
-              endedLabel="신청 시작"
-              urgent={false}
-              onEnd={() => setHasEnrollmentOpened(true)}
-              className="text-[32px] leading-[0.95] tracking-[-0.02em]"
+      {/* 넓은 화면에서는 고를 강연을 옆에 세워 둡니다. 스포트라이트 위에 얹으면
+          제목보다 먼저 읽히고, 아래로 스크롤하면 사라져 다시 위로 올라와야 합니다.
+          좁은 화면에서는 붙일 옆이 없어 스포트라이트 위로 다시 올라갑니다. */}
+      <div className="mt-6 flex flex-col gap-8 md:mt-12 lg:flex-row lg:items-start lg:gap-10">
+        {/* 헤더가 sticky top-0(68px)이라 그 아래에 붙여야 가려지지 않습니다. */}
+        {hasMultipleLive && (
+          <aside className="lg:sticky lg:top-[84px] lg:order-last lg:w-[17.5rem] lg:shrink-0">
+            <LectureSwitcher
+              items={switcherItems}
+              selectedId={lecture.lectureId}
+              onSelect={handleSelectLecture}
             />
-          </div>
-        ) : (
-          lecture.applicationDeadline && (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-gray-500">
-                신청 마감까지
-              </span>
-              <DeadlineCountdown
-                deadline={lecture.applicationDeadline}
-                onEnd={() => setHasDeadlinePassed(true)}
-                className="text-[32px] leading-[0.95] tracking-[-0.02em]"
-              />
-            </div>
-          )
+          </aside>
         )}
-      </div>
 
-      {/* 폭이 넓으면 마감 카운트다운의 진행 바로 읽히기 쉬워서, 바로 위에
-          무엇에 대한 게이지인지 라벨을 답니다. */}
-      <div className="mt-9 flex items-baseline justify-between gap-4">
-        <span className="text-xs font-medium text-gray-500">신청 현황</span>
-        <span className="tnum text-xs text-gray-500">
-          {enrolledCount}명 신청
-          {waitingCount > 0 ? ` · 대기 ${waitingCount}명` : ""}
-        </span>
-      </div>
-      <SeatMeter
-        enrolled={enrolledCount}
-        capacity={totalCapacity}
-        className="mt-2.5 h-2 rounded-full"
-      />
-      {/* 학년별로 자리를 나눈 강연은 총 정원만으로는 내가 낄 자리가 있는지
-          알 수 없어서, 상세 화면과 같은 자리에 학년별 정원을 적어 둡니다. */}
-      {showsGradeCapacity && (
-        <p className="tnum mt-2 text-right text-xs text-gray-500">
-          {(["1", "2", "3"] as const)
-            .map((g) => `${g}학년 ${lecture.capacityByGrade![g] ?? 0}`)
-            .join(" · ")}
-        </p>
-      )}
+        {/* 스포트라이트가 옆 칸만큼 좁아져도 안쪽 그리드가 밀어내지 않도록 min-w-0. */}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-4">
+            <Badge variant={LECTURE_STATUS_TO_BADGE[displayStatus]} />
+            {(isCreator || isAdmin) && (
+              <Link
+                href={`/lectures/${lecture.lectureId}/edit`}
+                className="focusable inline-flex items-center gap-1.5 rounded-lg text-xs font-semibold text-gray-600 transition-colors hover:text-gray-900"
+              >
+                <Pencil />
+                수정
+              </Link>
+            )}
+          </div>
 
-      <div className="mt-8 flex flex-col gap-2">
-        {isCreator || isSpeaker ? (
-          <Button variant="waiting" disabled className="w-full py-3">
-            {isCreator ? "내가 개설한 강연입니다" : "내가 진행하는 강연입니다"}
-          </Button>
-        ) : displayStatus === "CLOSED" ? (
-          // 화면을 열어 둔 채 강연 시각을 넘기면 고른 강연은 그대로 남습니다.
-          // 서버는 종료된 강연의 신청을 받지 않으므로 여기서도 닫습니다.
-          <Button variant="waiting" disabled className="w-full py-3">
-            강연 종료
-          </Button>
-        ) : isBeforeEnrollmentOpen && enrollmentOpenAt ? (
-          <Button variant="waiting" disabled className="w-full py-3">
-            {formatEnrollmentOpenAt(enrollmentOpenAt)}부터 신청
-          </Button>
-        ) : enrollStatus === "REJECTED" ? (
-          // 거절된 신청은 되돌릴 수 없습니다. 다시 신청해도 서버가 막습니다.
-          <Button variant="waiting" disabled className="w-full py-3">
-            신청이 거절되었습니다
-          </Button>
-        ) : enrollStatus ? (
-          <>
-            <p className="rounded-xl bg-main-soft py-2.5 text-center text-sm font-bold text-gray-900">
-              {enrollStatus === "ENROLLED" ? "신청했습니다" : "대기 중입니다"}
+          <h1 className="mt-4 text-[40px] font-bold leading-[1.15] tracking-[-0.03em] text-gray-900 md:text-[52px]">
+            {lecture.title}
+          </h1>
+
+          {/* 누가 언제 어디서 하는지가 신청 여부를 가르는 경우가 많아 제목 바로 밑에 둡니다. */}
+          <p className="mt-3.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1 text-[15px]">
+            {metaParts.map((part, index) => (
+              <span
+                key={`${index}-${part.text}`}
+                className={
+                  part.strong ? "font-semibold text-gray-900" : "text-gray-600"
+                }
+              >
+                {index > 0 && (
+                  <span aria-hidden className="mr-2.5 text-gray-300">
+                    ·
+                  </span>
+                )}
+                {part.text}
+              </span>
+            ))}
+          </p>
+
+          <div className="mt-10 flex flex-wrap items-start gap-x-16 gap-y-8">
+            {/* 게이지는 정원 이야기입니다. 마감 카운트다운 아래에 폭을 맞춰 깔면
+                마감 진행률로 읽히기 때문에 자리 블록 안에만 둡니다. */}
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium text-gray-500">남은 자리</span>
+              <div className="flex items-baseline gap-2">
+                <span
+                  className={`tnum text-[32px] font-bold leading-[0.95] tracking-[-0.03em] ${
+                    seatsLeft === 0 ? "text-gray-300" : "text-gray-900"
+                  }`}
+                >
+                  {seatsLeft}
+                </span>
+                <span className="tnum text-sm text-gray-500">
+                  / {totalCapacity}자리
+                </span>
+              </div>
+            </div>
+
+            {/* 아직 신청이 안 열렸으면 마감이 아니라 시작까지를 셉니다. */}
+            {isBeforeEnrollmentOpen && enrollmentOpenAt ? (
+              <div className="flex flex-col gap-2">
+                <span className="text-xs font-medium text-gray-500">
+                  신청 시작까지
+                </span>
+                <DeadlineCountdown
+                  deadline={enrollmentOpenAt.toISOString()}
+                  endedLabel="신청 시작"
+                  urgent={false}
+                  onEnd={() => setHasEnrollmentOpened(true)}
+                  className="text-[32px] leading-[0.95] tracking-[-0.02em]"
+                />
+              </div>
+            ) : (
+              lecture.applicationDeadline && (
+                <div className="flex flex-col gap-2">
+                  <span className="text-xs font-medium text-gray-500">
+                    신청 마감까지
+                  </span>
+                  <DeadlineCountdown
+                    deadline={lecture.applicationDeadline}
+                    onEnd={() => setHasDeadlinePassed(true)}
+                    className="text-[32px] leading-[0.95] tracking-[-0.02em]"
+                  />
+                </div>
+              )
+            )}
+          </div>
+
+          {/* 폭이 넓으면 마감 카운트다운의 진행 바로 읽히기 쉬워서, 바로 위에
+              무엇에 대한 게이지인지 라벨을 답니다. */}
+          <div className="mt-9 flex items-baseline justify-between gap-4">
+            <span className="text-xs font-medium text-gray-500">신청 현황</span>
+            <span className="tnum text-xs text-gray-500">
+              {enrolledCount}명 신청
+              {waitingCount > 0 ? ` · 대기 ${waitingCount}명` : ""}
+            </span>
+          </div>
+          <SeatMeter
+            enrolled={enrolledCount}
+            capacity={totalCapacity}
+            className="mt-2.5 h-2 rounded-full"
+          />
+          {/* 학년별로 자리를 나눈 강연은 총 정원만으로는 내가 낄 자리가 있는지
+              알 수 없어서, 상세 화면과 같은 자리에 학년별 정원을 적어 둡니다. */}
+          {showsGradeCapacity && (
+            <p className="tnum mt-2 text-right text-xs text-gray-500">
+              {(["1", "2", "3"] as const)
+                .map((g) => `${g}학년 ${lecture.capacityByGrade![g] ?? 0}`)
+                .join(" · ")}
             </p>
-            {/* 마감 뒤에는 확정된 명단이 흔들리면 안 되므로 신청 취소만 막습니다.
-              아직 확정되지 않은 대기는 마감 뒤에도 스스로 뺄 수 있어야 합니다. */}
-            {enrollStatus === "ENROLLED" && isAfterEnrollmentDeadline ? (
-              <p className="text-center text-xs text-gray-500">
-                마감되어 취소할 수 없습니다.
-              </p>
+          )}
+
+          <div className="mt-8 flex flex-col gap-2">
+            {isCreator || isSpeaker ? (
+              <Button variant="waiting" disabled className="w-full py-3">
+                {isCreator ? "내가 개설한 강연입니다" : "내가 진행하는 강연입니다"}
+              </Button>
+            ) : displayStatus === "CLOSED" ? (
+              // 화면을 열어 둔 채 강연 시각을 넘기면 고른 강연은 그대로 남습니다.
+              // 서버는 종료된 강연의 신청을 받지 않으므로 여기서도 닫습니다.
+              <Button variant="waiting" disabled className="w-full py-3">
+                강연 종료
+              </Button>
+            ) : isBeforeEnrollmentOpen && enrollmentOpenAt ? (
+              <Button variant="waiting" disabled className="w-full py-3">
+                {formatEnrollmentOpenAt(enrollmentOpenAt)}부터 신청
+              </Button>
+            ) : enrollStatus === "REJECTED" ? (
+              // 거절된 신청은 되돌릴 수 없습니다. 다시 신청해도 서버가 막습니다.
+              <Button variant="waiting" disabled className="w-full py-3">
+                신청이 거절되었습니다
+              </Button>
+            ) : enrollStatus ? (
+              <>
+                <p className="rounded-xl bg-main-soft py-2.5 text-center text-sm font-bold text-gray-900">
+                  {enrollStatus === "ENROLLED" ? "신청했습니다" : "대기 중입니다"}
+                </p>
+                {/* 마감 뒤에는 확정된 명단이 흔들리면 안 되므로 신청 취소만 막습니다.
+                  아직 확정되지 않은 대기는 마감 뒤에도 스스로 뺄 수 있어야 합니다. */}
+                {enrollStatus === "ENROLLED" && isAfterEnrollmentDeadline ? (
+                  <p className="text-center text-xs text-gray-500">
+                    마감되어 취소할 수 없습니다.
+                  </p>
+                ) : (
+                  <Button
+                    variant="cancel"
+                    onClick={() => cancelEnrollment()}
+                    disabled={isCancelling}
+                    className="w-full py-3"
+                  >
+                    {isCancelling
+                      ? "취소하는 중"
+                      : enrollStatus === "ENROLLED"
+                        ? "신청 취소"
+                        : "대기 취소"}
+                  </Button>
+                )}
+                {enrollStatus === "WAITING" && (
+                  <p className="text-center text-xs text-gray-500">
+                    학생회가 수락하면 신청이 확정됩니다.
+                  </p>
+                )}
+              </>
             ) : (
               <Button
-                variant="cancel"
-                onClick={() => cancelEnrollment()}
-                disabled={isCancelling}
-                className="w-full py-3"
+                onClick={() => enrollLecture()}
+                disabled={isEnrolling || isEnrollStatusPending}
+                className="w-full py-3 text-base"
               >
-                {isCancelling
-                  ? "취소하는 중"
-                  : enrollStatus === "ENROLLED"
-                    ? "신청 취소"
-                    : "대기 취소"}
+                {isEnrollStatusPending
+                  ? "불러오는 중"
+                  : isEnrolling
+                    ? "신청하는 중"
+                    : isWaitlistOnly || isAfterEnrollmentDeadline
+                      ? "대기로 신청하기"
+                      : "신청하기"}
               </Button>
             )}
-            {enrollStatus === "WAITING" && (
+
+            {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
+            {!enrollStatus && isAfterEnrollmentDeadline ? (
               <p className="text-center text-xs text-gray-500">
-                학생회가 수락하면 신청이 확정됩니다.
+                마감 뒤 신청은 대기자로 등록되고, 학생회가 수락해야 확정됩니다.
+              </p>
+            ) : !enrollStatus && hasNoGradeSeat ? (
+              <p className="text-center text-xs text-gray-500">
+                {myGrade}학년에 배정된 자리가 없어 대기자로 등록됩니다.
+              </p>
+            ) : (
+              isMyGradeTaken &&
+              !enrollStatus && (
+                <p className="text-center text-xs text-gray-500">
+                  {myGrade}학년 자리가 모두 차서 대기자로 등록됩니다.
+                </p>
+              )
+            )}
+            {enrollResult === "ERROR" && (
+              <p className="text-center text-sm text-error">
+                신청하지 못했습니다. 잠시 후 다시 시도해 주세요.
               </p>
             )}
-          </>
-        ) : (
-          <Button
-            onClick={() => enrollLecture()}
-            disabled={isEnrolling || isEnrollStatusPending}
-            className="w-full py-3 text-base"
-          >
-            {isEnrollStatusPending
-              ? "불러오는 중"
-              : isEnrolling
-                ? "신청하는 중"
-                : isWaitlistOnly || isAfterEnrollmentDeadline
-                  ? "대기로 신청하기"
-                  : "신청하기"}
-          </Button>
-        )}
+            {deadlineText && (
+              <p className="tnum text-center text-xs text-gray-500">
+                {deadlineText} 마감
+              </p>
+            )}
+          </div>
 
-        {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
-        {!enrollStatus && isAfterEnrollmentDeadline ? (
-          <p className="text-center text-xs text-gray-500">
-            마감 뒤 신청은 대기자로 등록되고, 학생회가 수락해야 확정됩니다.
-          </p>
-        ) : !enrollStatus && hasNoGradeSeat ? (
-          <p className="text-center text-xs text-gray-500">
-            {myGrade}학년에 배정된 자리가 없어 대기자로 등록됩니다.
-          </p>
-        ) : (
-          isMyGradeTaken &&
-          !enrollStatus && (
-            <p className="text-center text-xs text-gray-500">
-              {myGrade}학년 자리가 모두 차서 대기자로 등록됩니다.
-            </p>
-          )
-        )}
-        {enrollResult === "ERROR" && (
-          <p className="text-center text-sm text-error">
-            신청하지 못했습니다. 잠시 후 다시 시도해 주세요.
-          </p>
-        )}
-        {deadlineText && (
-          <p className="tnum text-center text-xs text-gray-500">
-            {deadlineText} 마감
-          </p>
-        )}
+          <section className="mt-16">
+            <h2 className="text-2xl font-bold tracking-[-0.02em] text-gray-900">
+              강연 소개
+            </h2>
+            <MarkdownContent className="mt-5" size="base">
+              {lecture.description}
+            </MarkdownContent>
+          </section>
+
+          {/* 칩으로 강연을 바꿔도 같은 자리의 같은 컴포넌트라 React가 재조정만 해서,
+              저장하지 않은 출석 체크가 다음 강연 명단에 그대로 옮겨 붙습니다.
+              강연 id를 key로 걸어 강연이 바뀌면 명단을 통째로 새로 마운트합니다. */}
+          <div key={lecture.lectureId} className="mt-16 grid gap-4 sm:grid-cols-2">
+            {/* 학생회는 이번 주 강연 화면에서 바로 출석을 찍고 명단을 복사합니다. */}
+            {isAdmin ? (
+              <AttendanceList
+                currentCount={lecture.enrolledCount}
+                maxCount={totalCapacity}
+                attendances={orderByRoster(attendances ?? [], roster)}
+                isLoading={isLoadingAttendances}
+                isError={isAttendancesError}
+                isSaving={isSavingAttendances}
+                onSave={saveAttendances}
+              />
+            ) : (
+              <ApplicantList
+                type="applicant"
+                currentCount={enrolledCount}
+                maxCount={totalCapacity}
+                applicants={roster.enrolled}
+              />
+            )}
+            <ApplicantList
+              type="waiting"
+              waitingCount={waitingCount}
+              applicants={roster.waiting}
+              copyable={isAdmin}
+              // 대기자를 신청자로 올릴지는 개설자와 학생회가 정합니다.
+              onDecide={canDecide ? handleDecide : undefined}
+              decidingUserId={decidingUserId}
+            />
+            {/* 거절 명단은 서버가 개설자·학생회에게만 내려줍니다. */}
+            {roster.rejected.length > 0 && (
+              <ApplicantList type="rejected" applicants={roster.rejected} />
+            )}
+          </div>
+
+          {otherCount > 0 && (
+            <Link
+              href="/lectures"
+              className="focusable lift mt-16 flex items-center justify-between gap-4 rounded-2xl bg-surface px-6 py-5 shadow-e2 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-e3"
+            >
+              <span className="flex flex-col gap-1">
+                <span className="text-sm font-bold text-gray-900">
+                  전체 강연 보기
+                </span>
+                <span className="tnum text-xs text-gray-500">
+                  지난 강연까지 {otherCount}개가 더 있습니다
+                </span>
+              </span>
+              <span className="shrink-0 rotate-180 text-gray-400">
+                <Arrow />
+              </span>
+            </Link>
+          )}
+        </div>
       </div>
-
-      <section className="mt-16">
-        <h2 className="text-2xl font-bold tracking-[-0.02em] text-gray-900">
-          강연 소개
-        </h2>
-        <MarkdownContent className="mt-5" size="base">
-          {lecture.description}
-        </MarkdownContent>
-      </section>
-
-      {/* 칩으로 강연을 바꿔도 같은 자리의 같은 컴포넌트라 React가 재조정만 해서,
-          저장하지 않은 출석 체크가 다음 강연 명단에 그대로 옮겨 붙습니다.
-          강연 id를 key로 걸어 강연이 바뀌면 명단을 통째로 새로 마운트합니다. */}
-      <div key={lecture.lectureId} className="mt-16 grid gap-4 sm:grid-cols-2">
-        {/* 학생회는 이번 주 강연 화면에서 바로 출석을 찍고 명단을 복사합니다. */}
-        {isAdmin ? (
-          <AttendanceList
-            currentCount={lecture.enrolledCount}
-            maxCount={totalCapacity}
-            attendances={orderByRoster(attendances ?? [], roster)}
-            isLoading={isLoadingAttendances}
-            isError={isAttendancesError}
-            isSaving={isSavingAttendances}
-            onSave={saveAttendances}
-          />
-        ) : (
-          <ApplicantList
-            type="applicant"
-            currentCount={enrolledCount}
-            maxCount={totalCapacity}
-            applicants={roster.enrolled}
-          />
-        )}
-        <ApplicantList
-          type="waiting"
-          waitingCount={waitingCount}
-          applicants={roster.waiting}
-          copyable={isAdmin}
-          // 대기자를 신청자로 올릴지는 개설자와 학생회가 정합니다.
-          onDecide={canDecide ? handleDecide : undefined}
-          decidingUserId={decidingUserId}
-        />
-        {/* 거절 명단은 서버가 개설자·학생회에게만 내려줍니다. */}
-        {roster.rejected.length > 0 && (
-          <ApplicantList type="rejected" applicants={roster.rejected} />
-        )}
-      </div>
-
-      {otherCount > 0 && (
-        <Link
-          href="/lectures"
-          className="focusable lift mt-16 flex items-center justify-between gap-4 rounded-2xl bg-surface px-6 py-5 shadow-e2 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-e3"
-        >
-          <span className="flex flex-col gap-1">
-            <span className="text-sm font-bold text-gray-900">
-              전체 강연 보기
-            </span>
-            <span className="tnum text-xs text-gray-500">
-              지난 강연까지 {otherCount}개가 더 있습니다
-            </span>
-          </span>
-          <span className="shrink-0 rotate-180 text-gray-400">
-            <Arrow />
-          </span>
-        </Link>
-      )}
     </PageShell>
   );
 }
