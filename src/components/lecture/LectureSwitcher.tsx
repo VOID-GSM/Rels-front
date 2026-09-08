@@ -38,7 +38,9 @@ export default function LectureSwitcher({
         열린 강연 {items.length}개
       </span>
 
-      <div className="flex flex-wrap gap-2.5">
+      {/* 폭을 고정하면 화면이 넓을 때 카드가 왼쪽에만 짧게 몰려 붙습니다.
+          한 줄에 들어갈 수 있을 만큼 열을 잡고 남는 폭은 카드들이 나눠 갖습니다. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-2.5">
         {items.map(({ id, title, status, meta }) => {
           const isSelected = id === selectedId;
 
@@ -52,8 +54,8 @@ export default function LectureSwitcher({
               onClick={() => onSelect(id)}
               // 제목만 든 알약은 "그냥 버튼"으로 읽혀서, 목록의 LectureCard와
               // 같은 순서(배지 → 제목 → 한 줄 정보)를 크기만 줄여 그대로 씁니다.
-              // 폭을 고정해야 카드들이 나란히 서고, 좁아지면 알아서 접힙니다.
-              className={`focusable flex w-52 cursor-pointer flex-col gap-1.5 rounded-2xl px-4 py-3 text-left transition-[background-color,box-shadow] ${
+              // 폭은 그리드가 정합니다.
+              className={`focusable flex w-full cursor-pointer flex-col gap-1.5 rounded-2xl px-5 py-4 text-left transition-[background-color,box-shadow] ${
                 isSelected
                   ? // bg-main으로 꽉 채우면 배지의 amber 점이 배경에 묻혀 상태가
                     // 사라집니다. 점이 살아남는 옅은 면으로 채워 띄웁니다.
