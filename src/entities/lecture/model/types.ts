@@ -9,7 +9,7 @@ export type RawLectureStatusType = LectureStatusType | "CLOSE";
 
 /**
  * 내 신청 상태. 신청하지 않았으면 서버가 null로 내려줍니다.
- * REJECTED는 대기자였다가 개설자나 학생회가 거절한 경우입니다.
+ * REJECTED는 대기자였다가 학생회가 거절한 경우입니다.
  */
 export type EnrollmentStatusType = "ENROLLED" | "WAITING" | "REJECTED";
 

@@ -41,7 +41,7 @@ import {
 } from "@/shared/lib/enrollmentWindow";
 import {
   getUserGrade,
-  isGradeCapacityBlocked as checkGradeCapacityBlocked,
+  hasNoGradeSeat as checkNoGradeSeat,
   usesGradeCapacity,
 } from "@/shared/lib/gradeCapacity";
 import {
@@ -226,8 +226,8 @@ export default function ThisWeekPage() {
     lecture.totalCapacity,
     lecture.capacityByGrade,
   );
-  // 상세 화면과 같은 규칙으로 내 학년에 배정된 자리가 있는지 봅니다.
-  const isGradeCapacityBlocked = checkGradeCapacityBlocked({
+  // 상세 화면과 같은 규칙입니다. 자리가 없어도 막지 않고 대기로 받습니다.
+  const hasNoGradeSeat = checkNoGradeSeat({
     totalCapacity: lecture.totalCapacity,
     capacityByGrade: lecture.capacityByGrade,
     studentNumber: user?.studentNumber,
@@ -248,14 +248,15 @@ export default function ThisWeekPage() {
       studentNumber: user?.studentNumber,
     });
   // 지금 누르면 신청자가 아니라 대기자로 들어가는 상태.
-  const isWaitlistOnly = isFull || isMyGradeTaken;
+  const isWaitlistOnly = isFull || isMyGradeTaken || hasNoGradeSeat;
   const myGrade = getUserGrade(user?.studentNumber);
   const isCreator = user?.userId === lecture.creatorId;
   // 연사자는 자기 강연에 신청할 수 없습니다. 서버도 403으로 막습니다.
   const isSpeaker =
     lecture.speakers?.some((speaker) => speaker.userId === user?.userId) ??
     false;
-  const canDecide = isCreator || isAdmin;
+  // 상세 화면과 같습니다. 수락·거절은 학생회만 할 수 있습니다.
+  const canDecide = isAdmin;
   const otherCount = lectures.length - 1;
 
   // 상세 페이지와 같은 규칙입니다. 신청은 개설한 날이 아니라 학생회가 수락한 날
@@ -414,9 +415,11 @@ export default function ThisWeekPage() {
           <Button variant="waiting" disabled className="w-full py-3">
             {isCreator ? "내가 개설한 강연입니다" : "내가 진행하는 강연입니다"}
           </Button>
-        ) : isGradeCapacityBlocked ? (
+        ) : displayStatus === "CLOSED" ? (
+          // 화면을 열어 둔 채 강연 시각을 넘기면 고른 강연은 그대로 남습니다.
+          // 서버는 종료된 강연의 신청을 받지 않으므로 여기서도 닫습니다.
           <Button variant="waiting" disabled className="w-full py-3">
-            다른 학년만 신청할 수 있습니다
+            강연 종료
           </Button>
         ) : isBeforeEnrollmentOpen && enrollmentOpenAt ? (
           <Button variant="waiting" disabled className="w-full py-3">
@@ -454,7 +457,7 @@ export default function ThisWeekPage() {
             )}
             {enrollStatus === "WAITING" && (
               <p className="text-center text-xs text-gray-500">
-                개설자나 학생회가 수락하면 신청이 확정됩니다.
+                학생회가 수락하면 신청이 확정됩니다.
               </p>
             )}
           </>
@@ -475,8 +478,11 @@ export default function ThisWeekPage() {
         {/* 남은 자리가 있는데 왜 대기로 가는지 버튼만으로는 알 수 없어서 적어 둡니다. */}
         {!enrollStatus && isAfterEnrollmentDeadline ? (
           <p className="text-center text-xs text-gray-500">
-            마감 뒤 신청은 대기자로 등록되고, 개설자나 학생회가 수락해야
-            확정됩니다.
+            마감 뒤 신청은 대기자로 등록되고, 학생회가 수락해야 확정됩니다.
+          </p>
+        ) : !enrollStatus && hasNoGradeSeat ? (
+          <p className="text-center text-xs text-gray-500">
+            {myGrade}학년에 배정된 자리가 없어 대기자로 등록됩니다.
           </p>
         ) : (
           isMyGradeTaken &&

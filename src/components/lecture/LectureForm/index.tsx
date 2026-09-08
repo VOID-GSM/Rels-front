@@ -269,7 +269,7 @@ export default function LectureForm({
             받습니다.
           </p>
           <p className="text-xs text-gray-500">
-            마감 뒤에 들어온 신청은 대기자로 서고, 개설자나 학생회가 수락해야
+            마감 뒤에 들어온 신청은 대기자로 서고, 학생회가 수락해야
             확정됩니다.
           </p>
         </div>
