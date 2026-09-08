@@ -38,9 +38,10 @@ export default function LectureSwitcher({
         열린 강연 {items.length}개
       </span>
 
-      {/* 폭을 고정하면 화면이 넓을 때 카드가 왼쪽에만 짧게 몰려 붙습니다.
-          한 줄에 들어갈 수 있을 만큼 열을 잡고 남는 폭은 카드들이 나눠 갖습니다. */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] gap-2.5">
+      {/* 폭을 고정하면 화면이 넓을 때 카드가 왼쪽에 짧게 몰려 붙고, 남는 폭을
+          전부 나눠 가지면 두 개일 때 한 장이 화면 절반까지 늘어납니다.
+          최소·최대 폭을 함께 잡아 그 사이에서만 늘어나게 둡니다. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(15rem,20rem))] gap-2.5">
         {items.map(({ id, title, status, meta }) => {
           const isSelected = id === selectedId;
 
