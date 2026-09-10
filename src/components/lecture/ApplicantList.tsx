@@ -20,10 +20,10 @@ type ApplicantListProps = {
   /** 학생회만 명단 복사 버튼을 봅니다. */
   copyable?: boolean;
   /**
-   * 대기자를 수락·거절할 수 있는 사람에게만 넘깁니다.
+   * 대기자를 수락할 수 있는 사람에게만 넘깁니다.
    * 넘기지 않으면 대기자 명단은 이름만 보이는 읽기 전용입니다.
    */
-  onDecide?: (userId: number, approved: boolean) => void;
+  onApprove?: (userId: number) => void;
   /** 지금 처리 중인 대기자. 그 줄의 버튼만 잠깁니다. */
   decidingUserId?: number | null;
 } & (
@@ -54,14 +54,14 @@ export default function ApplicantList({
   waitingCount,
   applicants,
   copyable = false,
-  onDecide,
+  onApprove,
   decidingUserId = null,
 }: ApplicantListProps) {
   const { title, empty } = LIST_CONFIG[type];
   const isApplicant = type === "applicant";
   const isRejected = type === "rejected";
-  // 수락·거절은 대기 중인 사람에게만 의미가 있습니다.
-  const isDecidable = type === "waiting" && !!onDecide;
+  // 수락은 대기 중인 사람에게만 의미가 있습니다.
+  const isDecidable = type === "waiting" && !!onApprove;
 
   const count = isApplicant ? `${currentCount}/${maxCount}` : null;
 
@@ -110,24 +110,14 @@ export default function ApplicantList({
 
                 {isDecidable && (
                   // 이름 오른쪽에 붙여야 "누구를" 수락하는지 헷갈리지 않습니다.
-                  <div className="ml-auto flex shrink-0 items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => onDecide(applicant.userId, true)}
-                      disabled={isDeciding}
-                      className="focusable cursor-pointer rounded-lg bg-main px-2.5 py-1.5 text-xs font-semibold text-gray-900 transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-55"
-                    >
-                      수락
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDecide(applicant.userId, false)}
-                      disabled={isDeciding}
-                      className="focusable cursor-pointer rounded-lg bg-surface px-2.5 py-1.5 text-xs font-semibold text-error shadow-e1 transition-colors hover:bg-error-soft disabled:cursor-not-allowed disabled:opacity-55"
-                    >
-                      거절
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onApprove(applicant.userId)}
+                    disabled={isDeciding}
+                    className="focusable ml-auto shrink-0 cursor-pointer rounded-lg bg-main px-2.5 py-1.5 text-xs font-semibold text-gray-900 transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-55"
+                  >
+                    수락
+                  </button>
                 )}
               </li>
             );
