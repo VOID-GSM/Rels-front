@@ -166,13 +166,9 @@ export default function ThisWeekPage() {
   // 지금 처리 중인 대기자. 그 줄의 버튼만 잠가서 명단 전체가 멈추지 않게 합니다.
   const [decidingUserId, setDecidingUserId] = useState<number | null>(null);
   const { mutate: decideEnrollment } = useDecideEnrollment(lectureId, {
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       setDecidingUserId(null);
-      toast.success(
-        variables.approved
-          ? "대기자를 수락했습니다."
-          : "대기 신청을 거절했습니다.",
-      );
+      toast.success("대기자를 수락했습니다.");
     },
     onError: (error) => {
       setDecidingUserId(null);
@@ -188,9 +184,10 @@ export default function ThisWeekPage() {
     },
   });
 
-  const handleDecide = (userId: number, approved: boolean) => {
+  // 대기자는 수락만 할 수 있습니다. 거절은 화면에서 내렸습니다.
+  const handleApprove = (userId: number) => {
     setDecidingUserId(userId);
-    decideEnrollment({ userId, approved });
+    decideEnrollment({ userId, approved: true });
   };
 
   const handleSelectLecture = (id: number) => {
@@ -309,7 +306,7 @@ export default function ThisWeekPage() {
   const isSpeaker =
     lecture.speakers?.some((speaker) => speaker.userId === user?.userId) ??
     false;
-  // 상세 화면과 같습니다. 수락·거절은 학생회만 할 수 있습니다.
+  // 상세 화면과 같습니다. 수락은 학생회만 할 수 있습니다.
   const canDecide = isAdmin;
   // 칩으로 이미 꺼내 놓은 강연은 "더 있습니다"에서 빼야 합니다. 안 그러면
   // 바로 위에서 고를 수 있는 강연이 아래에서 또 세어집니다.
@@ -633,7 +630,7 @@ export default function ThisWeekPage() {
             applicants={roster.waiting}
             copyable={isAdmin}
             // 대기자를 신청자로 올릴지는 개설자와 학생회가 정합니다.
-            onDecide={canDecide ? handleDecide : undefined}
+            onApprove={canDecide ? handleApprove : undefined}
             decidingUserId={decidingUserId}
           />
           {/* 거절 명단은 서버가 개설자·학생회에게만 내려줍니다. */}
