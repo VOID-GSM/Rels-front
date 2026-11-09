@@ -31,6 +31,8 @@ interface LectureFormProps {
    * 개설 시각입니다. 새로 만들 때는 넘기지 않으면 지금 시각으로 봅니다.
    */
   enrollmentBasisAt?: string | null;
+  /** 신청한 학생이 있으면 서버가 신청 시작 시각을 못 바꾸게 막아서 잠가 둡니다. */
+  hasEnrollments?: boolean;
 }
 
 export default function LectureForm({
@@ -42,6 +44,7 @@ export default function LectureForm({
   forceCapacityMode,
   creatorId,
   enrollmentBasisAt,
+  hasEnrollments = false,
 }: LectureFormProps) {
   const {
     values,
@@ -51,7 +54,12 @@ export default function LectureForm({
     handleModeChange,
     validate,
     buildSubmitData,
-  } = useLectureForm(initialValues, forceCapacityMode, enrollmentBasisAt);
+  } = useLectureForm(
+    initialValues,
+    forceCapacityMode,
+    enrollmentBasisAt,
+    hasEnrollments,
+  );
 
   const {
     title,
@@ -286,12 +294,13 @@ export default function LectureForm({
                 key={label}
                 type="button"
                 aria-pressed={useCustomOpenAt === custom}
+                disabled={hasEnrollments}
                 onClick={() => {
                   setUseCustomOpenAt(custom);
                   clearError("applicationOpenAt");
                   clearError("applicationDeadline");
                 }}
-                className={`focusable rounded-lg px-3.5 py-1.5 text-sm font-medium transition-[background-color,box-shadow,color] ${
+                className={`focusable rounded-lg px-3.5 py-1.5 text-sm font-medium transition-[background-color,box-shadow,color] disabled:cursor-not-allowed disabled:opacity-55 ${
                   useCustomOpenAt === custom
                     ? "bg-surface text-gray-900 shadow-e1"
                     : "text-gray-600 hover:text-gray-900"
@@ -301,6 +310,11 @@ export default function LectureForm({
               </button>
             ))}
           </div>
+          {hasEnrollments && (
+            <p className="text-xs text-gray-500">
+              이미 신청한 학생이 있어 신청 시작 시각을 바꿀 수 없습니다.
+            </p>
+          )}
           {useCustomOpenAt ? (
             <>
               <DateTimeField
@@ -311,6 +325,7 @@ export default function LectureForm({
                   clearError("applicationOpenAt");
                 }}
                 error={errors.applicationOpenAt}
+                disabled={hasEnrollments}
               />
               <p className="text-xs text-gray-500">
                 학생회가 수락한 강연만 신청을 받습니다. 정한 시각이 지나서

@@ -75,6 +75,8 @@ function EditForm({ lecture }: { lecture: LectureType }) {
           submitLabel="저장"
           creatorId={lecture.creatorId}
           enrollmentBasisAt={lecture.approvedAt ?? lecture.createdAt}
+          // 신청자가 있으면 서버가 신청 시작 시각 변경을 거절해서 폼에서 미리 잠급니다.
+          hasEnrollments={lecture.enrolledCount + lecture.waitingCount > 0}
           extraAction={
             <Button
               variant="cancel"

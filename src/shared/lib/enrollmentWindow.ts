@@ -1,5 +1,5 @@
 import { formatLectureDate } from "./formatLectureSchedule";
-import { parseServerDateTime } from "./serverDateTime";
+import { parseLocalDateTime, parseServerDateTime } from "./serverDateTime";
 
 /** 7교시가 끝나는 시각. 강연 신청은 이 시각부터 받습니다. */
 const OPEN_HOUR = 16;
@@ -65,16 +65,21 @@ const getTodayOpenAt = (): Date => {
  * 언제 수락됐는지 알 수 없으니 적어도 오늘 16:20까지는 잠가 둡니다.
  *
  * 강연자가 신청 시작 시각(applicationOpenAt)을 정해 뒀으면 그 시각이 우선입니다.
- * 서버도 같은 순서로 봅니다. 사용자가 입력한 값이라 로컬 시간 그대로 읽습니다.
+ * 사용자가 입력한 값이라 로컬 시간 그대로 읽습니다. 다만 그 시각이 수락 전에
+ * 지나 버렸으면 서버는 수락한 순간부터 받으므로, 둘 중 늦은 쪽입니다.
+ * 수락 시각을 모르면 정한 시각 그대로 봅니다.
  */
 export const getLectureEnrollmentOpenAt = (lecture: {
   approvedAt?: string | null;
   createdAt?: string | null;
   applicationOpenAt?: string | null;
 }): Date | null => {
-  if (lecture.applicationOpenAt) {
-    const customOpenAt = new Date(lecture.applicationOpenAt);
-    if (!Number.isNaN(customOpenAt.getTime())) return customOpenAt;
+  const customOpenAt = parseLocalDateTime(lecture.applicationOpenAt);
+  if (customOpenAt) {
+    const approvedAt = parseServerDateTime(lecture.approvedAt);
+    return approvedAt && approvedAt.getTime() > customOpenAt.getTime()
+      ? approvedAt
+      : customOpenAt;
   }
 
   if (lecture.approvedAt) return getEnrollmentOpenAt(lecture.approvedAt);
@@ -98,10 +103,8 @@ export const getLectureEnrollmentOpenAt = (lecture: {
 export const isAfterDeadline = (
   applicationDeadline?: string | null,
 ): boolean => {
-  if (!applicationDeadline) return false;
-
-  const deadline = new Date(applicationDeadline);
-  if (Number.isNaN(deadline.getTime())) return false;
+  const deadline = parseLocalDateTime(applicationDeadline);
+  if (!deadline) return false;
 
   return Date.now() >= deadline.getTime();
 };
