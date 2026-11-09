@@ -63,11 +63,20 @@ const getTodayOpenAt = (): Date => {
  * approvedAt은 백엔드에 컬럼이 생기기 전에 수락된 강연에는 없습니다. 그런 강연을
  * 개설 시각으로 세면 계산된 시각이 이미 지나 있어서 아침부터 신청이 열려 버립니다.
  * 언제 수락됐는지 알 수 없으니 적어도 오늘 16:20까지는 잠가 둡니다.
+ *
+ * 강연자가 신청 시작 시각(applicationOpenAt)을 정해 뒀으면 그 시각이 우선입니다.
+ * 서버도 같은 순서로 봅니다. 사용자가 입력한 값이라 로컬 시간 그대로 읽습니다.
  */
 export const getLectureEnrollmentOpenAt = (lecture: {
   approvedAt?: string | null;
   createdAt?: string | null;
+  applicationOpenAt?: string | null;
 }): Date | null => {
+  if (lecture.applicationOpenAt) {
+    const customOpenAt = new Date(lecture.applicationOpenAt);
+    if (!Number.isNaN(customOpenAt.getTime())) return customOpenAt;
+  }
+
   if (lecture.approvedAt) return getEnrollmentOpenAt(lecture.approvedAt);
 
   const todayOpenAt = getTodayOpenAt();

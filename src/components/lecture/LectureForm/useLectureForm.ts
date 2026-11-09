@@ -27,6 +27,8 @@ const DEFAULT_VALUES: LectureFormValues = {
   lectureDate: "",
   lectureTime: "",
   applicationDeadline: "",
+  useCustomOpenAt: false,
+  applicationOpenAt: "",
   speakers: [],
 };
 
@@ -62,6 +64,12 @@ export function useLectureForm(
   const [lectureTime, setLectureTime] = useState(init.lectureTime ?? "");
   const [applicationDeadline, setApplicationDeadline] = useState(
     init.applicationDeadline ?? "",
+  );
+  const [useCustomOpenAt, setUseCustomOpenAt] = useState(
+    init.useCustomOpenAt ?? Boolean(init.applicationOpenAt),
+  );
+  const [applicationOpenAt, setApplicationOpenAt] = useState(
+    init.applicationOpenAt ?? "",
   );
   const [speakers, setSpeakers] = useState<UserSummary[]>(init.speakers ?? []);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -170,6 +178,10 @@ export function useLectureForm(
       next.applicationDeadline = "신청 마감일을 입력해 주세요.";
       missingFields.push("신청 마감일");
     }
+    if (useCustomOpenAt && !applicationOpenAt) {
+      next.applicationOpenAt = "신청 시작 시각을 입력해 주세요.";
+      missingFields.push("신청 시작 시각");
+    }
 
     const lectureDateTime =
       lectureDate && lectureTime
@@ -181,6 +193,11 @@ export function useLectureForm(
     const isDateChanged =
       lectureDate !== init.lectureDate || lectureTime !== init.lectureTime;
     const isDeadlineChanged = applicationDeadline !== init.applicationDeadline;
+    const openDateTime =
+      useCustomOpenAt && applicationOpenAt
+        ? parseLocalDateTime(applicationOpenAt)
+        : null;
+    const isOpenAtChanged = applicationOpenAt !== init.applicationOpenAt;
 
     if (
       lectureDateTime &&
@@ -204,10 +221,29 @@ export function useLectureForm(
         "신청 마감일은 현재보다 이전으로 설정할 수 없습니다.";
     }
 
-    // 신청은 16:20에 열립니다. 그전에 마감하면 아무도 신청할 수 없습니다.
-    const enrollmentOpenAt = getEnrollmentOpenAt(
-      enrollmentBasisAt ?? new Date().toISOString(),
-    );
+    if (openDateTime && isOpenAtChanged && openDateTime.getTime() < Date.now()) {
+      next.applicationOpenAt = "현재 날짜/시간 이후로 선택해 주세요.";
+      dateToastMessage =
+        dateToastMessage ??
+        "신청 시작 시각은 현재보다 이전으로 설정할 수 없습니다.";
+    }
+
+    // 백엔드는 "시작 < 마감"만 통과시킵니다. 같은 시각이면 거절이라 >= 입니다.
+    if (
+      openDateTime &&
+      deadlineDateTime &&
+      openDateTime.getTime() >= deadlineDateTime.getTime()
+    ) {
+      next.applicationOpenAt = "신청 시작은 신청 마감 이전이어야 합니다.";
+      dateToastMessage =
+        dateToastMessage ??
+        "신청 시작 시각은 신청 마감일보다 이전으로 정해 주세요.";
+    }
+
+    // 직접 정하지 않으면 신청은 16:20에 열립니다. 그전에 마감하면 아무도 신청할 수 없습니다.
+    const enrollmentOpenAt = useCustomOpenAt
+      ? null
+      : getEnrollmentOpenAt(enrollmentBasisAt ?? new Date().toISOString());
 
     if (
       deadlineDateTime &&
@@ -264,6 +300,7 @@ export function useLectureForm(
     lectureDate,
     lectureTime,
     applicationDeadline,
+    applicationOpenAt: useCustomOpenAt ? applicationOpenAt : null,
     speakerIds: speakers.map((speaker) => speaker.userId),
   });
 
@@ -280,6 +317,8 @@ export function useLectureForm(
       lectureDate,
       lectureTime,
       applicationDeadline,
+      useCustomOpenAt,
+      applicationOpenAt,
       speakers,
     },
     setters: {
@@ -293,6 +332,8 @@ export function useLectureForm(
       setLectureDate,
       setLectureTime,
       setApplicationDeadline,
+      setUseCustomOpenAt,
+      setApplicationOpenAt,
       setSpeakers,
     },
     errors,

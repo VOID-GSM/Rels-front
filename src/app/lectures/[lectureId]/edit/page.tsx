@@ -64,6 +64,7 @@ function EditForm({ lecture }: { lecture: LectureType }) {
             lectureDate: lecture.lectureDate ?? "",
             lectureTime: lecture.lectureTime ?? "",
             applicationDeadline: lecture.applicationDeadline ?? "",
+            applicationOpenAt: lecture.applicationOpenAt ?? "",
             // 서버가 내려주는 speakers에는 개설자도 들어 있어서 빼고 넘깁니다.
             speakers: (lecture.speakers ?? []).filter(
               (speaker) => speaker.userId !== lecture.creatorId,

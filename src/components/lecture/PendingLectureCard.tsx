@@ -18,7 +18,7 @@ import {
 } from "@/shared/lib/formatLectureSchedule";
 import { formatServerDate } from "@/shared/lib/serverDateTime";
 import {
-  getEnrollmentOpenAt,
+  getLectureEnrollmentOpenAt,
   formatEnrollmentOpenAt,
 } from "@/shared/lib/enrollmentWindow";
 import { GRADE_KEYS } from "@/shared/lib/gradeCapacity";
@@ -75,8 +75,12 @@ export default function PendingLectureCard({
   );
 
   // 신청이 열리는 시각은 개설 시각이 아니라 수락 시각에서 셉니다. 아직 수락 전인
-  // 카드라 "지금 수락하면 언제부터 열리는지"를 보여 줍니다.
-  const enrollmentOpenAt = getEnrollmentOpenAt(new Date().toISOString());
+  // 카드라 "지금 수락하면 언제부터 열리는지"를 보여 줍니다. 강연자가 시작 시각을
+  // 정해 뒀으면 그 시각이 우선입니다.
+  const enrollmentOpenAt = getLectureEnrollmentOpenAt({
+    approvedAt: new Date().toISOString(),
+    applicationOpenAt: lecture.applicationOpenAt,
+  });
   const scheduleText = [
     formatLectureDate(lecture.lectureDate),
     formatLectureTime(lecture.lectureTime),
@@ -129,6 +133,7 @@ export default function PendingLectureCard({
               lectureDate: lecture.lectureDate ?? "",
               lectureTime: lecture.lectureTime ?? "",
               applicationDeadline: lecture.applicationDeadline ?? "",
+              applicationOpenAt: lecture.applicationOpenAt ?? "",
               // 서버가 내려주는 speakers에는 개설자도 들어 있어서 빼고 넘깁니다.
               speakers: (lecture.speakers ?? []).filter(
                 (speaker) => speaker.userId !== lecture.creatorId,
@@ -185,7 +190,11 @@ export default function PendingLectureCard({
                 value={formatLectureDeadline(lecture.applicationDeadline)}
               />
               <DetailRow
-                label="지금 수락하면 신청 시작"
+                label={
+                  lecture.applicationOpenAt
+                    ? "신청 시작"
+                    : "지금 수락하면 신청 시작"
+                }
                 value={
                   enrollmentOpenAt
                     ? formatEnrollmentOpenAt(enrollmentOpenAt)

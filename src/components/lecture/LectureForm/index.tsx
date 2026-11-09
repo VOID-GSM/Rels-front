@@ -65,6 +65,8 @@ export default function LectureForm({
     lectureDate,
     lectureTime,
     applicationDeadline,
+    useCustomOpenAt,
+    applicationOpenAt,
     speakers,
   } = values;
 
@@ -79,6 +81,8 @@ export default function LectureForm({
     setLectureDate,
     setLectureTime,
     setApplicationDeadline,
+    setUseCustomOpenAt,
+    setApplicationOpenAt,
     setSpeakers,
   } = setters;
 
@@ -263,15 +267,64 @@ export default function LectureForm({
             }}
             error={errors.applicationDeadline}
           />
-          {/* 신청 시작은 입력받지 않고 학생회가 수락한 시각에서 자동으로 정해집니다. */}
-          <p className="text-xs text-gray-500">
-            신청은 학생회가 수락한 날, 7교시가 끝나는 {ENROLLMENT_OPEN_TIME}부터
-            받습니다.
-          </p>
           <p className="text-xs text-gray-500">
             마감 뒤에 들어온 신청은 대기자로 서고, 학생회가 수락해야
             확정됩니다.
           </p>
+        </div>
+
+        <div className="flex flex-col gap-2.5">
+          <span className="text-sm font-medium text-gray-700">신청 시작</span>
+          <div className="inline-flex w-fit gap-0.5 rounded-xl bg-gray-100 p-1">
+            {(
+              [
+                { custom: false, label: `수락한 날 ${ENROLLMENT_OPEN_TIME}` },
+                { custom: true, label: "직접 정하기" },
+              ] as const
+            ).map(({ custom, label }) => (
+              <button
+                key={label}
+                type="button"
+                aria-pressed={useCustomOpenAt === custom}
+                onClick={() => {
+                  setUseCustomOpenAt(custom);
+                  clearError("applicationOpenAt");
+                  clearError("applicationDeadline");
+                }}
+                className={`focusable rounded-lg px-3.5 py-1.5 text-sm font-medium transition-[background-color,box-shadow,color] ${
+                  useCustomOpenAt === custom
+                    ? "bg-surface text-gray-900 shadow-e1"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {useCustomOpenAt ? (
+            <>
+              <DateTimeField
+                label="신청 시작 시각"
+                value={applicationOpenAt}
+                onChange={(value) => {
+                  setApplicationOpenAt(value);
+                  clearError("applicationOpenAt");
+                }}
+                error={errors.applicationOpenAt}
+              />
+              <p className="text-xs text-gray-500">
+                학생회가 수락한 강연만 신청을 받습니다. 정한 시각이 지나서
+                수락되면 수락하는 즉시 신청이 열립니다.
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-gray-500">
+              학생회가 수락한 날, 7교시가 끝나는 {ENROLLMENT_OPEN_TIME}부터
+              받습니다. {ENROLLMENT_OPEN_TIME} 이후에 수락되면 다음 날
+              {" "}
+              {ENROLLMENT_OPEN_TIME}부터입니다.
+            </p>
+          )}
         </div>
       </FormSection>
 
