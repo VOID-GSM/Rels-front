@@ -27,6 +27,7 @@ export { useDeleteLecture } from "./model/useDeleteLecture";
 export { useEnrollLecture } from "./model/useEnrollLecture";
 export { useCancelEnrollment } from "./model/useCancelEnrollment";
 export { useCancelEnrollmentById } from "./model/useCancelEnrollmentById";
+export { useRemoveEnrollment } from "./model/useRemoveEnrollment";
 export { useGetEnrollments } from "./model/useGetEnrollments";
 export { useDecideEnrollment } from "./model/useDecideEnrollment";
 export { useGetPendingLectures } from "./model/useGetPendingLectures";

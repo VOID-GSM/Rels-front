@@ -23,6 +23,10 @@ interface AttendanceListProps {
   isError?: boolean;
   isSaving?: boolean;
   onSave: (updates: AttendanceUpdate[]) => void;
+  /** 넘기면 줄마다 신청 취소 버튼이 붙습니다. 마감 뒤에도 뺄 수 있습니다. */
+  onRemove?: (attendance: LectureAttendance) => void;
+  /** 지금 취소 중인 사람. 그 줄의 버튼만 잠깁니다. */
+  removingUserId?: number | null;
 }
 
 export default function AttendanceList({
@@ -33,6 +37,8 @@ export default function AttendanceList({
   isError = false,
   isSaving = false,
   onSave,
+  onRemove,
+  removingUserId = null,
 }: AttendanceListProps) {
   // 저장 전까지는 화면에서만 바뀝니다. 바뀐 인원만 담아 두었다가 한 번에 보냅니다.
   const [drafts, setDrafts] = useState<Record<number, AttendanceStatusType>>({});
@@ -220,6 +226,24 @@ export default function AttendanceList({
                     >
                       {ATTENDANCE_STATUS_LABEL.ABSENT}
                     </button>
+                    {onRemove && (
+                      <>
+                        {/* 출석 버튼과 섞여 보이지 않게 세로줄로 떼어 둡니다. */}
+                        <span
+                          aria-hidden
+                          className="mx-0.5 h-4 w-px bg-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => onRemove(row)}
+                          disabled={removingUserId === row.userId}
+                          aria-label={`${row.name} 신청 취소`}
+                          className="focusable cursor-pointer rounded-lg px-2 py-1 text-xs font-semibold text-gray-600 transition-colors hover:bg-error-soft hover:text-error disabled:cursor-not-allowed disabled:opacity-55"
+                        >
+                          취소
+                        </button>
+                      </>
+                    )}
                   </div>
                 </li>
               );
