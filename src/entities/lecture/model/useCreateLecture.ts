@@ -19,6 +19,11 @@ interface CreateLectureReqType {
    * 서버는 "마감 < 강연 시작"만 검사합니다.
    */
   applicationDeadline?: string | null;
+  /**
+   * 강연자가 직접 정한 신청 시작 시각. 비어 있으면 학생회가 수락한 날 16:20부터
+   * 받습니다. 사용자가 입력한 로컬 시각 문자열이라 parseServerDateTime을 쓰면 안 됩니다.
+   */
+  applicationOpenAt?: string | null;
   /** 개설자 외 연사자들의 userId. */
   speakerIds?: number[];
 }
