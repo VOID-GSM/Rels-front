@@ -19,6 +19,18 @@ export const parseServerDateTime = (value?: string | null): Date | null => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
+/**
+ * 사용자가 입력한 시각("YYYY-MM-DDTHH:mm[:ss]")을 로컬 시간 그대로 읽습니다.
+ * applicationDeadline, applicationOpenAt처럼 오프셋 없이 한국 시간으로 저장되는
+ * 값에 씁니다. 비었거나 못 읽으면 null입니다.
+ */
+export const parseLocalDateTime = (value?: string | null): Date | null => {
+  if (!value) return null;
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
 /** 서버가 찍은 시각을 "2026년 8월 26일"로 보여 줍니다. */
 export const formatServerDate = (value?: string | null): string => {
   const date = parseServerDateTime(value);

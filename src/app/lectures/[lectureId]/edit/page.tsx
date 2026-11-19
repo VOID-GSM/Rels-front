@@ -64,6 +64,7 @@ function EditForm({ lecture }: { lecture: LectureType }) {
             lectureDate: lecture.lectureDate ?? "",
             lectureTime: lecture.lectureTime ?? "",
             applicationDeadline: lecture.applicationDeadline ?? "",
+            applicationOpenAt: lecture.applicationOpenAt ?? "",
             // 서버가 내려주는 speakers에는 개설자도 들어 있어서 빼고 넘깁니다.
             speakers: (lecture.speakers ?? []).filter(
               (speaker) => speaker.userId !== lecture.creatorId,
@@ -74,6 +75,8 @@ function EditForm({ lecture }: { lecture: LectureType }) {
           submitLabel="저장"
           creatorId={lecture.creatorId}
           enrollmentBasisAt={lecture.approvedAt ?? lecture.createdAt}
+          // 신청자가 있으면 서버가 신청 시작 시각 변경을 거절해서 폼에서 미리 잠급니다.
+          hasEnrollments={lecture.enrolledCount + lecture.waitingCount > 0}
           extraAction={
             <Button
               variant="cancel"

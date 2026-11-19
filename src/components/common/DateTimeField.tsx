@@ -9,6 +9,7 @@ interface DateTimeFieldProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  disabled?: boolean;
 }
 
 /**
@@ -20,6 +21,7 @@ export default function DateTimeField({
   value,
   onChange,
   error,
+  disabled = false,
 }: DateTimeFieldProps) {
   const [initialDate = "", initialTime = ""] = value.split("T");
 
@@ -55,11 +57,12 @@ export default function DateTimeField({
           type="date"
           aria-label={label ? `${label} 날짜` : "날짜"}
           value={date}
+          disabled={disabled}
           onChange={(e) => {
             setDate(e.target.value);
             emit(e.target.value, time);
           }}
-          className={`field h-11 rounded-xl px-3.5 text-sm text-gray-900 sm:w-[190px] ${
+          className={`field h-11 rounded-xl px-3.5 text-sm text-gray-900 disabled:cursor-not-allowed disabled:opacity-55 sm:w-[190px] ${
             error ? "field-error" : ""
           }`}
         />
@@ -70,6 +73,7 @@ export default function DateTimeField({
             emit(date, nextTime);
           }}
           invalid={Boolean(error)}
+          disabled={disabled}
           className="sm:w-auto"
         />
       </div>

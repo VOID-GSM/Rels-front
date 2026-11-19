@@ -46,6 +46,7 @@ import {
   useCancelEnrollment,
   useGetEnrollments,
   useDecideEnrollment,
+  useRemoveEnrollment,
   useGetAttendances,
   useUpdateAttendances,
   useDeleteLecture,
@@ -104,13 +105,9 @@ export default function LectureDetailPage() {
   // 지금 처리 중인 대기자. 그 줄의 버튼만 잠가서 명단 전체가 멈추지 않게 합니다.
   const [decidingUserId, setDecidingUserId] = useState<number | null>(null);
   const { mutate: decideEnrollment } = useDecideEnrollment(lectureId, {
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       setDecidingUserId(null);
-      toast.success(
-        variables.approved
-          ? "대기자를 수락했습니다."
-          : "대기 신청을 거절했습니다.",
-      );
+      toast.success("대기자를 수락했습니다.");
     },
     onError: (error) => {
       setDecidingUserId(null);
@@ -126,10 +123,37 @@ export default function LectureDetailPage() {
     },
   });
 
-  const handleDecide = (userId: number, approved: boolean) => {
+  // 대기자는 수락만 할 수 있습니다. 거절은 화면에서 내렸습니다.
+  const handleApprove = (userId: number) => {
     setDecidingUserId(userId);
-    decideEnrollment({ userId, approved });
+    decideEnrollment({ userId, approved: true });
   };
+
+  // 학생회가 명단에서 뺄 사람. 되돌릴 수 없어서 한 번 더 묻습니다.
+  const [removeTarget, setRemoveTarget] = useState<{
+    userId: number;
+    name: string;
+  } | null>(null);
+  const { mutate: removeEnrollment, isPending: isRemoving } =
+    useRemoveEnrollment(lectureId, {
+      onSuccess: () => {
+        setRemoveTarget(null);
+        toast.success("신청을 취소했습니다.");
+      },
+      onError: (error) => {
+        setRemoveTarget(null);
+        toast.error(
+          getApiErrorMessage(error, {
+            preferServerMessage: true,
+            statusMessages: {
+              403: "학생회만 취소할 수 있습니다.",
+              404: "이미 취소된 신청입니다.",
+            },
+          }),
+        );
+      },
+    });
+  const removingUserId = isRemoving ? (removeTarget?.userId ?? null) : null;
 
   // 카운트다운이 0에 닿는 순간 이 값이 켜지면서 신청 버튼이 풀립니다.
   const [hasEnrollmentOpened, setHasEnrollmentOpened] = useState(false);
@@ -600,6 +624,8 @@ export default function LectureDetailPage() {
                 isError={isAttendancesError}
                 isSaving={isSavingAttendances}
                 onSave={saveAttendances}
+                onRemove={setRemoveTarget}
+                removingUserId={removingUserId}
               />
             ) : (
               <ApplicantList
@@ -615,8 +641,11 @@ export default function LectureDetailPage() {
               applicants={roster.waiting}
               copyable={isAdmin}
               // 대기자를 신청자로 올릴지는 개설자와 학생회가 정합니다.
-              onDecide={canDecide ? handleDecide : undefined}
+              onApprove={canDecide ? handleApprove : undefined}
               decidingUserId={decidingUserId}
+              // 신청 마감 뒤에도 학생회는 사람을 뺄 수 있습니다.
+              onRemove={isAdmin ? setRemoveTarget : undefined}
+              removingUserId={removingUserId}
             />
             {/* 거절 명단은 서버가 개설자·학생회에게만 내려줍니다. */}
             {roster.rejected.length > 0 && (
@@ -635,6 +664,19 @@ export default function LectureDetailPage() {
           onConfirm={handleConfirmDelete}
           onCancel={() => setShowDeleteModal(false)}
           isPending={isDeleting}
+        />
+      )}
+
+      {removeTarget && (
+        <ConfirmModal
+          title="신청 취소"
+          message={`${removeTarget.name}님의 신청을 취소합니다. 신청 마감 뒤에도 취소되고, 되돌릴 수 없습니다.`}
+          confirmLabel="신청 취소"
+          confirmVariant="danger"
+          pendingLabel="취소하는 중"
+          onConfirm={() => removeEnrollment(removeTarget.userId)}
+          onCancel={() => setRemoveTarget(null)}
+          isPending={isRemoving}
         />
       )}
     </>

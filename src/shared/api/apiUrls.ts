@@ -15,6 +15,9 @@ export const lectureUrl = {
   delete: (id: number) => `/api/lectures/${id}`,
   enroll: (id: number) => `/api/lectures/${id}/enrollments`,
   cancelEnrollment: (id: number) => `/api/lectures/${id}/enrollments`,
+  // 학생회가 다른 사람의 신청을 지웁니다. 마감 뒤에도 됩니다.
+  removeEnrollment: (id: number, userId: number) =>
+    `/api/lectures/${id}/enrollments/${userId}`,
   getEnrollments: (id: number) => `/api/lectures/${id}/enrollments`,
   decideEnrollment: (id: number, userId: number) =>
     `/api/lectures/${id}/enrollments/${userId}/decision`,

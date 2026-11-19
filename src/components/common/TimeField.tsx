@@ -49,6 +49,7 @@ interface TimeFieldProps {
   error?: string;
   /** 메시지는 밖에서 보여 주고 테두리만 붉게 할 때 씁니다. */
   invalid?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -67,6 +68,7 @@ export default function TimeField({
   onChange,
   error,
   invalid,
+  disabled = false,
   className = "",
 }: TimeFieldProps) {
   const initial = parseTime(value);
@@ -133,7 +135,7 @@ export default function TimeField({
 
   // 브라우저가 그리는 화살표는 테두리에 바짝 붙어서, 화살표를 직접 그리고
   // 오른쪽에 자리를 비워 둡니다.
-  const selectStyle = `field h-11 w-full cursor-pointer appearance-none rounded-xl pl-3.5 pr-9 text-sm text-gray-900 ${
+  const selectStyle = `field h-11 w-full cursor-pointer appearance-none rounded-xl pl-3.5 pr-9 text-sm text-gray-900 disabled:cursor-not-allowed disabled:opacity-55 ${
     error || invalid ? "field-error" : ""
   }`;
 
@@ -156,7 +158,8 @@ export default function TimeField({
               type="button"
               onClick={() => handleMeridiem(key)}
               aria-pressed={meridiem === key}
-              className={`focusable h-9 cursor-pointer rounded-lg px-3.5 text-sm font-medium transition-[background-color,box-shadow,color] ${
+              disabled={disabled}
+              className={`focusable h-9 cursor-pointer rounded-lg px-3.5 text-sm font-medium transition-[background-color,box-shadow,color] disabled:cursor-not-allowed disabled:opacity-55 ${
                 meridiem === key
                   ? "bg-surface text-gray-900 shadow-e1"
                   : "text-gray-600 hover:text-gray-900"
@@ -173,6 +176,7 @@ export default function TimeField({
               aria-label={label ? `${label} 시` : "시"}
               value={hour}
               onChange={(e) => handleHour(e.target.value)}
+              disabled={disabled}
               className={selectStyle}
             >
               <option value="" disabled>
@@ -193,6 +197,7 @@ export default function TimeField({
               aria-label={label ? `${label} 분` : "분"}
               value={minute}
               onChange={(e) => handleMinute(e.target.value)}
+              disabled={disabled}
               className={selectStyle}
             >
               <option value="" disabled>
